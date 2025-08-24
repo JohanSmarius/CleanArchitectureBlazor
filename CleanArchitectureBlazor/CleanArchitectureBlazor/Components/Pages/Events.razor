@@ -17,9 +17,9 @@
                     </h1>
                     <p class="text-muted">Manage medical first aid events</p>
                 </div>
-                <a href="/events/create" class="btn btn-primary">
+                <button class="btn btn-primary" @onclick="ShowCreateModal">
                     <i class="fas fa-plus me-2"></i>Create Event
-                </a>
+                </button>
             </div>
         </div>
     </div>
@@ -38,9 +38,67 @@
             <i class="fas fa-calendar-times fa-4x text-muted mb-4"></i>
             <h4 class="text-muted">No Events Found</h4>
             <p class="text-muted mb-4">Start by creating your first medical first aid event.</p>
-            <a href="/events/create" class="btn btn-primary btn-lg">
+            <button class="btn btn-primary btn-lg" @onclick="ShowCreateModal">
                 <i class="fas fa-plus me-2"></i>Create First Event
-            </a>
+            </button>
+<!-- Create Event Modal -->
+@if (showCreateModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Event</h5>
+                    <button type="button" class="btn-close" @onclick="HideCreateModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="newEvent" OnValidSubmit="HandleCreateEvent">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <InputText class="form-control" @bind-Value="newEvent.Name" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Location</label>
+                            <InputText class="form-control" @bind-Value="newEvent.Location" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Start Date & Time</label>
+                            <InputDate class="form-control" @bind-Value="newEvent.StartDate" />
+                            <InputTime class="form-control mt-1" @bind-Value="newEvent.StartDate" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">End Date & Time</label>
+                            <InputDate class="form-control" @bind-Value="newEvent.EndDate" />
+                            <InputTime class="form-control mt-1" @bind-Value="newEvent.EndDate" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <InputTextArea class="form-control" @bind-Value="newEvent.Description" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact Person</label>
+                            <InputText class="form-control" @bind-Value="newEvent.ContactPerson" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact Phone</label>
+                            <InputText class="form-control" @bind-Value="newEvent.ContactPhone" />
+                        </div>
+                        <button type="submit" class="btn btn-primary" disabled="@isCreating">
+                            @if (isCreating)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            Create Event
+                        </button>
+                        <button type="button" class="btn btn-secondary ms-2" @onclick="HideCreateModal">Cancel</button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
         </div>
     }
     else
@@ -200,13 +258,64 @@
 @code {
     private bool isLoading = true;
     private bool isDeleting = false;
+    private bool showCreateModal = false;
+    private bool isCreating = false;
     private List<Event> events = new();
     private List<Event> filteredEvents = new();
     private Event? eventToDelete;
-    
+    private Event newEvent = new();
     private string searchTerm = string.Empty;
     private string statusFilter = string.Empty;
     private string sortBy = "StartDate";
+    private void ShowCreateModal()
+    {
+        newEvent = new Event
+        {
+            StartDate = DateTime.Today.AddHours(9),
+            EndDate = DateTime.Today.AddHours(17),
+            Status = EventStatus.Requested
+        };
+        showCreateModal = true;
+    }
+
+    private void HideCreateModal()
+    {
+        showCreateModal = false;
+    }
+
+    private async Task HandleCreateEvent()
+    {
+        isCreating = true;
+        try
+        {
+            // Add a shift covering the event duration
+            newEvent.Shifts = new List<Shift>
+            {
+                new Shift
+                {
+                    Name = $"{newEvent.Name} Shift",
+                    StartTime = newEvent.StartDate,
+                    EndTime = newEvent.EndDate,
+                    RequiredStaff = 1,
+                    Description = "Auto-generated shift covering the event duration."
+                }
+            };
+            newEvent.Status = EventStatus.Requested;
+            var created = await EventService.CreateEventAsync(newEvent);
+            events.Add(created);
+            ApplyFiltersAndSort();
+            showCreateModal = false;
+        }
+        catch (Exception ex)
+        {
+            // Handle error (show toast in real app)
+            Console.WriteLine($"Error creating event: {ex.Message}");
+        }
+        finally
+        {
+            isCreating = false;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
