@@ -1,0 +1,711 @@
+@page "/staff/details/{StaffId:int}"
+@using CleanArchitectureBlazor.Models
+@using CleanArchitectureBlazor.Services
+@inject IStaffService StaffService
+@inject IStaffAssignmentService StaffAssignmentService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Staff Details - Medical First Aid Manager</PageTitle>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (staffDetail == null)
+{
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Staff Member Not Found</strong>
+                    <p class="mb-0">The requested staff member could not be found.</p>
+                </div>
+                <a href="/staff" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Staff
+                </a>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/staff" class="text-decoration-none">Staff</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">@staffDetail.FullName</li>
+                    </ol>
+                </nav>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="bg-@GetRoleColor(staffDetail.Role) text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <span class="fw-bold display-6">@staffDetail.FirstName.Substring(0, 1)@staffDetail.LastName.Substring(0, 1)</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h1 class="h3 mb-0 text-primary">@staffDetail.FullName</h1>
+                            <div class="mt-2">
+                                <span class="badge bg-@GetRoleColor(staffDetail.Role) fs-6 me-2">@staffDetail.Role</span>
+                                @if (!staffDetail.IsActive)
+                                {
+                                    <span class="badge bg-secondary fs-6">Inactive</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success fs-6">Active</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-primary" @onclick="OpenEditStaffDialog">
+                            <i class="fas fa-edit me-2"></i>Edit Details
+                        </button>
+                        @if (staffDetail.IsActive)
+                        {
+                            <button class="btn btn-outline-warning" @onclick="ConfirmDeactivateStaff">
+                                <i class="fas fa-user-times me-2"></i>Deactivate
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-success" @onclick="ReactivateStaff">
+                                <i class="fas fa-user-check me-2"></i>Reactivate
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Personal Information -->
+            <div class="col-lg-4 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user me-2"></i>Personal Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">FULL NAME</label>
+                            <div class="fw-medium">@staffDetail.FullName</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">EMAIL ADDRESS</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-envelope text-muted me-2"></i>
+                                <a href="mailto:@staffDetail.Email" class="text-decoration-none">@staffDetail.Email</a>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(staffDetail.Phone))
+                        {
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">PHONE NUMBER</label>
+                                <div class="fw-medium">
+                                    <i class="fas fa-phone text-muted me-2"></i>
+                                    <a href="tel:@staffDetail.Phone" class="text-decoration-none">@staffDetail.Phone</a>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">ROLE</label>
+                            <div class="fw-medium">
+                                <span class="badge bg-@GetRoleColor(staffDetail.Role) fs-6">@staffDetail.Role</span>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(staffDetail.CertificationLevel))
+                        {
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">CERTIFICATION</label>
+                                <div class="fw-medium">
+                                    <i class="fas fa-certificate text-muted me-2"></i>
+                                    <span class="badge bg-info">@staffDetail.CertificationLevel</span>
+                                    @if (staffDetail.CertificationExpiry.HasValue)
+                                    {
+                                        <br>
+                                        <small class="text-muted">
+                                            Expires: @staffDetail.CertificationExpiry.Value.ToString("MMMM dd, yyyy")
+                                            @if (staffDetail.CertificationExpiry.Value < DateTime.Today)
+                                            {
+                                                <span class="badge bg-danger ms-1">EXPIRED</span>
+                                            }
+                                            else if (staffDetail.CertificationExpiry.Value < DateTime.Today.AddDays(30))
+                                            {
+                                                <span class="badge bg-warning ms-1">EXPIRING SOON</span>
+                                            }
+                                        </small>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">STATUS</label>
+                            <div class="fw-medium">
+                                @if (staffDetail.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label text-muted small">JOINED</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-calendar-plus text-muted me-2"></i>
+                                @staffDetail.CreatedAt.ToString("MMMM dd, yyyy")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bolt me-2"></i>Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" @onclick="OpenEditStaffDialog">
+                                <i class="fas fa-edit me-2"></i>Edit Information
+                            </button>
+                            @if (!string.IsNullOrEmpty(staffDetail.Email))
+                            {
+                                <a href="mailto:@staffDetail.Email" class="btn btn-outline-info">
+                                    <i class="fas fa-envelope me-2"></i>Send Email
+                                </a>
+                            }
+                            @if (!string.IsNullOrEmpty(staffDetail.Phone))
+                            {
+                                <a href="tel:@staffDetail.Phone" class="btn btn-outline-success">
+                                    <i class="fas fa-phone me-2"></i>Call Now
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignment History & Statistics -->
+            <div class="col-lg-8">
+                <!-- Statistics -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm text-center">
+                            <div class="card-body">
+                                <div class="text-primary display-6 mb-2">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <h4 class="text-primary mb-0">@TotalAssignments</h4>
+                                <small class="text-muted">Total Assignments</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm text-center">
+                            <div class="card-body">
+                                <div class="text-success display-6 mb-2">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <h4 class="text-success mb-0">@CompletedAssignments</h4>
+                                <small class="text-muted">Completed</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm text-center">
+                            <div class="card-body">
+                                <div class="text-warning display-6 mb-2">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <h4 class="text-warning mb-0">@UpcomingAssignments</h4>
+                                <small class="text-muted">Upcoming</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm text-center">
+                            <div class="card-body">
+                                <div class="text-info display-6 mb-2">
+                                    <i class="fas fa-hourglass-half"></i>
+                                </div>
+                                <h4 class="text-info mb-0">@TotalHours</h4>
+                                <small class="text-muted">Total Hours</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment History -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-transparent border-0">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-history me-2"></i>Assignment History
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (!staffDetail.StaffAssignments.Any())
+                        {
+                            <div class="text-center py-5">
+                                <i class="fas fa-clipboard-list fa-4x text-muted mb-4"></i>
+                                <h5 class="text-muted">No Assignment History</h5>
+                                <p class="text-muted">This staff member hasn't been assigned to any shifts yet.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">
+                                                <i class="fas fa-calendar me-1"></i>Event
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-clock me-1"></i>Shift
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-calendar-day me-1"></i>Date
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-hourglass-half me-1"></i>Duration
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-info-circle me-1"></i>Status
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-clock me-1"></i>Check In/Out
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var assignment in staffDetail.StaffAssignments.OrderByDescending(a => a.Shift.StartTime))
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-medium">@assignment.Shift.Event.Name</div>
+                                                    <small class="text-muted">@assignment.Shift.Event.Location</small>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-medium">@assignment.Shift.Name</div>
+                                                    @if (!string.IsNullOrEmpty(assignment.Shift.Description))
+                                                    {
+                                                        <small class="text-muted">
+                                                            @(assignment.Shift.Description.Length > 30 ? assignment.Shift.Description.Substring(0, 30) + "..." : assignment.Shift.Description)
+                                                        </small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <span class="fw-medium">@assignment.Shift.StartTime.ToString("MMM dd, yyyy")</span>
+                                                    <br>
+                                                    <small class="text-muted">@assignment.Shift.StartTime.ToString("HH:mm") - @assignment.Shift.EndTime.ToString("HH:mm")</small>
+                                                </td>
+                                                <td>
+                                                    <span class="fw-medium">@CalculateShiftDuration(assignment.Shift)</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-@GetAssignmentStatusColor(assignment.Status)">
+                                                        @assignment.Status
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if (assignment.CheckInTime.HasValue)
+                                                    {
+                                                        <div class="small">
+                                                            <strong>In:</strong> @assignment.CheckInTime.Value.ToString("HH:mm")
+                                                            @if (assignment.CheckOutTime.HasValue)
+                                                            {
+                                                                <br><strong>Out:</strong> @assignment.CheckOutTime.Value.ToString("HH:mm")
+                                                            }
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            @if (staffDetail.StaffAssignments.Count > 10)
+                            {
+                                <div class="mt-3 text-center">
+                                    <small class="text-muted">
+                                        Showing latest assignments. Total: @staffDetail.StaffAssignments.Count
+                                    </small>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Edit Staff Modal -->
+@if (showEditDialog)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>Edit Staff Member
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CloseEditDialog"></button>
+                </div>
+                <EditForm Model="staffForm" OnValidSubmit="UpdateStaff">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">First Name *</label>
+                                <InputText @bind-Value="staffForm.FirstName" class="form-control" placeholder="Enter first name" />
+                                <ValidationMessage For="() => staffForm.FirstName" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Last Name *</label>
+                                <InputText @bind-Value="staffForm.LastName" class="form-control" placeholder="Enter last name" />
+                                <ValidationMessage For="() => staffForm.LastName" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email Address *</label>
+                                <InputText @bind-Value="staffForm.Email" class="form-control" placeholder="Enter email address" type="email" />
+                                <ValidationMessage For="() => staffForm.Email" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <InputText @bind-Value="staffForm.Phone" class="form-control" placeholder="Enter phone number" />
+                                <ValidationMessage For="() => staffForm.Phone" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Role *</label>
+                                <InputSelect @bind-Value="staffForm.Role" class="form-select">
+                                    <option value="">Select Role</option>
+                                    <option value="@StaffRole.Doctor">Doctor</option>
+                                    <option value="@StaffRole.Paramedic">Paramedic</option>
+                                    <option value="@StaffRole.TeamLeader">Team Leader</option>
+                                    <option value="@StaffRole.FirstAider">First Aider</option>
+                                    <option value="@StaffRole.Volunteer">Volunteer</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => staffForm.Role" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Certification Level</label>
+                                <InputText @bind-Value="staffForm.CertificationLevel" class="form-control" placeholder="e.g., Level 1, Advanced, etc." />
+                                <ValidationMessage For="() => staffForm.CertificationLevel" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Certification Expiry</label>
+                                <input type="date" @bind="staffForm.CertificationExpiry" class="form-control" />
+                                <ValidationMessage For="() => staffForm.CertificationExpiry" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" @bind="staffForm.IsActive" id="staffActiveSwitch">
+                                    <label class="form-check-label" for="staffActiveSwitch">
+                                        @(staffForm.IsActive ? "Active" : "Inactive")
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(emailError))
+                        {
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                @emailError
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseEditDialog">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                            @if (isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            <i class="fas fa-save me-2"></i>Update Staff
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Deactivate Confirmation Modal -->
+@if (showDeactivateConfirm)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Deactivation</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDeactivate"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to deactivate <strong>@staffDetail?.FullName</strong>?</p>
+                    <p class="text-warning small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        This will remove them from active duty but preserve all their records and assignment history.
+                        They can be reactivated later if needed.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelDeactivate">Cancel</button>
+                    <button type="button" class="btn btn-warning" @onclick="DeactivateStaff" disabled="@isDeactivating">
+                        @if (isDeactivating)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Deactivate Staff
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int StaffId { get; set; }
+
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private bool isDeactivating = false;
+    private bool showEditDialog = false;
+    private bool showDeactivateConfirm = false;
+    private CleanArchitectureBlazor.Models.Staff? staffDetail;
+    private CleanArchitectureBlazor.Models.Staff staffForm = new();
+    private string emailError = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStaffDetails();
+        isLoading = false;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (isLoading) return;
+        await LoadStaffDetails();
+    }
+
+    private async Task LoadStaffDetails()
+    {
+        staffDetail = await StaffService.GetStaffByIdAsync(StaffId);
+    }
+
+    private int TotalAssignments => staffDetail?.StaffAssignments.Count ?? 0;
+
+    private int CompletedAssignments => staffDetail?.StaffAssignments.Count(a => 
+        a.Status == AssignmentStatus.CheckedOut) ?? 0;
+
+    private int UpcomingAssignments => staffDetail?.StaffAssignments.Count(a => 
+        a.Shift.StartTime > DateTime.Now && 
+        (a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.Confirmed)) ?? 0;
+
+    private int TotalHours
+    {
+        get
+        {
+            if (staffDetail?.StaffAssignments == null) return 0;
+            
+            return (int)staffDetail.StaffAssignments
+                .Where(a => a.Status == AssignmentStatus.CheckedOut)
+                .Sum(a => (a.Shift.EndTime - a.Shift.StartTime).TotalHours);
+        }
+    }
+
+    private string CalculateShiftDuration(Shift shift)
+    {
+        var duration = shift.EndTime - shift.StartTime;
+        if (duration.TotalHours >= 24)
+        {
+            return $"{duration.Days}d {duration.Hours}h";
+        }
+        return $"{duration.Hours}h {duration.Minutes}m";
+    }
+
+    private void OpenEditStaffDialog()
+    {
+        if (staffDetail == null) return;
+
+        staffForm = new CleanArchitectureBlazor.Models.Staff
+        {
+            Id = staffDetail.Id,
+            FirstName = staffDetail.FirstName,
+            LastName = staffDetail.LastName,
+            Email = staffDetail.Email,
+            Phone = staffDetail.Phone,
+            Role = staffDetail.Role,
+            CertificationLevel = staffDetail.CertificationLevel,
+            CertificationExpiry = staffDetail.CertificationExpiry,
+            IsActive = staffDetail.IsActive,
+            CreatedAt = staffDetail.CreatedAt,
+            UpdatedAt = staffDetail.UpdatedAt
+        };
+        emailError = string.Empty;
+        showEditDialog = true;
+        StateHasChanged();
+    }
+
+    private void CloseEditDialog()
+    {
+        showEditDialog = false;
+        staffForm = new CleanArchitectureBlazor.Models.Staff();
+        emailError = string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task UpdateStaff()
+    {
+        isSaving = true;
+        emailError = string.Empty;
+        
+        try
+        {
+            // Check for email uniqueness
+            var isEmailUnique = await StaffService.IsEmailUniqueAsync(staffForm.Email, staffForm.Id);
+            if (!isEmailUnique)
+            {
+                emailError = "This email address is already in use by another staff member.";
+                return;
+            }
+
+            await StaffService.UpdateStaffAsync(staffForm);
+            
+            // Reload staff details
+            await LoadStaffDetails();
+            CloseEditDialog();
+        }
+        catch (Exception ex)
+        {
+            emailError = $"Error updating staff member: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ConfirmDeactivateStaff()
+    {
+        showDeactivateConfirm = true;
+        StateHasChanged();
+    }
+
+    private void CancelDeactivate()
+    {
+        showDeactivateConfirm = false;
+        StateHasChanged();
+    }
+
+    private async Task DeactivateStaff()
+    {
+        if (staffDetail == null) return;
+
+        isDeactivating = true;
+        try
+        {
+            await StaffService.DeleteStaffAsync(staffDetail.Id);
+            
+            // Reload staff details
+            await LoadStaffDetails();
+            showDeactivateConfirm = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deactivating staff: {ex.Message}");
+        }
+        finally
+        {
+            isDeactivating = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ReactivateStaff()
+    {
+        if (staffDetail == null) return;
+
+        try
+        {
+            staffDetail.IsActive = true;
+            await StaffService.UpdateStaffAsync(staffDetail);
+            
+            // Reload staff details
+            await LoadStaffDetails();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reactivating staff: {ex.Message}");
+        }
+    }
+
+    private string GetRoleColor(StaffRole role)
+    {
+        return role switch
+        {
+            StaffRole.Doctor => "danger",
+            StaffRole.Paramedic => "warning",
+            StaffRole.TeamLeader => "primary",
+            StaffRole.FirstAider => "success",
+            StaffRole.Volunteer => "info",
+            _ => "secondary"
+        };
+    }
+
+    private string GetAssignmentStatusColor(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => "primary",
+            AssignmentStatus.Confirmed => "info",
+            AssignmentStatus.CheckedIn => "success",
+            AssignmentStatus.CheckedOut => "secondary",
+            AssignmentStatus.NoShow => "danger",
+            AssignmentStatus.Cancelled => "dark",
+            _ => "secondary"
+        };
+    }
+}

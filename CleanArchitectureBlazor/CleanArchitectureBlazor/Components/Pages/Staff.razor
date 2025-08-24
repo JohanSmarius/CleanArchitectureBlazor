@@ -1,4 +1,8 @@
 @page "/staff"
+@using CleanArchitectureBlazor.Models
+@using CleanArchitectureBlazor.Services
+@inject IStaffService StaffService
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>Staff - Medical First Aid Manager</PageTitle>
@@ -9,23 +13,589 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h1 class="h3 mb-0 text-primary">
-                        <i class="fas fa-users me-2"></i>Staff
+                        <i class="fas fa-users me-2"></i>Staff Management
                     </h1>
                     <p class="text-muted">Manage medical first aid staff members</p>
                 </div>
-                <a href="/staff/create" class="btn btn-primary">
-                    <i class="fas fa-user-plus me-2"></i>Add Staff
-                </a>
+                <button class="btn btn-primary" @onclick="OpenCreateStaffDialog">
+                    <i class="fas fa-user-plus me-2"></i>Add Staff Member
+                </button>
             </div>
         </div>
     </div>
 
-    <div class="text-center py-5">
-        <i class="fas fa-users fa-4x text-muted mb-4"></i>
-        <h4 class="text-muted">Staff Management</h4>
-        <p class="text-muted mb-4">This page will show all staff members and their details.</p>
-        <a href="/staff/create" class="btn btn-primary btn-lg">
-            <i class="fas fa-user-plus me-2"></i>Add First Staff Member
-        </a>
-    </div>
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (!staff.Any())
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-4x text-muted mb-4"></i>
+            <h4 class="text-muted">No Staff Members Found</h4>
+            <p class="text-muted mb-4">Start by adding your first medical first aid staff member.</p>
+            <button class="btn btn-primary btn-lg" @onclick="OpenCreateStaffDialog">
+                <i class="fas fa-user-plus me-2"></i>Add First Staff Member
+            </button>
+        </div>
+    }
+    else
+    {
+        <!-- Filter and Search -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" placeholder="Search staff by name or email..." @bind="searchTerm" @oninput="OnSearchChanged" />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" @bind="roleFilter" @bind:after="OnFilterChanged">
+                    <option value="">All Roles</option>
+                    <option value="@StaffRole.Doctor">Doctor</option>
+                    <option value="@StaffRole.Paramedic">Paramedic</option>
+                    <option value="@StaffRole.TeamLeader">Team Leader</option>
+                    <option value="@StaffRole.FirstAider">First Aider</option>
+                    <option value="@StaffRole.Volunteer">Volunteer</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" @bind="statusFilter" @bind:after="OnFilterChanged">
+                    <option value="">All Status</option>
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Staff Cards Grid -->
+        <div class="row">
+            @foreach (var staffMember in filteredStaff)
+            {
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="card border-0 shadow-sm h-100 @(!staffMember.IsActive ? "opacity-75" : "")">
+                        <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <div class="bg-@GetRoleColor(staffMember.Role) text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <span class="fw-bold fs-5">@staffMember.FirstName.Substring(0, 1)@staffMember.LastName.Substring(0, 1)</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h5 class="card-title mb-1">@staffMember.FullName</h5>
+                                    <span class="badge bg-@GetRoleColor(staffMember.Role)">@staffMember.Role</span>
+                                    @if (!staffMember.IsActive)
+                                    {
+                                        <span class="badge bg-secondary ms-1">Inactive</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                        @onclick="@((e) => ToggleDropdown(staffMember.Id))" 
+                                        @onclick:stopPropagation="true">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                @if (openDropdownId == staffMember.Id)
+                                {
+                                    <ul class="dropdown-menu show position-absolute" style="right: 0; left: auto; z-index: 1050;">
+                                        <li>
+                                            <button class="dropdown-item" @onclick="@((e) => ViewStaffDetails(staffMember.Id))" @onclick:stopPropagation="true">
+                                                <i class="fas fa-eye me-2"></i>View Details
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item" @onclick="@((e) => OpenEditStaffDialog(staffMember))" @onclick:stopPropagation="true">
+                                                <i class="fas fa-edit me-2"></i>Edit Details
+                                            </button>
+                                        </li>
+                                        @if (staffMember.IsActive)
+                                        {
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button class="dropdown-item text-danger" @onclick="@((e) => ConfirmDeactivateStaff(staffMember))" @onclick:stopPropagation="true">
+                                                    <i class="fas fa-user-times me-2"></i>Deactivate
+                                                </button>
+                                            </li>
+                                        }
+                                        else
+                                        {
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button class="dropdown-item text-success" @onclick="@((e) => ReactivateStaff(staffMember))" @onclick:stopPropagation="true">
+                                                    <i class="fas fa-user-check me-2"></i>Reactivate
+                                                </button>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
+                        </div>
+                        <div class="card-body pt-0" @onclick="@((e) => ViewStaffDetails(staffMember.Id))" style="cursor: pointer;">
+                            <div class="mb-2">
+                                <i class="fas fa-envelope text-muted me-2"></i>
+                                <a href="mailto:@staffMember.Email" class="text-decoration-none" @onclick:stopPropagation="true">@staffMember.Email</a>
+                            </div>
+                            @if (!string.IsNullOrEmpty(staffMember.Phone))
+                            {
+                                <div class="mb-2">
+                                    <i class="fas fa-phone text-muted me-2"></i>
+                                    <a href="tel:@staffMember.Phone" class="text-decoration-none" @onclick:stopPropagation="true">@staffMember.Phone</a>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(staffMember.CertificationLevel))
+                            {
+                                <div class="mb-2">
+                                    <i class="fas fa-certificate text-muted me-2"></i>
+                                    <span class="badge bg-info">@staffMember.CertificationLevel</span>
+                                    @if (staffMember.CertificationExpiry.HasValue)
+                                    {
+                                        <small class="text-muted ms-2">
+                                            Expires: @staffMember.CertificationExpiry.Value.ToString("MMM yyyy")
+                                        </small>
+                                    }
+                                </div>
+                            }
+                            <div class="small text-muted">
+                                <i class="fas fa-calendar-plus me-1"></i>
+                                Joined: @staffMember.CreatedAt.ToString("MMM dd, yyyy")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Summary -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="small text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Showing @filteredStaff.Count of @staff.Count staff member(s)
+                </div>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <div class="small text-muted">
+                    <i class="fas fa-users me-1"></i>
+                    Active: @staff.Count(s => s.IsActive) | 
+                    Inactive: @staff.Count(s => !s.IsActive)
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
+<!-- Click outside overlay to close dropdown -->
+@if (openDropdownId.HasValue)
+{
+    <div class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1040; background: transparent;" @onclick="CloseDropdown"></div>
+}
+
+<!-- Create/Edit Staff Modal -->
+@if (showStaffDialog)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-@(isEditMode ? "edit" : "user-plus") me-2"></i>
+                        @(isEditMode ? "Edit Staff Member" : "Add New Staff Member")
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CloseStaffDialog"></button>
+                </div>
+                <EditForm Model="staffForm" OnValidSubmit="SaveStaff">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">First Name *</label>
+                                <InputText @bind-Value="staffForm.FirstName" class="form-control" placeholder="Enter first name" />
+                                <ValidationMessage For="() => staffForm.FirstName" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Last Name *</label>
+                                <InputText @bind-Value="staffForm.LastName" class="form-control" placeholder="Enter last name" />
+                                <ValidationMessage For="() => staffForm.LastName" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email Address *</label>
+                                <InputText @bind-Value="staffForm.Email" class="form-control" placeholder="Enter email address" type="email" />
+                                <ValidationMessage For="() => staffForm.Email" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <InputText @bind-Value="staffForm.Phone" class="form-control" placeholder="Enter phone number" />
+                                <ValidationMessage For="() => staffForm.Phone" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Role *</label>
+                                <InputSelect @bind-Value="staffForm.Role" class="form-select">
+                                    <option value="">Select Role</option>
+                                    <option value="@StaffRole.Doctor">Doctor</option>
+                                    <option value="@StaffRole.Paramedic">Paramedic</option>
+                                    <option value="@StaffRole.TeamLeader">Team Leader</option>
+                                    <option value="@StaffRole.FirstAider">First Aider</option>
+                                    <option value="@StaffRole.Volunteer">Volunteer</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => staffForm.Role" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Certification Level</label>
+                                <InputText @bind-Value="staffForm.CertificationLevel" class="form-control" placeholder="e.g., Level 1, Advanced, etc." />
+                                <ValidationMessage For="() => staffForm.CertificationLevel" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Certification Expiry</label>
+                                <input type="date" @bind="staffForm.CertificationExpiry" class="form-control" />
+                                <ValidationMessage For="() => staffForm.CertificationExpiry" class="text-danger" />
+                            </div>
+                            @if (isEditMode)
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Status</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" @bind="staffForm.IsActive" id="staffActiveSwitch">
+                                        <label class="form-check-label" for="staffActiveSwitch">
+                                            @(staffForm.IsActive ? "Active" : "Inactive")
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(emailError))
+                        {
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                @emailError
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseStaffDialog">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                            @if (isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            <i class="fas fa-save me-2"></i>@(isEditMode ? "Update Staff" : "Add Staff")
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Deactivate Confirmation Modal -->
+@if (staffToDeactivate is not null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Deactivation</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDeactivateStaff"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to deactivate <strong>@staffToDeactivate.FullName</strong>?</p>
+                    <p class="text-warning small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        This will remove them from active duty but preserve all their records and assignment history.
+                        They can be reactivated later if needed.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelDeactivateStaff">Cancel</button>
+                    <button type="button" class="btn btn-warning" @onclick="DeactivateStaff" disabled="@isDeactivating">
+                        @if (isDeactivating)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Deactivate Staff
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private bool isDeactivating = false;
+    private bool showStaffDialog = false;
+    private bool isEditMode = false;
+    private List<CleanArchitectureBlazor.Models.Staff> staff = new();
+    private List<CleanArchitectureBlazor.Models.Staff> filteredStaff = new();
+    private CleanArchitectureBlazor.Models.Staff? staffToDeactivate;
+    private CleanArchitectureBlazor.Models.Staff staffForm = new();
+    private int? openDropdownId = null;
+    
+    private string searchTerm = string.Empty;
+    private string roleFilter = string.Empty;
+    private string statusFilter = string.Empty;
+    private string emailError = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStaff();
+        ApplyFiltersAndSort();
+        isLoading = false;
+    }
+
+    private async Task LoadStaff()
+    {
+        staff = await StaffService.GetAllStaffAsync();
+    }
+
+    private void OnSearchChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        ApplyFiltersAndSort();
+    }
+
+    private void OnFilterChanged()
+    {
+        ApplyFiltersAndSort();
+    }
+
+    private void ApplyFiltersAndSort()
+    {
+        var filtered = staff.AsEnumerable();
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filtered = filtered.Where(s => 
+                s.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                s.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                (s.Phone?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
+            );
+        }
+
+        // Apply role filter
+        if (!string.IsNullOrEmpty(roleFilter) && Enum.TryParse<StaffRole>(roleFilter, out var role))
+        {
+            filtered = filtered.Where(s => s.Role == role);
+        }
+
+        // Apply status filter
+        if (!string.IsNullOrEmpty(statusFilter) && bool.TryParse(statusFilter, out var isActive))
+        {
+            filtered = filtered.Where(s => s.IsActive == isActive);
+        }
+
+        filteredStaff = filtered.OrderBy(s => s.LastName).ThenBy(s => s.FirstName).ToList();
+        StateHasChanged();
+    }
+
+    private void ToggleDropdown(int staffId)
+    {
+        if (openDropdownId == staffId)
+        {
+            openDropdownId = null;
+        }
+        else
+        {
+            openDropdownId = staffId;
+        }
+        StateHasChanged();
+    }
+
+    private void CloseDropdown()
+    {
+        openDropdownId = null;
+        StateHasChanged();
+    }
+
+    private void ViewStaffDetails(int staffId)
+    {
+        CloseDropdown();
+        Navigation.NavigateTo($"/staff/details/{staffId}");
+    }
+
+    private void OpenCreateStaffDialog()
+    {
+        CloseDropdown();
+        isEditMode = false;
+        staffForm = new CleanArchitectureBlazor.Models.Staff { IsActive = true };
+        emailError = string.Empty;
+        showStaffDialog = true;
+        StateHasChanged();
+    }
+
+    private void OpenEditStaffDialog(CleanArchitectureBlazor.Models.Staff staffMember)
+    {
+        CloseDropdown();
+        isEditMode = true;
+        staffForm = new CleanArchitectureBlazor.Models.Staff
+        {
+            Id = staffMember.Id,
+            FirstName = staffMember.FirstName,
+            LastName = staffMember.LastName,
+            Email = staffMember.Email,
+            Phone = staffMember.Phone,
+            Role = staffMember.Role,
+            CertificationLevel = staffMember.CertificationLevel,
+            CertificationExpiry = staffMember.CertificationExpiry,
+            IsActive = staffMember.IsActive,
+            CreatedAt = staffMember.CreatedAt,
+            UpdatedAt = staffMember.UpdatedAt
+        };
+        emailError = string.Empty;
+        showStaffDialog = true;
+        StateHasChanged();
+    }
+
+    private void CloseStaffDialog()
+    {
+        showStaffDialog = false;
+        staffForm = new CleanArchitectureBlazor.Models.Staff();
+        emailError = string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task SaveStaff()
+    {
+        isSaving = true;
+        emailError = string.Empty;
+        
+        try
+        {
+            // Check for email uniqueness
+            var isEmailUnique = await StaffService.IsEmailUniqueAsync(staffForm.Email, isEditMode ? staffForm.Id : null);
+            if (!isEmailUnique)
+            {
+                emailError = "This email address is already in use by another staff member.";
+                return;
+            }
+
+            if (isEditMode)
+            {
+                await StaffService.UpdateStaffAsync(staffForm);
+                
+                // Update the local staff list
+                var staffIndex = staff.FindIndex(s => s.Id == staffForm.Id);
+                if (staffIndex >= 0)
+                {
+                    staff[staffIndex] = staffForm;
+                }
+            }
+            else
+            {
+                var createdStaff = await StaffService.CreateStaffAsync(staffForm);
+                staff.Add(createdStaff);
+            }
+            
+            ApplyFiltersAndSort();
+            CloseStaffDialog();
+        }
+        catch (Exception ex)
+        {
+            emailError = $"Error saving staff member: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ConfirmDeactivateStaff(CleanArchitectureBlazor.Models.Staff staffMember)
+    {
+        staffToDeactivate = staffMember;
+        CloseDropdown();
+        StateHasChanged();
+    }
+
+    private void CancelDeactivateStaff()
+    {
+        staffToDeactivate = null;
+        StateHasChanged();
+    }
+
+    private async Task DeactivateStaff()
+    {
+        if (staffToDeactivate is null) return;
+
+        isDeactivating = true;
+        try
+        {
+            await StaffService.DeleteStaffAsync(staffToDeactivate.Id);
+            
+            // Update the local staff list
+            var staffMember = staff.FirstOrDefault(s => s.Id == staffToDeactivate.Id);
+            if (staffMember != null)
+            {
+                staffMember.IsActive = false;
+                staffMember.UpdatedAt = DateTime.UtcNow;
+            }
+            
+            ApplyFiltersAndSort();
+            staffToDeactivate = null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deactivating staff: {ex.Message}");
+        }
+        finally
+        {
+            isDeactivating = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ReactivateStaff(CleanArchitectureBlazor.Models.Staff staffMember)
+    {
+        CloseDropdown();
+        try
+        {
+            staffMember.IsActive = true;
+            await StaffService.UpdateStaffAsync(staffMember);
+            
+            // Update the local staff list
+            var localStaff = staff.FirstOrDefault(s => s.Id == staffMember.Id);
+            if (localStaff != null)
+            {
+                localStaff.IsActive = true;
+                localStaff.UpdatedAt = DateTime.UtcNow;
+            }
+            
+            ApplyFiltersAndSort();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reactivating staff: {ex.Message}");
+        }
+    }
+
+    private string GetRoleColor(StaffRole role)
+    {
+        return role switch
+        {
+            StaffRole.Doctor => "danger",
+            StaffRole.Paramedic => "warning",
+            StaffRole.TeamLeader => "primary",
+            StaffRole.FirstAider => "success",
+            StaffRole.Volunteer => "info",
+            _ => "secondary"
+        };
+    }
+}

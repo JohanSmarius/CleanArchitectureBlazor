@@ -66,7 +66,10 @@ public class StaffService : IStaffService
         var staff = await _context.Staff.FindAsync(id);
         if (staff != null)
         {
-            _context.Staff.Remove(staff);
+            // Soft delete by setting IsActive to false
+            staff.IsActive = false;
+            staff.UpdatedAt = DateTime.UtcNow;
+            _context.Staff.Update(staff);
             await _context.SaveChangesAsync();
         }
     }
