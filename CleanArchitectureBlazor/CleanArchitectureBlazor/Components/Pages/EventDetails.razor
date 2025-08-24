@@ -1,0 +1,647 @@
+@page "/events/details/{EventId:int}"
+@using CleanArchitectureBlazor.Models
+@using CleanArchitectureBlazor.Services
+@inject IEventService EventService
+@inject IShiftService ShiftService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Event Details - Medical First Aid Manager</PageTitle>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (eventDetail == null)
+{
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Event Not Found</strong>
+                    <p class="mb-0">The requested event could not be found.</p>
+                </div>
+                <a href="/events" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Events
+                </a>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item">
+                                    <a href="/events" class="text-decoration-none">Events</a>
+                                </li>
+                                <li class="breadcrumb-item active" aria-current="page">@eventDetail.Name</li>
+                            </ol>
+                        </nav>
+                        <h1 class="h3 mb-0 text-primary">
+                            <i class="fas fa-calendar-alt me-2"></i>@eventDetail.Name
+                        </h1>
+                        <span class="badge bg-@GetEventStatusColor(eventDetail.Status) fs-6 mt-2">
+                            @eventDetail.Status
+                        </span>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-success" @onclick="OpenCreateShiftDialog">
+                            <i class="fas fa-plus me-2"></i>Add Shift
+                        </button>
+                        <button class="btn btn-outline-primary" @onclick="EditEvent">
+                            <i class="fas fa-edit me-2"></i>Edit Event
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Event Information -->
+            <div class="col-lg-4 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Event Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">LOCATION</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                                @eventDetail.Location
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">START DATE & TIME</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-calendar text-muted me-2"></i>
+                                @eventDetail.StartDate.ToString("dddd, MMMM dd, yyyy")
+                                <br>
+                                <i class="fas fa-clock text-muted me-2"></i>
+                                @eventDetail.StartDate.ToString("HH:mm")
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">END DATE & TIME</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-calendar text-muted me-2"></i>
+                                @eventDetail.EndDate.ToString("dddd, MMMM dd, yyyy")
+                                <br>
+                                <i class="fas fa-clock text-muted me-2"></i>
+                                @eventDetail.EndDate.ToString("HH:mm")
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">DURATION</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-hourglass-half text-muted me-2"></i>
+                                @CalculateDuration()
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(eventDetail.ContactPerson))
+                        {
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">CONTACT PERSON</label>
+                                <div class="fw-medium">
+                                    <i class="fas fa-user text-muted me-2"></i>
+                                    @eventDetail.ContactPerson
+                                    @if (!string.IsNullOrEmpty(eventDetail.ContactPhone))
+                                    {
+                                        <br>
+                                        <i class="fas fa-phone text-muted me-2"></i>
+                                        <a href="tel:@eventDetail.ContactPhone" class="text-decoration-none">
+                                            @eventDetail.ContactPhone
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(eventDetail.Description))
+                        {
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">DESCRIPTION</label>
+                                <div class="fw-medium">@eventDetail.Description</div>
+                            </div>
+                        }
+
+                        <div class="mb-0">
+                            <label class="form-label text-muted small">CREATED</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-clock text-muted me-2"></i>
+                                @eventDetail.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>Statistics
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border-end">
+                                    <h4 class="text-primary mb-0">@eventDetail.Shifts.Count</h4>
+                                    <small class="text-muted">Total Shifts</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-success mb-0">@TotalRequiredStaff</h4>
+                                <small class="text-muted">Required Staff</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shifts -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-clock me-2"></i>Event Shifts
+                        </h5>
+                        <button class="btn btn-sm btn-success" @onclick="OpenCreateShiftDialog">
+                            <i class="fas fa-plus me-2"></i>Add Shift
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        @if (!eventDetail.Shifts.Any())
+                        {
+                            <div class="text-center py-5">
+                                <i class="fas fa-clock fa-4x text-muted mb-4"></i>
+                                <h5 class="text-muted">No Shifts Scheduled</h5>
+                                <p class="text-muted mb-4">This event doesn't have any shifts yet. Add the first shift to get started.</p>
+                                <button class="btn btn-success btn-lg" @onclick="OpenCreateShiftDialog">
+                                    <i class="fas fa-plus me-2"></i>Create First Shift
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Shifts Table -->
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">
+                                                <i class="fas fa-tag me-1"></i>Shift Name
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-calendar-day me-1"></i>Date
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-clock me-1"></i>Time
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-users me-1"></i>Staff
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-hourglass-half me-1"></i>Duration
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-info-circle me-1"></i>Status
+                                            </th>
+                                            <th scope="col" class="text-center">
+                                                <i class="fas fa-cogs me-1"></i>Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var shift in eventDetail.Shifts.OrderBy(s => s.StartTime))
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-medium">@shift.Name</div>
+                                                    @if (!string.IsNullOrEmpty(shift.Description))
+                                                    {
+                                                        <small class="text-muted">
+                                                            @(shift.Description.Length > 50 ? shift.Description.Substring(0, 50) + "..." : shift.Description)
+                                                        </small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <span class="fw-medium">@shift.StartTime.ToString("MMM dd, yyyy")</span>
+                                                    @if (shift.StartTime.Date != shift.EndTime.Date)
+                                                    {
+                                                        <br>
+                                                        <small class="text-muted">to @shift.EndTime.ToString("MMM dd")</small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <span class="fw-medium">@shift.StartTime.ToString("HH:mm")</span>
+                                                    <br>
+                                                    <small class="text-muted">to @shift.EndTime.ToString("HH:mm")</small>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="fw-medium me-2">@shift.StaffAssignments.Count / @shift.RequiredStaff</span>
+                                                        @if (shift.StaffAssignments.Count == shift.RequiredStaff)
+                                                        {
+                                                            <span class="badge bg-success">Full</span>
+                                                        }
+                                                        else if (shift.StaffAssignments.Count > 0)
+                                                        {
+                                                            <span class="badge bg-warning">Partial</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-danger">Empty</span>
+                                                        }
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="fw-medium">@CalculateShiftDuration(shift)</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-@GetShiftStatusColor(shift.Status)">
+                                                        @shift.Status
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <button class="btn btn-outline-primary" 
+                                                                @onclick="() => EditShift(shift.Id)"
+                                                                title="Edit Shift">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-info" 
+                                                                @onclick="() => ViewShiftDetails(shift.Id)"
+                                                                title="View Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger" 
+                                                                @onclick="() => ConfirmDeleteShift(shift)"
+                                                                title="Delete Shift">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Shifts Summary -->
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="small text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Showing @eventDetail.Shifts.Count shift(s) for this event
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <div class="small text-muted">
+                                        <i class="fas fa-users me-1"></i>
+                                        Total staff required: @TotalRequiredStaff | 
+                                        Assigned: @TotalAssignedStaff
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Create Shift Modal -->
+@if (showCreateShiftDialog)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-clock me-2"></i>Create New Shift
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CloseCreateShiftDialog"></button>
+                </div>
+                <EditForm Model="newShift" OnValidSubmit="CreateShift">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <div class="alert alert-info mb-4">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Creating shift for:</strong> @eventDetail.Name
+                            <br>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>@eventDetail.StartDate.ToString("MMM dd, yyyy HH:mm") - @eventDetail.EndDate.ToString("MMM dd, yyyy HH:mm")
+                                <br>
+                                <i class="fas fa-map-marker-alt me-1"></i>@eventDetail.Location
+                            </small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Shift Name *</label>
+                                <InputText @bind-Value="newShift.Name" class="form-control" placeholder="Enter shift name" />
+                                <ValidationMessage For="() => newShift.Name" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Required Staff *</label>
+                                <InputNumber @bind-Value="newShift.RequiredStaff" class="form-control" min="1" max="50" />
+                                <ValidationMessage For="() => newShift.RequiredStaff" class="text-danger" />
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Start Time *</label>
+                                <input type="datetime-local" @bind="newShift.StartTime" class="form-control" />
+                                <ValidationMessage For="() => newShift.StartTime" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">End Time *</label>
+                                <input type="datetime-local" @bind="newShift.EndTime" class="form-control" />
+                                <ValidationMessage For="() => newShift.EndTime" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <InputTextArea @bind-Value="newShift.Description" class="form-control" rows="3" placeholder="Enter shift description (optional)" />
+                            <ValidationMessage For="() => newShift.Description" class="text-danger" />
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Note:</strong> Make sure the shift times are within the event duration 
+                            (@eventDetail.StartDate.ToString("MMM dd HH:mm") - @eventDetail.EndDate.ToString("MMM dd HH:mm")).
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseCreateShiftDialog">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@isCreatingShift">
+                            @if (isCreatingShift)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            <i class="fas fa-save me-2"></i>Create Shift
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Delete Shift Confirmation Modal -->
+@if (shiftToDelete is not null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDeleteShift"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the shift "<strong>@shiftToDelete.Name</strong>"?</p>
+                    <p class="text-danger small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        This action cannot be undone and will also delete all associated staff assignments.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelDeleteShift">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="DeleteShift" disabled="@isDeletingShift">
+                        @if (isDeletingShift)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Delete Shift
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int EventId { get; set; }
+
+    private bool isLoading = true;
+    private bool isCreatingShift = false;
+    private bool isDeletingShift = false;
+    private bool showCreateShiftDialog = false;
+    private Event? eventDetail;
+    private Shift newShift = new();
+    private Shift? shiftToDelete;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEventDetails();
+        isLoading = false;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (isLoading) return;
+        await LoadEventDetails();
+    }
+
+    private async Task LoadEventDetails()
+    {
+        eventDetail = await EventService.GetEventByIdAsync(EventId);
+    }
+
+    private string GetEventStatusColor(EventStatus status)
+    {
+        return status switch
+        {
+            EventStatus.Requested => "warning",
+            EventStatus.Planned => "primary",
+            EventStatus.Active => "success",
+            EventStatus.Completed => "secondary",
+            EventStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+
+    private string GetShiftStatusColor(ShiftStatus status)
+    {
+        return status switch
+        {
+            ShiftStatus.Open => "primary",
+            ShiftStatus.Full => "info",
+            ShiftStatus.InProgress => "success",
+            ShiftStatus.Completed => "secondary",
+            ShiftStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+
+    private string CalculateDuration()
+    {
+        if (eventDetail == null) return "";
+        var duration = eventDetail.EndDate - eventDetail.StartDate;
+        if (duration.TotalDays >= 1)
+        {
+            return $"{duration.Days} day(s), {duration.Hours} hour(s)";
+        }
+        return $"{duration.Hours} hour(s), {duration.Minutes} minute(s)";
+    }
+
+    private string CalculateShiftDuration(Shift shift)
+    {
+        var duration = shift.EndTime - shift.StartTime;
+        if (duration.TotalHours >= 24)
+        {
+            return $"{duration.Days}d {duration.Hours}h";
+        }
+        return $"{duration.Hours}h {duration.Minutes}m";
+    }
+
+    private int TotalRequiredStaff => eventDetail?.Shifts.Sum(s => s.RequiredStaff) ?? 0;
+
+    private int TotalAssignedStaff => eventDetail?.Shifts.Sum(s => s.StaffAssignments.Count) ?? 0;
+
+    private void EditEvent()
+    {
+        Navigation.NavigateTo($"/events/edit/{EventId}");
+    }
+
+    private void EditShift(int shiftId)
+    {
+        Navigation.NavigateTo($"/shifts/edit/{shiftId}");
+    }
+
+    private void ViewShiftDetails(int shiftId)
+    {
+        Navigation.NavigateTo($"/shifts/details/{shiftId}");
+    }
+
+    private void OpenCreateShiftDialog()
+    {
+        if (eventDetail == null) return;
+        
+        // Initialize the new shift with default values based on the event
+        newShift = new Shift
+        {
+            EventId = eventDetail.Id,
+            Name = $"Shift - {eventDetail.Name}",
+            StartTime = eventDetail.StartDate,
+            EndTime = eventDetail.EndDate,
+            RequiredStaff = 1,
+            Status = ShiftStatus.Open
+        };
+        
+        showCreateShiftDialog = true;
+        StateHasChanged();
+    }
+
+    private void CloseCreateShiftDialog()
+    {
+        showCreateShiftDialog = false;
+        newShift = new Shift();
+        StateHasChanged();
+    }
+
+    private async Task CreateShift()
+    {
+        if (eventDetail == null) return;
+
+        isCreatingShift = true;
+        try
+        {
+            // Validate that shift times are within event duration
+            if (newShift.StartTime < eventDetail.StartDate || newShift.EndTime > eventDetail.EndDate)
+            {
+                // In a real app, show a toast notification or validation error
+                Console.WriteLine("Shift times must be within the event duration");
+                return;
+            }
+
+            if (newShift.StartTime >= newShift.EndTime)
+            {
+                Console.WriteLine("End time must be after start time");
+                return;
+            }
+
+            // Set the EventId to ensure it's properly set
+            newShift.EventId = eventDetail.Id;
+            
+            // Create the shift
+            await ShiftService.CreateShiftAsync(newShift);
+            
+            // Refresh the event details
+            await LoadEventDetails();
+            
+            // Close the dialog
+            CloseCreateShiftDialog();
+        }
+        catch (Exception ex)
+        {
+            // Handle error - in a real app, show a toast notification
+            Console.WriteLine($"Error creating shift: {ex.Message}");
+        }
+        finally
+        {
+            isCreatingShift = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ConfirmDeleteShift(Shift shift)
+    {
+        shiftToDelete = shift;
+        StateHasChanged();
+    }
+
+    private void CancelDeleteShift()
+    {
+        shiftToDelete = null;
+        StateHasChanged();
+    }
+
+    private async Task DeleteShift()
+    {
+        if (shiftToDelete == null) return;
+
+        isDeletingShift = true;
+        try
+        {
+            await ShiftService.DeleteShiftAsync(shiftToDelete.Id);
+            
+            // Refresh the event details
+            await LoadEventDetails();
+            
+            shiftToDelete = null;
+        }
+        catch (Exception ex)
+        {
+            // Handle error - in a real app, show a toast notification
+            Console.WriteLine($"Error deleting shift: {ex.Message}");
+        }
+        finally
+        {
+            isDeletingShift = false;
+            StateHasChanged();
+        }
+    }
+}

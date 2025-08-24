@@ -2,6 +2,7 @@
 @using CleanArchitectureBlazor.Models
 @using CleanArchitectureBlazor.Services
 @inject IEventService EventService
+@inject IShiftService ShiftService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 
@@ -17,9 +18,9 @@
                     </h1>
                     <p class="text-muted">Manage medical first aid events</p>
                 </div>
-                <a href="/events/create" class="btn btn-primary">
+                <button class="btn btn-primary" @onclick="OpenCreateEventDialog">
                     <i class="fas fa-plus me-2"></i>Create Event
-                </a>
+                </button>
             </div>
         </div>
     </div>
@@ -38,9 +39,9 @@
             <i class="fas fa-calendar-times fa-4x text-muted mb-4"></i>
             <h4 class="text-muted">No Events Found</h4>
             <p class="text-muted mb-4">Start by creating your first medical first aid event.</p>
-            <a href="/events/create" class="btn btn-primary btn-lg">
+            <button class="btn btn-primary btn-lg" @onclick="OpenCreateEventDialog">
                 <i class="fas fa-plus me-2"></i>Create First Event
-            </a>
+            </button>
         </div>
     }
     else
@@ -58,6 +59,7 @@
             <div class="col-md-3">
                 <select class="form-select" @bind="statusFilter" @bind:after="OnFilterChanged">
                     <option value="">All Statuses</option>
+                    <option value="@EventStatus.Requested">Requested</option>
                     <option value="@EventStatus.Planned">Planned</option>
                     <option value="@EventStatus.Active">Active</option>
                     <option value="@EventStatus.Completed">Completed</option>
@@ -78,7 +80,7 @@
         <div class="row">
             @foreach (var eventItem in filteredEvents)
             {
-                <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="col-lg-6 col-xl-4 mb-4" @onclick="CloseDropdown">
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
                             <div>
@@ -87,22 +89,38 @@
                                     @eventItem.Status
                                 </span>
                             </div>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <div class="dropdown position-relative">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                        @onclick="@((e) => ToggleDropdown(eventItem.Id))" 
+                                        @onclick:stopPropagation="true">
                                     <i class="fas fa-ellipsis-v"></i>
                                 </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="/events/details/@eventItem.Id">
-                                        <i class="fas fa-eye me-2"></i>View Details
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="/events/edit/@eventItem.Id">
-                                        <i class="fas fa-edit me-2"></i>Edit
-                                    </a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><button class="dropdown-item text-danger" @onclick="() => ConfirmDelete(eventItem)">
-                                        <i class="fas fa-trash me-2"></i>Delete
-                                    </button></li>
-                                </ul>
+                                @if (openDropdownId == eventItem.Id)
+                                {
+                                    <ul class="dropdown-menu show position-absolute" style="right: 0; left: auto; z-index: 1050;">
+                                        <li>
+                                            <button class="dropdown-item" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
+                                                <i class="fas fa-eye me-2"></i>View Details
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
+                                                <i class="fas fa-clock me-2"></i>Create Shift
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item" @onclick="@((e) => OpenEditEventDialog(eventItem))" @onclick:stopPropagation="true">
+                                                <i class="fas fa-edit me-2"></i>Edit
+                                            </button>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <button class="dropdown-item text-danger" @onclick="@((e) => ConfirmDelete(eventItem))" @onclick:stopPropagation="true">
+                                                <i class="fas fa-trash me-2"></i>Delete
+                                            </button>
+                                        </li>
+                                    </ul>
+                                }
                             </div>
                         </div>
                         <div class="card-body">
@@ -151,10 +169,13 @@
                                 <small class="text-muted">
                                     <i class="fas fa-clock me-1"></i>@eventItem.Shifts.Count shift(s)
                                 </small>
-                                <div>
-                                    <a href="/events/details/@eventItem.Id" class="btn btn-sm btn-outline-primary">
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-outline-success" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
+                                        <i class="fas fa-plus me-1"></i>Add Shift
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
                                         View Details
-                                    </a>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -165,10 +186,16 @@
     }
 </div>
 
+<!-- Click outside overlay to close dropdown -->
+@if (openDropdownId.HasValue)
+{
+    <div class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1040; background: transparent;" @onclick="CloseDropdown"></div>
+}
+
 <!-- Delete Confirmation Modal -->
 @if (eventToDelete is not null)
 {
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -197,12 +224,295 @@
     </div>
 }
 
+<!-- Create Event Modal -->
+@if (showCreateDialog)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-calendar-plus me-2"></i>Create New Event
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CloseCreateEventDialog"></button>
+                </div>
+                <EditForm Model="newEvent" OnValidSubmit="CreateEvent">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Event Name *</label>
+                                <InputText @bind-Value="newEvent.Name" class="form-control" placeholder="Enter event name" />
+                                <ValidationMessage For="() => newEvent.Name" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Location *</label>
+                                <InputText @bind-Value="newEvent.Location" class="form-control" placeholder="Enter event location" />
+                                <ValidationMessage For="() => newEvent.Location" class="text-danger" />
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Start Date & Time *</label>
+                                <input type="datetime-local" @bind="newEvent.StartDate" class="form-control" />
+                                <ValidationMessage For="() => newEvent.StartDate" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">End Date & Time *</label>
+                                <input type="datetime-local" @bind="newEvent.EndDate" class="form-control" />
+                                <ValidationMessage For="() => newEvent.EndDate" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Contact Person</label>
+                                <InputText @bind-Value="newEvent.ContactPerson" class="form-control" placeholder="Enter contact person name" />
+                                <ValidationMessage For="() => newEvent.ContactPerson" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Contact Phone</label>
+                                <InputText @bind-Value="newEvent.ContactPhone" class="form-control" placeholder="Enter contact phone number" />
+                                <ValidationMessage For="() => newEvent.ContactPhone" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <InputTextArea @bind-Value="newEvent.Description" class="form-control" rows="3" placeholder="Enter event description (optional)" />
+                            <ValidationMessage For="() => newEvent.Description" class="text-danger" />
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> The event will be created with "Requested" status and one shift covering the entire event duration will be automatically added.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseCreateEventDialog">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@isCreating">
+                            @if (isCreating)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            <i class="fas fa-save me-2"></i>Create Event
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Edit Event Modal -->
+@if (showEditDialog)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>Edit Event
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CloseEditEventDialog"></button>
+                </div>
+                <EditForm Model="editEvent" OnValidSubmit="UpdateEvent">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Event Name *</label>
+                                <InputText @bind-Value="editEvent.Name" class="form-control" placeholder="Enter event name" />
+                                <ValidationMessage For="() => editEvent.Name" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Location *</label>
+                                <InputText @bind-Value="editEvent.Location" class="form-control" placeholder="Enter event location" />
+                                <ValidationMessage For="() => editEvent.Location" class="text-danger" />
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Start Date & Time *</label>
+                                <input type="datetime-local" @bind="editEvent.StartDate" class="form-control" />
+                                <ValidationMessage For="() => editEvent.StartDate" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">End Date & Time *</label>
+                                <input type="datetime-local" @bind="editEvent.EndDate" class="form-control" />
+                                <ValidationMessage For="() => editEvent.EndDate" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status *</label>
+                                <InputSelect @bind-Value="editEvent.Status" class="form-select">
+                                    <option value="@EventStatus.Requested">Requested</option>
+                                    <option value="@EventStatus.Planned">Planned</option>
+                                    <option value="@EventStatus.Active">Active</option>
+                                    <option value="@EventStatus.Completed">Completed</option>
+                                    <option value="@EventStatus.Cancelled">Cancelled</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => editEvent.Status" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Contact Person</label>
+                                <InputText @bind-Value="editEvent.ContactPerson" class="form-control" placeholder="Enter contact person name" />
+                                <ValidationMessage For="() => editEvent.ContactPerson" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Contact Phone</label>
+                                <InputText @bind-Value="editEvent.ContactPhone" class="form-control" placeholder="Enter contact phone number" />
+                                <ValidationMessage For="() => editEvent.ContactPhone" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <InputTextArea @bind-Value="editEvent.Description" class="form-control" rows="3" placeholder="Enter event description (optional)" />
+                            <ValidationMessage For="() => editEvent.Description" class="text-danger" />
+                        </div>
+
+                        @if (editEvent.Shifts.Any())
+                        {
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Note:</strong> This event has @editEvent.Shifts.Count shift(s) assigned. Changing dates and times may affect existing shifts.
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseEditEventDialog">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@isUpdating">
+                            @if (isUpdating)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            <i class="fas fa-save me-2"></i>Update Event
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Create Shift Modal -->
+@if (showCreateShiftDialog)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-clock me-2"></i>Create New Shift
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CloseCreateShiftDialog"></button>
+                </div>
+                <EditForm Model="newShift" OnValidSubmit="CreateShift">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        @if (selectedEventForShift != null)
+                        {
+                            <div class="alert alert-info mb-4">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Creating shift for:</strong> @selectedEventForShift.Name
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>@selectedEventForShift.StartDate.ToString("MMM dd, yyyy HH:mm") - @selectedEventForShift.EndDate.ToString("MMM dd, yyyy HH:mm")
+                                    <br>
+                                    <i class="fas fa-map-marker-alt me-1"></i>@selectedEventForShift.Location
+                                </small>
+                            </div>
+
+                            @if (selectedEventForShift.Shifts.Any())
+                            {
+                                <div class="alert alert-warning mb-4">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Smart Shift Management:</strong> This event has @selectedEventForShift.Shifts.Count existing shift(s). 
+                                    When you create this new shift, any existing shifts that cover the entire event duration will be automatically 
+                                    adjusted to cover the remaining time slots.
+                                </div>
+                            }
+                        }
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Shift Name *</label>
+                                <InputText @bind-Value="newShift.Name" class="form-control" placeholder="Enter shift name" />
+                                <ValidationMessage For="() => newShift.Name" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Required Staff *</label>
+                                <InputNumber @bind-Value="newShift.RequiredStaff" class="form-control" min="1" max="50" />
+                                <ValidationMessage For="() => newShift.RequiredStaff" class="text-danger" />
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Start Time *</label>
+                                <input type="datetime-local" @bind="newShift.StartTime" class="form-control" />
+                                <ValidationMessage For="() => newShift.StartTime" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">End Time *</label>
+                                <input type="datetime-local" @bind="newShift.EndTime" class="form-control" />
+                                <ValidationMessage For="() => newShift.EndTime" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <InputTextArea @bind-Value="newShift.Description" class="form-control" rows="3" placeholder="Enter shift description (optional)" />
+                            <ValidationMessage For="() => newShift.Description" class="text-danger" />
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Note:</strong> Make sure the shift times are within the event duration 
+                            (@selectedEventForShift?.StartDate.ToString("MMM dd HH:mm") - @selectedEventForShift?.EndDate.ToString("MMM dd HH:mm")).
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseCreateShiftDialog">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@isCreatingShift">
+                            @if (isCreatingShift)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            <i class="fas fa-save me-2"></i>Create Shift
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private bool isLoading = true;
     private bool isDeleting = false;
+    private bool isCreating = false;
+    private bool isUpdating = false;
+    private bool isCreatingShift = false;
+    private bool showCreateDialog = false;
+    private bool showEditDialog = false;
+    private bool showCreateShiftDialog = false;
     private List<Event> events = new();
     private List<Event> filteredEvents = new();
     private Event? eventToDelete;
+    private Event newEvent = new();
+    private Event editEvent = new();
+    private Shift newShift = new();
+    private Event? selectedEventForShift;
+    private int? openDropdownId = null;
     
     private string searchTerm = string.Empty;
     private string statusFilter = string.Empty;
@@ -269,14 +579,42 @@
         StateHasChanged();
     }
 
+    private void ToggleDropdown(int eventId)
+    {
+        if (openDropdownId == eventId)
+        {
+            openDropdownId = null;
+        }
+        else
+        {
+            openDropdownId = eventId;
+        }
+        StateHasChanged();
+    }
+
+    private void CloseDropdown()
+    {
+        openDropdownId = null;
+        StateHasChanged();
+    }
+
+    private void NavigateToDetails(int eventId)
+    {
+        CloseDropdown();
+        Navigation.NavigateTo($"/events/details/{eventId}");
+    }
+
     private void ConfirmDelete(Event eventItem)
     {
         eventToDelete = eventItem;
+        CloseDropdown(); // Close dropdown when opening modal
+        StateHasChanged();
     }
 
     private void CancelDelete()
     {
         eventToDelete = null;
+        StateHasChanged();
     }
 
     private async Task DeleteEvent()
@@ -299,6 +637,7 @@
         finally
         {
             isDeleting = false;
+            StateHasChanged();
         }
     }
 
@@ -306,11 +645,299 @@
     {
         return status switch
         {
+            EventStatus.Requested => "warning",
             EventStatus.Planned => "primary",
             EventStatus.Active => "success",
             EventStatus.Completed => "secondary",
             EventStatus.Cancelled => "danger",
             _ => "secondary"
         };
+    }
+
+    private void OpenCreateEventDialog()
+    {
+        CloseDropdown(); // Close any open dropdown
+        newEvent = new Event
+        {
+            StartDate = DateTime.Today.AddHours(9), // Default to 9 AM today
+            EndDate = DateTime.Today.AddHours(17)   // Default to 5 PM today
+        };
+        showCreateDialog = true;
+        StateHasChanged();
+    }
+
+    private void CloseCreateEventDialog()
+    {
+        showCreateDialog = false;
+        newEvent = new Event();
+        StateHasChanged();
+    }
+
+    private async Task OpenEditEventDialog(Event eventItem)
+    {
+        CloseDropdown(); // Close dropdown when opening modal
+        
+        // Get the full event with all related data
+        var fullEvent = await EventService.GetEventByIdAsync(eventItem.Id);
+        if (fullEvent != null)
+        {
+            editEvent = new Event
+            {
+                Id = fullEvent.Id,
+                Name = fullEvent.Name,
+                StartDate = fullEvent.StartDate,
+                EndDate = fullEvent.EndDate,
+                Location = fullEvent.Location,
+                Description = fullEvent.Description,
+                Status = fullEvent.Status,
+                ContactPerson = fullEvent.ContactPerson,
+                ContactPhone = fullEvent.ContactPhone,
+                CreatedAt = fullEvent.CreatedAt,
+                UpdatedAt = fullEvent.UpdatedAt,
+                Shifts = fullEvent.Shifts ?? new List<Shift>()
+            };
+            showEditDialog = true;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseEditEventDialog()
+    {
+        showEditDialog = false;
+        editEvent = new Event();
+        StateHasChanged();
+    }
+
+    private async Task UpdateEvent()
+    {
+        isUpdating = true;
+        try
+        {
+            await EventService.UpdateEventAsync(editEvent);
+            
+            // Update the local events list
+            var eventIndex = events.FindIndex(e => e.Id == editEvent.Id);
+            if (eventIndex >= 0)
+            {
+                events[eventIndex] = editEvent;
+            }
+            
+            ApplyFiltersAndSort();
+            CloseEditEventDialog();
+        }
+        catch (Exception ex)
+        {
+            // Handle error - in a real app, show a toast notification
+            Console.WriteLine($"Error updating event: {ex.Message}");
+        }
+        finally
+        {
+            isUpdating = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CreateEvent()
+    {
+        isCreating = true;
+        try
+        {
+            // Create the event with "Requested" status (already set as default in the model)
+            var createdEvent = await EventService.CreateEventAsync(newEvent);
+            
+            // Create a shift covering the entire event duration
+            await CreateDefaultShift(createdEvent);
+            
+            // Refresh the events list
+            await LoadEvents();
+            ApplyFiltersAndSort();
+            
+            // Close the dialog
+            CloseCreateEventDialog();
+        }
+        catch (Exception ex)
+        {
+            // Handle error - in a real app, show a toast notification
+            Console.WriteLine($"Error creating event: {ex.Message}");
+        }
+        finally
+        {
+            isCreating = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CreateDefaultShift(Event eventItem)
+    {
+        try
+        {
+            var shift = new Shift
+            {
+                EventId = eventItem.Id,
+                Name = $"Full Event Coverage - {eventItem.Name}",
+                StartTime = eventItem.StartDate,
+                EndTime = eventItem.EndDate,
+                RequiredStaff = 1,
+                Description = "Default shift covering the entire event duration",
+                Status = ShiftStatus.Open
+            };
+
+            await ShiftService.CreateShiftAsync(shift);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating default shift: {ex.Message}");
+        }
+    }
+
+    private async Task OpenCreateShiftDialog(Event eventItem)
+    {
+        CloseDropdown(); // Close any open dropdown
+        
+        // Get the full event with all related data to see existing shifts
+        var fullEvent = await EventService.GetEventByIdAsync(eventItem.Id);
+        if (fullEvent != null)
+        {
+            selectedEventForShift = fullEvent;
+            
+            // Initialize the new shift with default values based on the event
+            newShift = new Shift
+            {
+                EventId = fullEvent.Id,
+                Name = $"Shift - {fullEvent.Name}",
+                StartTime = fullEvent.StartDate,
+                EndTime = fullEvent.EndDate,
+                RequiredStaff = 1,
+                Status = ShiftStatus.Open
+            };
+            
+            showCreateShiftDialog = true;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseCreateShiftDialog()
+    {
+        showCreateShiftDialog = false;
+        newShift = new Shift();
+        selectedEventForShift = null;
+        StateHasChanged();
+    }
+
+    private async Task CreateShift()
+    {
+        if (selectedEventForShift == null) return;
+
+        isCreatingShift = true;
+        try
+        {
+            // Validate that shift times are within event duration
+            if (newShift.StartTime < selectedEventForShift.StartDate || newShift.EndTime > selectedEventForShift.EndDate)
+            {
+                // In a real app, show a toast notification or validation error
+                Console.WriteLine("Shift times must be within the event duration");
+                return;
+            }
+
+            if (newShift.StartTime >= newShift.EndTime)
+            {
+                Console.WriteLine("End time must be after start time");
+                return;
+            }
+
+            // Set the EventId to ensure it's properly set
+            newShift.EventId = selectedEventForShift.Id;
+            
+            // Handle smart shift management - adjust existing full-coverage shifts
+            await HandleExistingShiftsAdjustment(selectedEventForShift, newShift);
+            
+            // Create the new shift
+            await ShiftService.CreateShiftAsync(newShift);
+            
+            // Refresh the events list to update shift counts
+            await LoadEvents();
+            ApplyFiltersAndSort();
+            
+            // Close the dialog
+            CloseCreateShiftDialog();
+        }
+        catch (Exception ex)
+        {
+            // Handle error - in a real app, show a toast notification
+            Console.WriteLine($"Error creating shift: {ex.Message}");
+        }
+        finally
+        {
+            isCreatingShift = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Handles automatic adjustment of existing shifts when adding a new shift
+    /// </summary>
+    private async Task HandleExistingShiftsAdjustment(Event eventDetail, Shift newShift)
+    {
+        // Find shifts that cover the entire event duration (likely default shifts)
+        var fullCoverageShifts = eventDetail.Shifts.Where(s => 
+            s.StartTime <= eventDetail.StartDate && 
+            s.EndTime >= eventDetail.EndDate &&
+            s.Description != null &&
+            s.Description.Contains("Default shift", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        foreach (var existingShift in fullCoverageShifts)
+        {
+            // Create the remaining coverage based on the new shift timing
+            var remainingShifts = CalculateRemainingCoverage(eventDetail, existingShift, newShift);
+            
+            foreach (var remainingShift in remainingShifts)
+            {
+                await ShiftService.CreateShiftAsync(remainingShift);
+            }
+            
+            // Delete the original full coverage shift since we're replacing it with split coverage
+            await ShiftService.DeleteShiftAsync(existingShift.Id);
+        }
+    }
+
+    /// <summary>
+    /// Calculates what shifts are needed to cover the remaining time after inserting a new shift
+    /// </summary>
+    private List<Shift> CalculateRemainingCoverage(Event eventDetail, Shift originalShift, Shift newShift)
+    {
+        var remainingShifts = new List<Shift>();
+
+        // If there's time before the new shift, create a shift to cover it
+        if (eventDetail.StartDate < newShift.StartTime)
+        {
+            remainingShifts.Add(new Shift
+            {
+                EventId = eventDetail.Id,
+                Name = $"Coverage Before {newShift.Name}",
+                StartTime = eventDetail.StartDate,
+                EndTime = newShift.StartTime,
+                RequiredStaff = originalShift.RequiredStaff,
+                Description = $"Automatic coverage created when '{newShift.Name}' was added",
+                Status = ShiftStatus.Open
+            });
+        }
+
+        // If there's time after the new shift, create a shift to cover it
+        if (newShift.EndTime < eventDetail.EndDate)
+        {
+            remainingShifts.Add(new Shift
+            {
+                EventId = eventDetail.Id,
+                Name = $"Coverage After {newShift.Name}",
+                StartTime = newShift.EndTime,
+                EndTime = eventDetail.EndDate,
+                RequiredStaff = originalShift.RequiredStaff,
+                Description = $"Automatic coverage created when '{newShift.Name}' was added",
+                Status = ShiftStatus.Open
+            });
+        }
+
+        return remainingShifts;
     }
 }

@@ -116,13 +116,13 @@
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
-                            <a href="/events/create" class="btn btn-outline-primary">
+                            <a href="/events" class="btn btn-outline-primary">
                                 <i class="fas fa-plus me-2"></i>Create Event
                             </a>
-                            <a href="/shifts/create" class="btn btn-outline-success">
+                            <a href="/shifts" class="btn btn-outline-success">
                                 <i class="fas fa-clock me-2"></i>Create Shift
                             </a>
-                            <a href="/staff/create" class="btn btn-outline-info">
+                            <a href="/staff" class="btn btn-outline-info">
                                 <i class="fas fa-user-plus me-2"></i>Add Staff
                             </a>
                             <a href="/assignments" class="btn btn-outline-warning">
@@ -175,7 +175,7 @@
                             <div class="text-center py-4">
                                 <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
                                 <p class="text-muted">No upcoming events</p>
-                                <a href="/events/create" class="btn btn-primary">Create First Event</a>
+                                <a href="/events" class="btn btn-primary">Create First Event</a>
                             </div>
                         }
                     </div>
@@ -294,6 +294,7 @@
     {
         return status switch
         {
+            EventStatus.Requested => "warning",
             EventStatus.Planned => "primary",
             EventStatus.Active => "success",
             EventStatus.Completed => "secondary",
