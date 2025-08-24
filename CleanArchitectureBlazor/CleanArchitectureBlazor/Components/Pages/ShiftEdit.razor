@@ -1,0 +1,727 @@
+@page "/shifts/edit/{ShiftId:int}"
+@using CleanArchitectureBlazor.Models
+@using CleanArchitectureBlazor.Services
+@inject IShiftService ShiftService
+@inject IStaffService StaffService
+@inject IStaffAssignmentService StaffAssignmentService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Edit Shift - Medical First Aid Manager</PageTitle>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (shift == null)
+{
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Shift Not Found</strong>
+                    <p class="mb-0">The requested shift could not be found.</p>
+                </div>
+                <a href="/events" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Events
+                </a>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/events" class="text-decoration-none">Events</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="/events/details/@shift.EventId" class="text-decoration-none">@shift.Event.Name</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">Edit Shift</li>
+                    </ol>
+                </nav>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0 text-primary">
+                            <i class="fas fa-edit me-2"></i>Edit Shift
+                        </h1>
+                        <p class="text-muted mb-0">@shift.Name</p>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-outline-secondary" @onclick="Cancel">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </button>
+                        <button class="btn btn-primary" @onclick="SaveShift" disabled="@isSaving">
+                            @if (isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Shift Details -->
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-clock me-2"></i>Shift Details
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <EditForm Model="editShift" OnValidSubmit="SaveShift">
+                            <DataAnnotationsValidator />
+                            
+                            <!-- Event Info (Read-only) -->
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">EVENT</label>
+                                <div class="p-3 bg-light rounded">
+                                    <div class="fw-medium">@shift.Event.Name</div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-map-marker-alt me-1"></i>@shift.Event.Location<br>
+                                        <i class="fas fa-calendar me-1"></i>@shift.Event.StartDate.ToString("MMM dd, yyyy HH:mm") - @shift.Event.EndDate.ToString("MMM dd, yyyy HH:mm")
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Shift Name -->
+                            <div class="mb-3">
+                                <label class="form-label">Shift Name *</label>
+                                <InputText @bind-Value="editShift.Name" class="form-control" placeholder="Enter shift name" />
+                                <ValidationMessage For="() => editShift.Name" class="text-danger" />
+                            </div>
+
+                            <!-- Times -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Start Time *</label>
+                                    <input type="datetime-local" @bind="editShift.StartTime" class="form-control" />
+                                    <ValidationMessage For="() => editShift.StartTime" class="text-danger" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">End Time *</label>
+                                    <input type="datetime-local" @bind="editShift.EndTime" class="form-control" />
+                                    <ValidationMessage For="() => editShift.EndTime" class="text-danger" />
+                                </div>
+                            </div>
+
+                            <!-- Required Staff and Status -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Required Staff *</label>
+                                    <InputNumber @bind-Value="editShift.RequiredStaff" class="form-control" min="1" max="50" />
+                                    <ValidationMessage For="() => editShift.RequiredStaff" class="text-danger" />
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Maximum staff that can be assigned to this shift
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Status *</label>
+                                    <InputSelect @bind-Value="editShift.Status" class="form-select">
+                                        <option value="@ShiftStatus.Open">Open</option>
+                                        <option value="@ShiftStatus.Full">Full</option>
+                                        <option value="@ShiftStatus.InProgress">In Progress</option>
+                                        <option value="@ShiftStatus.Completed">Completed</option>
+                                        <option value="@ShiftStatus.Cancelled">Cancelled</option>
+                                    </InputSelect>
+                                    <ValidationMessage For="() => editShift.Status" class="text-danger" />
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <InputTextArea @bind-Value="editShift.Description" class="form-control" rows="3" placeholder="Enter shift description (optional)" />
+                                <ValidationMessage For="() => editShift.Description" class="text-danger" />
+                            </div>
+
+                            <!-- Validation Notes -->
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Note:</strong> Make sure the shift times are within the event duration 
+                                (@shift.Event.StartDate.ToString("MMM dd HH:mm") - @shift.Event.EndDate.ToString("MMM dd HH:mm")).
+                                <br>
+                                <small class="text-muted mt-1">
+                                    Current assignment count: @currentAssignments.Count / @editShift.RequiredStaff
+                                </small>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Staff Assignment -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-users me-2"></i>Staff Assignment (@currentAssignments.Count / @editShift.RequiredStaff)
+                        </h5>
+                        @if (currentAssignments.Count < editShift.RequiredStaff)
+                        {
+                            <button class="btn btn-light btn-sm" @onclick="OpenAddStaffDialog">
+                                <i class="fas fa-plus me-1"></i>Add Staff
+                            </button>
+                        }
+                    </div>
+                    <div class="card-body">
+                        @if (!currentAssignments.Any())
+                        {
+                            <div class="text-center py-4">
+                                <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
+                                <h6 class="text-muted">No Staff Assigned</h6>
+                                <p class="text-muted mb-3">This shift doesn't have any staff assigned yet.</p>
+                                <button class="btn btn-success" @onclick="OpenAddStaffDialog">
+                                    <i class="fas fa-plus me-2"></i>Assign First Staff Member
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Assigned Staff List -->
+                            <div class="list-group list-group-flush">
+                                @foreach (var assignment in currentAssignments)
+                                {
+                                    <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                        <span class="fw-bold">@assignment.Staff.FirstName.Substring(0, 1)@assignment.Staff.LastName.Substring(0, 1)</span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1">@assignment.Staff.FullName</h6>
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="badge bg-@GetRoleColor(assignment.Staff.Role) me-2">@assignment.Staff.Role</span>
+                                                        <span class="badge bg-@GetAssignmentStatusColor(assignment.Status)">@assignment.Status</span>
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(assignment.Staff.Phone))
+                                                    {
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-phone me-1"></i>@assignment.Staff.Phone
+                                                        </small>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-danger" 
+                                                    @onclick="() => ConfirmRemoveStaff(assignment)"
+                                                    title="Remove from shift">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (currentAssignments.Count < editShift.RequiredStaff)
+                            {
+                                <div class="mt-3">
+                                    <button class="btn btn-outline-success w-100" @onclick="OpenAddStaffDialog">
+                                        <i class="fas fa-plus me-2"></i>Add Another Staff Member
+                                        <span class="badge bg-success ms-2">@(editShift.RequiredStaff - currentAssignments.Count) slots available</span>
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-success mt-3 mb-0">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <strong>Shift is fully staffed!</strong> All required positions have been filled.
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Add Staff Modal -->
+@if (showAddStaffDialog)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-plus me-2"></i>Add Staff to Shift
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CloseAddStaffDialog"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Shift Info -->
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Adding staff to:</strong> @shift.Name<br>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>@shift.StartTime.ToString("MMM dd, yyyy HH:mm") - @shift.EndTime.ToString("MMM dd, yyyy HH:mm")
+                        </small>
+                    </div>
+
+                    <!-- Search and Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" placeholder="Search staff by name or email..." 
+                                       @bind="staffSearchTerm" @oninput="OnStaffSearchChanged" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" @bind="staffRoleFilter" @bind:after="OnStaffFilterChanged">
+                                <option value="">All Roles</option>
+                                <option value="@StaffRole.FirstAider">First Aider</option>
+                                <option value="@StaffRole.TeamLeader">Team Leader</option>
+                                <option value="@StaffRole.Paramedic">Paramedic</option>
+                                <option value="@StaffRole.Doctor">Doctor</option>
+                                <option value="@StaffRole.Volunteer">Volunteer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Available Staff List -->
+                    @if (isLoadingStaff)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading staff...</span>
+                            </div>
+                        </div>
+                    }
+                    else if (!filteredAvailableStaff.Any())
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No Available Staff</h6>
+                            <p class="text-muted">No staff members match your search criteria or are available for this time slot.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Showing @filteredAvailableStaff.Count available staff member(s)
+                            </small>
+                        </div>
+                        
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            <div class="list-group">
+                                @foreach (var staffMember in filteredAvailableStaff)
+                                {
+                                    <div class="list-group-item list-group-item-action">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3">
+                                                        <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                            <span class="fw-bold">@staffMember.FirstName.Substring(0, 1)@staffMember.LastName.Substring(0, 1)</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="mb-1">@staffMember.FullName</h6>
+                                                        <div class="d-flex align-items-center mb-1">
+                                                            <span class="badge bg-@GetRoleColor(staffMember.Role) me-2">@staffMember.Role</span>
+                                                            @if (!string.IsNullOrEmpty(staffMember.CertificationLevel))
+                                                            {
+                                                                <span class="badge bg-info me-2">@staffMember.CertificationLevel</span>
+                                                            }
+                                                        </div>
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-envelope me-1"></i>@staffMember.Email
+                                                            @if (!string.IsNullOrEmpty(staffMember.Phone))
+                                                            {
+                                                                <br><i class="fas fa-phone me-1"></i>@staffMember.Phone
+                                                            }
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <button class="btn btn-primary" @onclick="() => AddStaffToShift(staffMember)">
+                                                    <i class="fas fa-plus me-1"></i>Add
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseAddStaffDialog">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Remove Staff Confirmation Modal -->
+@if (staffToRemove is not null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Staff Removal</h5>
+                    <button type="button" class="btn-close" @onclick="CancelRemoveStaff"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to remove <strong>@staffToRemove.Staff.FullName</strong> from this shift?</p>
+                    <p class="text-warning small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        This action will unassign the staff member from the shift.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelRemoveStaff">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="RemoveStaffFromShift" disabled="@isRemovingStaff">
+                        @if (isRemovingStaff)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Remove Staff
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int ShiftId { get; set; }
+
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private bool isLoadingStaff = false;
+    private bool isRemovingStaff = false;
+    private bool showAddStaffDialog = false;
+
+    private Shift? shift;
+    private Shift editShift = new();
+    private List<StaffAssignment> currentAssignments = new();
+    private List<CleanArchitectureBlazor.Models.Staff> availableStaff = new();
+    private List<CleanArchitectureBlazor.Models.Staff> filteredAvailableStaff = new();
+    private StaffAssignment? staffToRemove;
+
+    private string staffSearchTerm = string.Empty;
+    private string staffRoleFilter = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadShiftDetails();
+        isLoading = false;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (isLoading) return;
+        await LoadShiftDetails();
+    }
+
+    private async Task LoadShiftDetails()
+    {
+        shift = await ShiftService.GetShiftByIdAsync(ShiftId);
+        if (shift != null)
+        {
+            // Create a copy for editing
+            editShift = new Shift
+            {
+                Id = shift.Id,
+                EventId = shift.EventId,
+                Name = shift.Name,
+                StartTime = shift.StartTime,
+                EndTime = shift.EndTime,
+                RequiredStaff = shift.RequiredStaff,
+                Description = shift.Description,
+                Status = shift.Status,
+                CreatedAt = shift.CreatedAt,
+                UpdatedAt = shift.UpdatedAt,
+                Event = shift.Event,
+                StaffAssignments = shift.StaffAssignments
+            };
+
+            currentAssignments = shift.StaffAssignments.ToList();
+        }
+    }
+
+    private async Task LoadAvailableStaff()
+    {
+        if (shift == null) return;
+
+        isLoadingStaff = true;
+        try
+        {
+            var allStaff = await StaffService.GetActiveStaffAsync();
+            var assignedStaffIds = currentAssignments.Select(a => a.StaffId).ToHashSet();
+            
+            // Filter out already assigned staff and check availability
+            var availableStaffList = new List<CleanArchitectureBlazor.Models.Staff>();
+            
+            foreach (var staffMember in allStaff)
+            {
+                // Skip if already assigned to this shift
+                if (assignedStaffIds.Contains(staffMember.Id))
+                    continue;
+
+                // Check if staff is available during shift time
+                var isAvailable = await StaffAssignmentService.IsStaffAvailableAsync(
+                    staffMember.Id, 
+                    editShift.StartTime, 
+                    editShift.EndTime
+                );
+
+                if (isAvailable)
+                {
+                    availableStaffList.Add(staffMember);
+                }
+            }
+
+            availableStaff = availableStaffList;
+            ApplyStaffFilters();
+        }
+        finally
+        {
+            isLoadingStaff = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ApplyStaffFilters()
+    {
+        var filtered = availableStaff.AsEnumerable();
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(staffSearchTerm))
+        {
+            filtered = filtered.Where(s => 
+                s.FullName.Contains(staffSearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                s.Email.Contains(staffSearchTerm, StringComparison.OrdinalIgnoreCase)
+            );
+        }
+
+        // Apply role filter
+        if (!string.IsNullOrEmpty(staffRoleFilter) && Enum.TryParse<StaffRole>(staffRoleFilter, out var role))
+        {
+            filtered = filtered.Where(s => s.Role == role);
+        }
+
+        filteredAvailableStaff = filtered.OrderBy(s => s.LastName).ThenBy(s => s.FirstName).ToList();
+        StateHasChanged();
+    }
+
+    private void OnStaffSearchChanged(ChangeEventArgs e)
+    {
+        staffSearchTerm = e.Value?.ToString() ?? string.Empty;
+        ApplyStaffFilters();
+    }
+
+    private void OnStaffFilterChanged()
+    {
+        ApplyStaffFilters();
+    }
+
+    private async Task OpenAddStaffDialog()
+    {
+        if (currentAssignments.Count >= editShift.RequiredStaff)
+        {
+            // In a real app, show a toast notification
+            return;
+        }
+
+        staffSearchTerm = string.Empty;
+        staffRoleFilter = string.Empty;
+        showAddStaffDialog = true;
+        await LoadAvailableStaff();
+        StateHasChanged();
+    }
+
+    private void CloseAddStaffDialog()
+    {
+        showAddStaffDialog = false;
+        availableStaff.Clear();
+        filteredAvailableStaff.Clear();
+        StateHasChanged();
+    }
+
+    private async Task AddStaffToShift(CleanArchitectureBlazor.Models.Staff staffMember)
+    {
+        try
+        {
+            var assignment = new StaffAssignment
+            {
+                ShiftId = ShiftId,
+                StaffId = staffMember.Id,
+                Status = AssignmentStatus.Assigned
+            };
+
+            var createdAssignment = await StaffAssignmentService.CreateAssignmentAsync(assignment);
+            
+            // Add to current assignments with staff info
+            createdAssignment.Staff = staffMember;
+            currentAssignments.Add(createdAssignment);
+            
+            // Remove from available staff
+            availableStaff.Remove(staffMember);
+            ApplyStaffFilters();
+            
+            // Close dialog if shift is now full
+            if (currentAssignments.Count >= editShift.RequiredStaff)
+            {
+                CloseAddStaffDialog();
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding staff to shift: {ex.Message}");
+        }
+    }
+
+    private void ConfirmRemoveStaff(StaffAssignment assignment)
+    {
+        staffToRemove = assignment;
+        StateHasChanged();
+    }
+
+    private void CancelRemoveStaff()
+    {
+        staffToRemove = null;
+        StateHasChanged();
+    }
+
+    private async Task RemoveStaffFromShift()
+    {
+        if (staffToRemove == null) return;
+
+        isRemovingStaff = true;
+        try
+        {
+            await StaffAssignmentService.DeleteAssignmentAsync(staffToRemove.Id);
+            currentAssignments.Remove(staffToRemove);
+            
+            // If add staff dialog is open, refresh available staff
+            if (showAddStaffDialog)
+            {
+                await LoadAvailableStaff();
+            }
+            
+            staffToRemove = null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing staff from shift: {ex.Message}");
+        }
+        finally
+        {
+            isRemovingStaff = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveShift()
+    {
+        if (shift == null) return;
+
+        isSaving = true;
+        try
+        {
+            // Validate that shift times are within event duration
+            if (editShift.StartTime < shift.Event.StartDate || editShift.EndTime > shift.Event.EndDate)
+            {
+                Console.WriteLine("Shift times must be within the event duration");
+                return;
+            }
+
+            if (editShift.StartTime >= editShift.EndTime)
+            {
+                Console.WriteLine("End time must be after start time");
+                return;
+            }
+
+            // If required staff is reduced below current assignments, we need to handle this
+            if (editShift.RequiredStaff < currentAssignments.Count)
+            {
+                Console.WriteLine($"Cannot reduce required staff below current assignments ({currentAssignments.Count})");
+                return;
+            }
+
+            await ShiftService.UpdateShiftAsync(editShift);
+            
+            // Navigate back to event details
+            Navigation.NavigateTo($"/events/details/{shift.EventId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving shift: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Cancel()
+    {
+        if (shift != null)
+        {
+            Navigation.NavigateTo($"/events/details/{shift.EventId}");
+        }
+        else
+        {
+            Navigation.NavigateTo("/events");
+        }
+    }
+
+    private string GetRoleColor(StaffRole role)
+    {
+        return role switch
+        {
+            StaffRole.Doctor => "danger",
+            StaffRole.Paramedic => "warning",
+            StaffRole.TeamLeader => "primary",
+            StaffRole.FirstAider => "success",
+            StaffRole.Volunteer => "info",
+            _ => "secondary"
+        };
+    }
+
+    private string GetAssignmentStatusColor(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => "primary",
+            AssignmentStatus.Confirmed => "info",
+            AssignmentStatus.CheckedIn => "success",
+            AssignmentStatus.CheckedOut => "secondary",
+            AssignmentStatus.NoShow => "danger",
+            AssignmentStatus.Cancelled => "dark",
+            _ => "secondary"
+        };
+    }
+}
