@@ -43,6 +43,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 // Register our application services
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<IStaffService, StaffService>();

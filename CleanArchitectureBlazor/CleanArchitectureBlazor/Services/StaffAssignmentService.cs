@@ -24,10 +24,14 @@ public interface IStaffAssignmentService
 public class StaffAssignmentService : IStaffAssignmentService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<StaffAssignmentService> _logger;
 
-    public StaffAssignmentService(ApplicationDbContext context)
+    public StaffAssignmentService(ApplicationDbContext context, IEmailService emailService, ILogger<StaffAssignmentService> logger)
     {
         _context = context;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<List<StaffAssignment>> GetAllAssignmentsAsync()
@@ -74,6 +78,30 @@ public class StaffAssignmentService : IStaffAssignmentService
         assignment.AssignedAt = DateTime.UtcNow;
         _context.StaffAssignments.Add(assignment);
         await _context.SaveChangesAsync();
+
+        // Load the full assignment with related data for email notification
+        var fullAssignment = await GetAssignmentByIdAsync(assignment.Id);
+        if (fullAssignment?.Staff != null && fullAssignment.Shift?.Event != null)
+        {
+            try
+            {
+                // Send email notification to the assigned staff member
+                await _emailService.SendStaffAssignmentNotificationAsync(
+                    fullAssignment.Staff, 
+                    fullAssignment.Shift, 
+                    fullAssignment.Shift.Event);
+
+                _logger.LogInformation("Assignment notification email sent to {Email} for shift {ShiftName}", 
+                    fullAssignment.Staff.Email, fullAssignment.Shift.Name);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send assignment notification email to {Email} for shift {ShiftName}", 
+                    fullAssignment.Staff?.Email, fullAssignment.Shift?.Name);
+                // Don't throw - we don't want email failures to prevent assignment creation
+            }
+        }
+
         return assignment;
     }
 

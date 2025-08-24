@@ -1,0 +1,25 @@
+using CleanArchitectureBlazor.Models;
+
+namespace CleanArchitectureBlazor.Services;
+
+/// <summary>
+/// Service for sending emails
+/// </summary>
+public interface IEmailService
+{
+    /// <summary>
+    /// Sends a staff assignment notification email
+    /// </summary>
+    /// <param name="staff">The staff member being assigned</param>
+    /// <param name="shift">The shift being assigned to</param>
+    /// <param name="event">The event containing the shift</param>
+    Task SendStaffAssignmentNotificationAsync(Staff staff, Shift shift, Event @event);
+    
+    /// <summary>
+    /// Sends a general email
+    /// </summary>
+    /// <param name="to">Recipient email address</param>
+    /// <param name="subject">Email subject</param>
+    /// <param name="htmlBody">HTML email body</param>
+    Task SendEmailAsync(string to, string subject, string htmlBody);
+}
