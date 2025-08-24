@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="CleanArchitectureBlazor/CleanArchitectureBlazor.Client/CleanArchitectureBlazor.Client.csproj" />
+  <Project Path="CleanArchitectureBlazor/CleanArchitectureBlazor/CleanArchitectureBlazor.csproj" />
+</Solution>
