@@ -1,0 +1,502 @@
+@page "/shifts/details/{ShiftId:int}"
+@using CleanArchitectureBlazor.Models
+@using CleanArchitectureBlazor.Services
+@inject IShiftService ShiftService
+@inject IStaffAssignmentService StaffAssignmentService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Shift Details - Medical First Aid Manager</PageTitle>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (shiftDetail == null)
+{
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Shift Not Found</strong>
+                    <p class="mb-0">The requested shift could not be found.</p>
+                </div>
+                <a href="/shifts" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Shifts
+                </a>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/events" class="text-decoration-none">Events</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="/events/details/@shiftDetail.EventId" class="text-decoration-none">@shiftDetail.Event.Name</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="/shifts" class="text-decoration-none">Shifts</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">@shiftDetail.Name</li>
+                    </ol>
+                </nav>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0 text-primary">
+                            <i class="fas fa-clock me-2"></i>@shiftDetail.Name
+                        </h1>
+                        <span class="badge bg-@GetShiftStatusColor(shiftDetail.Status) fs-6 mt-2">
+                            @shiftDetail.Status
+                        </span>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-outline-secondary" @onclick="GoBack">
+                            <i class="fas fa-arrow-left me-2"></i>Back
+                        </button>
+                        <a href="/shifts/edit/@ShiftId" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>Edit Shift
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Shift Information -->
+            <div class="col-lg-4 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Shift Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">EVENT</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-calendar-alt text-muted me-2"></i>
+                                <a href="/events/details/@shiftDetail.EventId" class="text-decoration-none">
+                                    @shiftDetail.Event.Name
+                                </a>
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-map-marker-alt me-1"></i>@shiftDetail.Event.Location
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">START DATE & TIME</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-calendar text-muted me-2"></i>
+                                @shiftDetail.StartTime.ToString("dddd, MMMM dd, yyyy")
+                                <br>
+                                <i class="fas fa-clock text-muted me-2"></i>
+                                @shiftDetail.StartTime.ToString("HH:mm")
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">END DATE & TIME</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-calendar text-muted me-2"></i>
+                                @shiftDetail.EndTime.ToString("dddd, MMMM dd, yyyy")
+                                <br>
+                                <i class="fas fa-clock text-muted me-2"></i>
+                                @shiftDetail.EndTime.ToString("HH:mm")
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">DURATION</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-hourglass-half text-muted me-2"></i>
+                                @CalculateShiftDuration()
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">REQUIRED STAFF</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-users text-muted me-2"></i>
+                                @shiftDetail.RequiredStaff staff member(s)
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(shiftDetail.Description))
+                        {
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">DESCRIPTION</label>
+                                <div class="fw-medium">@shiftDetail.Description</div>
+                            </div>
+                        }
+
+                        <div class="mb-0">
+                            <label class="form-label text-muted small">CREATED</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-clock text-muted me-2"></i>
+                                @shiftDetail.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>Statistics
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border-end">
+                                    <h4 class="text-@GetStaffingLevelColor() mb-0">@shiftDetail.StaffAssignments.Count</h4>
+                                    <small class="text-muted">Assigned</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-primary mb-0">@shiftDetail.RequiredStaff</h4>
+                                <small class="text-muted">Required</small>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-@GetStaffingLevelColor()" 
+                                     role="progressbar" 
+                                     style="width: @GetStaffingPercentage()%" 
+                                     aria-valuenow="@shiftDetail.StaffAssignments.Count" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="@shiftDetail.RequiredStaff">
+                                </div>
+                            </div>
+                            <small class="text-muted">
+                                @GetStaffingPercentage()% staffed
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Staff Assignments -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-users me-2"></i>Staff Assignments (@shiftDetail.StaffAssignments.Count / @shiftDetail.RequiredStaff)
+                        </h5>
+                        @if (shiftDetail.StaffAssignments.Count < shiftDetail.RequiredStaff)
+                        {
+                            <span class="badge bg-warning">
+                                @(shiftDetail.RequiredStaff - shiftDetail.StaffAssignments.Count) slots available
+                            </span>
+                        }
+                        else if (shiftDetail.StaffAssignments.Count == shiftDetail.RequiredStaff)
+                        {
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-check me-1"></i>Fully Staffed
+                            </span>
+                        }
+                    </div>
+                    <div class="card-body">
+                        @if (!shiftDetail.StaffAssignments.Any())
+                        {
+                            <div class="text-center py-5">
+                                <i class="fas fa-users-slash fa-4x text-muted mb-4"></i>
+                                <h5 class="text-muted">No Staff Assigned</h5>
+                                <p class="text-muted mb-4">This shift doesn't have any staff assigned yet.</p>
+                                <a href="/shifts/edit/@ShiftId" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-plus me-2"></i>Assign Staff
+                                </a>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Assigned Staff Grid -->
+                            <div class="row">
+                                @foreach (var assignment in shiftDetail.StaffAssignments.OrderBy(a => a.Staff.LastName).ThenBy(a => a.Staff.FirstName))
+                                {
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card border-0 bg-light">
+                                            <div class="card-body">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3">
+                                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                            <span class="fw-bold">@assignment.Staff.FirstName.Substring(0, 1)@assignment.Staff.LastName.Substring(0, 1)</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="card-title mb-1">
+                                                            <a href="/staff/details/@assignment.StaffId" class="text-decoration-none">
+                                                                @assignment.Staff.FullName
+                                                            </a>
+                                                        </h6>
+                                                        <div class="d-flex flex-wrap gap-1 mb-2">
+                                                            <span class="badge bg-@GetRoleColor(assignment.Staff.Role)">
+                                                                @assignment.Staff.Role
+                                                            </span>
+                                                            <span class="badge bg-@GetAssignmentStatusColor(assignment.Status)">
+                                                                @assignment.Status
+                                                            </span>
+                                                            @if (!string.IsNullOrEmpty(assignment.Staff.CertificationLevel))
+                                                            {
+                                                                <span class="badge bg-info">@assignment.Staff.CertificationLevel</span>
+                                                            }
+                                                        </div>
+                                                        <div class="small text-muted">
+                                                            <i class="fas fa-envelope me-1"></i>@assignment.Staff.Email
+                                                            @if (!string.IsNullOrEmpty(assignment.Staff.Phone))
+                                                            {
+                                                                <br><i class="fas fa-phone me-1"></i>@assignment.Staff.Phone
+                                                            }
+                                                        </div>
+                                                        <div class="small text-muted mt-1">
+                                                            <i class="fas fa-calendar-plus me-1"></i>
+                                                            Assigned: @assignment.AssignedAt.ToString("MMM dd, yyyy HH:mm")
+                                                        </div>
+                                                        @if (assignment.CheckInTime.HasValue)
+                                                        {
+                                                            <div class="small text-success mt-1">
+                                                                <i class="fas fa-sign-in-alt me-1"></i>
+                                                                Checked in: @assignment.CheckInTime.Value.ToString("HH:mm")
+                                                            </div>
+                                                        }
+                                                        @if (assignment.CheckOutTime.HasValue)
+                                                        {
+                                                            <div class="small text-secondary mt-1">
+                                                                <i class="fas fa-sign-out-alt me-1"></i>
+                                                                Checked out: @assignment.CheckOutTime.Value.ToString("HH:mm")
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (shiftDetail.StaffAssignments.Count < shiftDetail.RequiredStaff)
+                            {
+                                <div class="alert alert-warning mt-3 mb-0">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Additional Staff Needed:</strong> 
+                                    This shift needs @(shiftDetail.RequiredStaff - shiftDetail.StaffAssignments.Count) more staff member(s).
+                                    <div class="mt-2">
+                                        <a href="/shifts/edit/@ShiftId" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-plus me-1"></i>Add More Staff
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-success mt-3 mb-0">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <strong>Shift is fully staffed!</strong> All required positions have been filled.
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Time Tracking (if shift has started or ended) -->
+                @if (shiftDetail.StaffAssignments.Any(a => a.CheckInTime.HasValue || a.CheckOutTime.HasValue))
+                {
+                    <div class="card border-0 shadow-sm mt-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-clock me-2"></i>Time Tracking
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Staff Member</th>
+                                            <th>Check In</th>
+                                            <th>Check Out</th>
+                                            <th>Hours Worked</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var assignment in shiftDetail.StaffAssignments.Where(a => a.CheckInTime.HasValue || a.CheckOutTime.HasValue))
+                                        {
+                                            <tr>
+                                                <td>@assignment.Staff.FullName</td>
+                                                <td>
+                                                    @if (assignment.CheckInTime.HasValue)
+                                                    {
+                                                        <span class="text-success">
+                                                            <i class="fas fa-check me-1"></i>
+                                                            @assignment.CheckInTime.Value.ToString("HH:mm")
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (assignment.CheckOutTime.HasValue)
+                                                    {
+                                                        <span class="text-secondary">
+                                                            <i class="fas fa-sign-out-alt me-1"></i>
+                                                            @assignment.CheckOutTime.Value.ToString("HH:mm")
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (assignment.CheckInTime.HasValue && assignment.CheckOutTime.HasValue)
+                                                    {
+                                                        var hoursWorked = (assignment.CheckOutTime.Value - assignment.CheckInTime.Value).TotalHours;
+                                                        <span class="fw-medium">@hoursWorked.ToString("F1")h</span>
+                                                    }
+                                                    else if (assignment.CheckInTime.HasValue)
+                                                    {
+                                                        <span class="text-warning">
+                                                            <i class="fas fa-clock me-1"></i>In Progress
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int ShiftId { get; set; }
+
+    private bool isLoading = true;
+    private Shift? shiftDetail;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadShiftDetails();
+        isLoading = false;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (isLoading) return;
+        await LoadShiftDetails();
+    }
+
+    private async Task LoadShiftDetails()
+    {
+        shiftDetail = await ShiftService.GetShiftByIdAsync(ShiftId);
+    }
+
+    private void GoBack()
+    {
+        if (shiftDetail != null)
+        {
+            Navigation.NavigateTo($"/events/details/{shiftDetail.EventId}");
+        }
+        else
+        {
+            Navigation.NavigateTo("/shifts");
+        }
+    }
+
+    private string GetShiftStatusColor(ShiftStatus status)
+    {
+        return status switch
+        {
+            ShiftStatus.Open => "primary",
+            ShiftStatus.Full => "info",
+            ShiftStatus.InProgress => "success",
+            ShiftStatus.Completed => "secondary",
+            ShiftStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+
+    private string GetRoleColor(StaffRole role)
+    {
+        return role switch
+        {
+            StaffRole.Doctor => "danger",
+            StaffRole.Paramedic => "warning",
+            StaffRole.TeamLeader => "primary",
+            StaffRole.FirstAider => "success",
+            StaffRole.Volunteer => "info",
+            _ => "secondary"
+        };
+    }
+
+    private string GetAssignmentStatusColor(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => "primary",
+            AssignmentStatus.Confirmed => "info",
+            AssignmentStatus.CheckedIn => "success",
+            AssignmentStatus.CheckedOut => "secondary",
+            AssignmentStatus.NoShow => "danger",
+            AssignmentStatus.Cancelled => "dark",
+            _ => "secondary"
+        };
+    }
+
+    private string CalculateShiftDuration()
+    {
+        if (shiftDetail == null) return "";
+        var duration = shiftDetail.EndTime - shiftDetail.StartTime;
+        if (duration.TotalHours >= 24)
+        {
+            return $"{duration.Days}d {duration.Hours}h {duration.Minutes}m";
+        }
+        return $"{duration.Hours}h {duration.Minutes}m";
+    }
+
+    private string GetStaffingLevelColor()
+    {
+        if (shiftDetail == null) return "secondary";
+        
+        var percentage = GetStaffingPercentage();
+        return percentage switch
+        {
+            >= 100 => "success",
+            >= 75 => "warning",
+            >= 50 => "warning",
+            _ => "danger"
+        };
+    }
+
+    private int GetStaffingPercentage()
+    {
+        if (shiftDetail == null || shiftDetail.RequiredStaff == 0) return 0;
+        return (int)((double)shiftDetail.StaffAssignments.Count / shiftDetail.RequiredStaff * 100);
+    }
+}

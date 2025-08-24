@@ -34,6 +34,12 @@ public class Event
     [StringLength(20)]
     public string? ContactPhone { get; set; }
 
+    [EmailAddress]
+    [StringLength(255)]
+    public string? ContactEmail { get; set; }
+
+    public bool NotificationSent { get; set; } = false;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }
@@ -49,6 +55,7 @@ public enum EventStatus
 {
     Requested,
     Planned,
+    Confirmed,
     Active,
     Completed,
     Cancelled

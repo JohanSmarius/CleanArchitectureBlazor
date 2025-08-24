@@ -31,6 +31,23 @@ public class EmailService : IEmailService
     }
 
     /// <summary>
+    /// Sends an event confirmation notification email to the contact person
+    /// </summary>
+    public async Task SendEventConfirmationNotificationAsync(Event @event)
+    {
+        if (string.IsNullOrEmpty(@event.ContactEmail))
+        {
+            _logger.LogWarning("Cannot send event confirmation email for event {EventId}: No contact email provided", @event.Id);
+            return;
+        }
+
+        var subject = $"Event Confirmed: {@event.Name}";
+        var htmlBody = GenerateEventConfirmationEmailBody(@event);
+        
+        await SendEmailAsync(@event.ContactEmail, subject, htmlBody);
+    }
+
+    /// <summary>
     /// Sends a general email using SMTP
     /// </summary>
     public async Task SendEmailAsync(string to, string subject, string htmlBody)
@@ -212,6 +229,137 @@ public class EmailService : IEmailService
         sb.AppendLine("        <div class='footer'>");
         sb.AppendLine("            <p>This is an automated notification from the Medical First Aid Event Manager.</p>");
         sb.AppendLine($"            <p>Email sent on {DateTime.UtcNow:MMM dd, yyyy HH:mm} UTC</p>");
+        sb.AppendLine("        </div>");
+        sb.AppendLine("    </div>");
+        sb.AppendLine("</body>");
+        sb.AppendLine("</html>");
+        
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Generates the HTML body for event confirmation notification email
+    /// </summary>
+    private string GenerateEventConfirmationEmailBody(Event @event)
+    {
+        var sb = new StringBuilder();
+        
+        sb.AppendLine("<!DOCTYPE html>");
+        sb.AppendLine("<html>");
+        sb.AppendLine("<head>");
+        sb.AppendLine("    <meta charset='utf-8'>");
+        sb.AppendLine("    <meta name='viewport' content='width=device-width, initial-scale=1.0'>");
+        sb.AppendLine("    <title>Event Confirmation</title>");
+        sb.AppendLine("    <style>");
+        sb.AppendLine("        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }");
+        sb.AppendLine("        .container { max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px; }");
+        sb.AppendLine("        .header { background: #28a745; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }");
+        sb.AppendLine("        .content { background: white; padding: 20px; border-radius: 0 0 8px 8px; }");
+        sb.AppendLine("        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }");
+        sb.AppendLine("        .badge-success { background: #28a745; color: white; }");
+        sb.AppendLine("        .detail-row { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }");
+        sb.AppendLine("        .detail-label { font-weight: bold; color: #495057; }");
+        sb.AppendLine("        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #6c757d; }");
+        sb.AppendLine("        .highlight { background: #fff3cd; padding: 15px; border-radius: 4px; border-left: 4px solid #ffc107; margin: 15px 0; }");
+        sb.AppendLine("    </style>");
+        sb.AppendLine("</head>");
+        sb.AppendLine("<body>");
+        sb.AppendLine("    <div class='container'>");
+        sb.AppendLine("        <div class='header'>");
+        sb.AppendLine("            <h1>? Event Confirmation</h1>");
+        sb.AppendLine("        </div>");
+        sb.AppendLine("        <div class='content'>");
+        
+        if (!string.IsNullOrEmpty(@event.ContactPerson))
+        {
+            sb.AppendLine($"            <p>Hello <strong>{@event.ContactPerson}</strong>,</p>");
+        }
+        else
+        {
+            sb.AppendLine("            <p>Hello,</p>");
+        }
+        
+        sb.AppendLine("            <p>Great news! Your event request has been <strong>confirmed</strong> by our medical first aid team.</p>");
+        
+        sb.AppendLine("            <div class='highlight'>");
+        sb.AppendLine("                <h3>?? Your Event is Confirmed!</h3>");
+        sb.AppendLine("                <p>We are pleased to confirm that medical first aid coverage has been arranged for your event.</p>");
+        sb.AppendLine("            </div>");
+        
+        // Event Details
+        sb.AppendLine("            <h3>?? Event Details</h3>");
+        sb.AppendLine("            <div class='detail-row'>");
+        sb.AppendLine($"                <div class='detail-label'>Event Name:</div>");
+        sb.AppendLine($"                <div>{@event.Name}</div>");
+        sb.AppendLine("            </div>");
+        sb.AppendLine("            <div class='detail-row'>");
+        sb.AppendLine($"                <div class='detail-label'>Location:</div>");
+        sb.AppendLine($"                <div>?? {@event.Location}</div>");
+        sb.AppendLine("            </div>");
+        sb.AppendLine("            <div class='detail-row'>");
+        sb.AppendLine($"                <div class='detail-label'>Event Duration:</div>");
+        sb.AppendLine($"                <div>??? {@event.StartDate:dddd, MMMM dd, yyyy HH:mm} - {@event.EndDate:dddd, MMMM dd, yyyy HH:mm}</div>");
+        sb.AppendLine("            </div>");
+        
+        var duration = @event.EndDate - @event.StartDate;
+        var durationText = duration.TotalDays >= 1 
+            ? $"{duration.Days} day(s), {duration.Hours} hour(s)" 
+            : $"{duration.Hours} hour(s), {duration.Minutes} minute(s)";
+        
+        sb.AppendLine("            <div class='detail-row'>");
+        sb.AppendLine($"                <div class='detail-label'>Duration:</div>");
+        sb.AppendLine($"                <div>?? {durationText}</div>");
+        sb.AppendLine("            </div>");
+        
+        if (!string.IsNullOrEmpty(@event.Description))
+        {
+            sb.AppendLine("            <div class='detail-row'>");
+            sb.AppendLine($"                <div class='detail-label'>Event Description:</div>");
+            sb.AppendLine($"                <div>{@event.Description}</div>");
+            sb.AppendLine("            </div>");
+        }
+        
+        // Status Badge
+        sb.AppendLine("            <div class='detail-row'>");
+        sb.AppendLine($"                <div class='detail-label'>Status:</div>");
+        sb.AppendLine($"                <div><span class='badge badge-success'>? Confirmed</span></div>");
+        sb.AppendLine("            </div>");
+        
+        // What's Next Section
+        sb.AppendLine("            <h3>?? What Happens Next?</h3>");
+        sb.AppendLine("            <ul>");
+        sb.AppendLine("                <li><strong>Staff Assignment:</strong> Our team will assign qualified medical first aid personnel to your event</li>");
+        sb.AppendLine("                <li><strong>Pre-Event Contact:</strong> You will be contacted 24-48 hours before the event with final details</li>");
+        sb.AppendLine("                <li><strong>Day of Event:</strong> Our staff will arrive 30 minutes early for setup and briefing</li>");
+        sb.AppendLine("                <li><strong>Equipment:</strong> All necessary medical equipment and supplies will be provided</li>");
+        sb.AppendLine("            </ul>");
+        
+        // Important Notes
+        sb.AppendLine("            <h3>?? Important Information</h3>");
+        sb.AppendLine("            <ul>");
+        sb.AppendLine("                <li>Please ensure adequate parking and access for our medical team</li>");
+        sb.AppendLine("                <li>Notify us immediately if there are any changes to your event details</li>");
+        sb.AppendLine("                <li>Our team will need access to power outlets for medical equipment</li>");
+        sb.AppendLine("                <li>A designated area for the first aid station should be available</li>");
+        sb.AppendLine("            </ul>");
+        
+        // Contact Information
+        sb.AppendLine("            <h3>?? Need to Make Changes?</h3>");
+        sb.AppendLine("            <p>If you need to make any changes to your event or have questions, please contact us as soon as possible:</p>");
+        sb.AppendLine("            <div class='detail-row'>");
+        sb.AppendLine("                <div>?? Email: <a href='mailto:events@medicalfirstaid.com'>events@medicalfirstaid.com</a></div>");
+        sb.AppendLine("                <div>?? Phone: +1 (555) 123-4567</div>");
+        sb.AppendLine("                <div>?? Office Hours: Monday-Friday, 8:00 AM - 6:00 PM</div>");
+        sb.AppendLine("            </div>");
+        
+        sb.AppendLine("            <p><strong>Thank you for choosing our medical first aid services!</strong></p>");
+        sb.AppendLine("            <p>We look forward to providing professional medical coverage for your event.</p>");
+        
+        sb.AppendLine("        </div>");
+        sb.AppendLine("        <div class='footer'>");
+        sb.AppendLine("            <p>This is an automated confirmation from the Medical First Aid Event Manager.</p>");
+        sb.AppendLine($"            <p>Confirmation sent on {DateTime.UtcNow:MMMM dd, yyyy 'at' HH:mm} UTC</p>");
+        sb.AppendLine("            <p>Reference ID: EVENT-{@event.Id:D6}</p>");
         sb.AppendLine("        </div>");
         sb.AppendLine("    </div>");
         sb.AppendLine("</body>");

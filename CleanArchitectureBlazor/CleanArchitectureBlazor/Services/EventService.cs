@@ -21,10 +21,14 @@ public interface IEventService
 public class EventService : IEventService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<EventService> _logger;
 
-    public EventService(ApplicationDbContext context)
+    public EventService(ApplicationDbContext context, IEmailService emailService, ILogger<EventService> logger)
     {
         _context = context;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<List<Event>> GetAllEventsAsync()
@@ -54,10 +58,47 @@ public class EventService : IEventService
 
     public async Task<Event> UpdateEventAsync(Event eventModel)
     {
+        var existingEvent = await _context.Events.FindAsync(eventModel.Id);
+        if (existingEvent == null)
+        {
+            throw new InvalidOperationException($"Event with ID {eventModel.Id} not found.");
+        }
+
+        // Store the original status to check for changes
+        var originalStatus = existingEvent.Status;
+        var originalNotificationSent = existingEvent.NotificationSent;
+
+        // Update the entity
         eventModel.UpdatedAt = DateTime.UtcNow;
-        _context.Events.Update(eventModel);
+        _context.Entry(existingEvent).CurrentValues.SetValues(eventModel);
+
+        // Check if status changed from something else to Planned and email hasn't been sent
+        if (originalStatus != EventStatus.Planned && 
+            eventModel.Status == EventStatus.Planned && 
+            !originalNotificationSent &&
+            !string.IsNullOrEmpty(eventModel.ContactEmail))
+        {
+            try
+            {
+                // Send confirmation email
+                await _emailService.SendEventConfirmationNotificationAsync(eventModel);
+                
+                // Set status to Confirmed and mark notification as sent
+                existingEvent.Status = EventStatus.Confirmed;
+                existingEvent.NotificationSent = true;
+                
+                _logger.LogInformation("Event confirmation email sent for event {EventId} to {ContactEmail}", 
+                    eventModel.Id, eventModel.ContactEmail);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send event confirmation email for event {EventId}", eventModel.Id);
+                // Don't throw - we still want to save the event status change
+            }
+        }
+
         await _context.SaveChangesAsync();
-        return eventModel;
+        return existingEvent;
     }
 
     public async Task DeleteEventAsync(int id)

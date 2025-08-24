@@ -1,31 +1,432 @@
 @page "/shifts"
+@using CleanArchitectureBlazor.Models
+@using CleanArchitectureBlazor.Services
+@inject IShiftService ShiftService
+@inject IEventService EventService
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>Shifts - Medical First Aid Manager</PageTitle>
 
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-0 text-primary">
-                        <i class="fas fa-clock me-2"></i>Shifts
-                    </h1>
-                    <p class="text-muted">Manage event shifts and scheduling</p>
-                </div>
-                <a href="/shifts/create" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Create Shift
-                </a>
-            </div>
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
     </div>
+}
+else
+{
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0 text-primary">
+                            <i class="fas fa-clock me-2"></i>All Shifts
+                        </h1>
+                        <p class="text-muted">Manage event shifts and scheduling</p>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-outline-secondary" @onclick="RefreshShifts">
+                            <i class="fas fa-refresh me-2"></i>Refresh
+                        </button>
+                        <a href="/events" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i>Create Event & Shifts
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <div class="text-center py-5">
-        <i class="fas fa-clock fa-4x text-muted mb-4"></i>
-        <h4 class="text-muted">Shift Management</h4>
-        <p class="text-muted mb-4">This page will show all shifts organized by events.</p>
-        <a href="/shifts/create" class="btn btn-primary btn-lg">
-            <i class="fas fa-plus me-2"></i>Create First Shift
-        </a>
+        <!-- Filter and Search -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" placeholder="Search shifts..." 
+                           @bind="searchTerm" @oninput="OnSearchChanged" />
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <select class="form-select" @bind="statusFilter" @bind:after="ApplyFilters">
+                    <option value="">All Statuses</option>
+                    <option value="@ShiftStatus.Open">Open</option>
+                    <option value="@ShiftStatus.Full">Full</option>
+                    <option value="@ShiftStatus.InProgress">In Progress</option>
+                    <option value="@ShiftStatus.Completed">Completed</option>
+                    <option value="@ShiftStatus.Cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <select class="form-select" @bind="timeFilter" @bind:after="ApplyFilters">
+                    <option value="">All Time</option>
+                    <option value="upcoming">Upcoming</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="past">Past</option>
+                </select>
+            </div>
+            <div class="col-md-2 mb-3">
+                <div class="d-flex align-items-center justify-content-end">
+                    <small class="text-muted">
+                        @filteredShifts.Count of @allShifts.Count shifts
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        @if (!allShifts.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-clock fa-4x text-muted mb-4"></i>
+                <h4 class="text-muted">No Shifts Found</h4>
+                <p class="text-muted mb-4">There are no shifts created yet. Create an event first, then add shifts to it.</p>
+                <a href="/events" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Create Your First Event
+                </a>
+            </div>
+        }
+        else if (!filteredShifts.Any())
+        {
+            <div class="text-center py-4">
+                <i class="fas fa-filter fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Shifts Match Your Filters</h5>
+                <p class="text-muted mb-3">Try adjusting your search or filter criteria.</p>
+                <button class="btn btn-outline-primary" @onclick="ClearFilters">
+                    <i class="fas fa-times me-2"></i>Clear Filters
+                </button>
+            </div>
+        }
+        else
+        {
+            <!-- Shifts by Event -->
+            @foreach (var eventGroup in filteredShifts.GroupBy(s => s.Event).OrderBy(g => g.Key.StartDate))
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent border-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title mb-1">
+                                    <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                                    <a href="/events/details/@eventGroup.Key.Id" class="text-decoration-none">
+                                        @eventGroup.Key.Name
+                                    </a>
+                                </h5>
+                                <div class="d-flex align-items-center flex-wrap gap-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-map-marker-alt me-1"></i>@eventGroup.Key.Location
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>@eventGroup.Key.StartDate.ToString("MMM dd") - @eventGroup.Key.EndDate.ToString("MMM dd, yyyy")
+                                    </small>
+                                    <span class="badge bg-@GetEventStatusColor(eventGroup.Key.Status)">
+                                        @eventGroup.Key.Status
+                                    </span>
+                                    <small class="text-muted">
+                                        @eventGroup.Count() shift(s)
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="/events/details/@eventGroup.Key.Id" class="btn btn-outline-primary" title="View Event">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="/events/edit/@eventGroup.Key.Id" class="btn btn-outline-secondary" title="Edit Event">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var shift in eventGroup.OrderBy(s => s.StartTime))
+                            {
+                                <div class="col-lg-6 col-xl-4 mb-3">
+                                    <div class="card h-100 border-0 bg-light">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="card-title mb-0">
+                                                    <a href="/shifts/details/@shift.Id" class="text-decoration-none">
+                                                        @shift.Name
+                                                    </a>
+                                                </h6>
+                                                <span class="badge bg-@GetShiftStatusColor(shift.Status)">
+                                                    @shift.Status
+                                                </span>
+                                            </div>
+                                            
+                                            @if (!string.IsNullOrEmpty(shift.Description))
+                                            {
+                                                <p class="card-text small text-muted mb-2">
+                                                    @(shift.Description.Length > 60 ? shift.Description.Substring(0, 60) + "..." : shift.Description)
+                                                </p>
+                                            }
+
+                                            <div class="small text-muted mb-2">
+                                                <div>
+                                                    <i class="fas fa-calendar me-1"></i>
+                                                    @shift.StartTime.ToString("MMM dd, yyyy")
+                                                </div>
+                                                <div>
+                                                    <i class="fas fa-clock me-1"></i>
+                                                    @shift.StartTime.ToString("HH:mm") - @shift.EndTime.ToString("HH:mm")
+                                                    <small class="text-muted">(@CalculateShiftDuration(shift))</small>
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <div class="small">
+                                                    <i class="fas fa-users me-1"></i>
+                                                    <span class="fw-medium">@shift.StaffAssignments.Count / @shift.RequiredStaff</span>
+                                                    @if (shift.StaffAssignments.Count == shift.RequiredStaff)
+                                                    {
+                                                        <span class="badge bg-success ms-1">Full</span>
+                                                    }
+                                                    else if (shift.StaffAssignments.Count > 0)
+                                                    {
+                                                        <span class="badge bg-warning ms-1">Partial</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger ms-1">Empty</span>
+                                                    }
+                                                </div>
+                                                @if (shift.StaffAssignments.Count < shift.RequiredStaff)
+                                                {
+                                                    <small class="text-warning">
+                                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                                        @(shift.RequiredStaff - shift.StaffAssignments.Count) needed
+                                                    </small>
+                                                }
+                                            </div>
+
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="/shifts/details/@shift.Id" class="btn btn-outline-primary" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="/shifts/edit/@shift.Id" class="btn btn-outline-secondary" title="Edit Shift">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                </div>
+                                                <small class="text-muted">
+                                                    @GetTimeFromNow(shift.StartTime)
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+
+        <!-- Summary Statistics -->
+        @if (allShifts.Any())
+        {
+            <div class="row mt-4">
+                <div class="col">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>Shifts Summary
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-2 col-6 mb-3">
+                                    <h4 class="text-primary mb-0">@allShifts.Count</h4>
+                                    <small class="text-muted">Total Shifts</small>
+                                </div>
+                                <div class="col-md-2 col-6 mb-3">
+                                    <h4 class="text-success mb-0">@upcomingShifts</h4>
+                                    <small class="text-muted">Upcoming</small>
+                                </div>
+                                <div class="col-md-2 col-6 mb-3">
+                                    <h4 class="text-warning mb-0">@inProgressShifts</h4>
+                                    <small class="text-muted">In Progress</small>
+                                </div>
+                                <div class="col-md-2 col-6 mb-3">
+                                    <h4 class="text-info mb-0">@totalStaffRequired</h4>
+                                    <small class="text-muted">Staff Required</small>
+                                </div>
+                                <div class="col-md-2 col-6 mb-3">
+                                    <h4 class="text-@GetStaffingColor() mb-0">@totalStaffAssigned</h4>
+                                    <small class="text-muted">Staff Assigned</small>
+                                </div>
+                                <div class="col-md-2 col-6 mb-3">
+                                    <h4 class="text-secondary mb-0">@completedShifts</h4>
+                                    <small class="text-muted">Completed</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
-</div>
+}
+
+@code {
+    private bool isLoading = true;
+    private List<Shift> allShifts = new();
+    private List<Shift> filteredShifts = new();
+    
+    private string searchTerm = string.Empty;
+    private string statusFilter = string.Empty;
+    private string timeFilter = string.Empty;
+
+    // Statistics
+    private int upcomingShifts => allShifts.Count(s => s.StartTime > DateTime.Now && s.Status != ShiftStatus.Cancelled);
+    private int inProgressShifts => allShifts.Count(s => s.Status == ShiftStatus.InProgress);
+    private int completedShifts => allShifts.Count(s => s.Status == ShiftStatus.Completed);
+    private int totalStaffRequired => allShifts.Sum(s => s.RequiredStaff);
+    private int totalStaffAssigned => allShifts.Sum(s => s.StaffAssignments.Count);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadShifts();
+        ApplyFilters();
+        isLoading = false;
+    }
+
+    private async Task LoadShifts()
+    {
+        allShifts = await ShiftService.GetAllShiftsAsync();
+    }
+
+    private async Task RefreshShifts()
+    {
+        isLoading = true;
+        await LoadShifts();
+        ApplyFilters();
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private void OnSearchChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        var filtered = allShifts.AsEnumerable();
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filtered = filtered.Where(s => 
+                s.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                s.Event.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                s.Event.Location.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrEmpty(s.Description) && s.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            );
+        }
+
+        // Apply status filter
+        if (!string.IsNullOrEmpty(statusFilter) && Enum.TryParse<ShiftStatus>(statusFilter, out var status))
+        {
+            filtered = filtered.Where(s => s.Status == status);
+        }
+
+        // Apply time filter
+        if (!string.IsNullOrEmpty(timeFilter))
+        {
+            var now = DateTime.Now;
+            var today = now.Date;
+            var weekStart = today.AddDays(-(int)today.DayOfWeek);
+            var monthStart = new DateTime(today.Year, today.Month, 1);
+
+            filtered = timeFilter switch
+            {
+                "upcoming" => filtered.Where(s => s.StartTime > now),
+                "today" => filtered.Where(s => s.StartTime.Date == today),
+                "week" => filtered.Where(s => s.StartTime.Date >= weekStart && s.StartTime.Date < weekStart.AddDays(7)),
+                "month" => filtered.Where(s => s.StartTime >= monthStart && s.StartTime < monthStart.AddMonths(1)),
+                "past" => filtered.Where(s => s.EndTime < now),
+                _ => filtered
+            };
+        }
+
+        filteredShifts = filtered.OrderBy(s => s.StartTime).ToList();
+        StateHasChanged();
+    }
+
+    private void ClearFilters()
+    {
+        searchTerm = string.Empty;
+        statusFilter = string.Empty;
+        timeFilter = string.Empty;
+        ApplyFilters();
+    }
+
+    private string GetEventStatusColor(EventStatus status)
+    {
+        return status switch
+        {
+            EventStatus.Requested => "warning",
+            EventStatus.Planned => "primary",
+            EventStatus.Active => "success",
+            EventStatus.Completed => "secondary",
+            EventStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+
+    private string GetShiftStatusColor(ShiftStatus status)
+    {
+        return status switch
+        {
+            ShiftStatus.Open => "primary",
+            ShiftStatus.Full => "info",
+            ShiftStatus.InProgress => "success",
+            ShiftStatus.Completed => "secondary",
+            ShiftStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+
+    private string GetStaffingColor()
+    {
+        if (totalStaffRequired == 0) return "secondary";
+        var percentage = (double)totalStaffAssigned / totalStaffRequired;
+        return percentage >= 0.8 ? "success" : percentage >= 0.6 ? "warning" : "danger";
+    }
+
+    private string CalculateShiftDuration(Shift shift)
+    {
+        var duration = shift.EndTime - shift.StartTime;
+        if (duration.TotalHours >= 24)
+        {
+            return $"{duration.Days}d {duration.Hours}h";
+        }
+        return $"{duration.Hours}h {duration.Minutes}m";
+    }
+
+    private string GetTimeFromNow(DateTime dateTime)
+    {
+        var timeSpan = dateTime - DateTime.Now;
+        
+        if (timeSpan.TotalDays > 1)
+            return $"in {(int)timeSpan.TotalDays} days";
+        else if (timeSpan.TotalHours > 1)
+            return $"in {(int)timeSpan.TotalHours}h";
+        else if (timeSpan.TotalMinutes > 1)
+            return $"in {(int)timeSpan.TotalMinutes}m";
+        else if (timeSpan.TotalMinutes > -60)
+            return "now";
+        else if (timeSpan.TotalHours > -24)
+            return $"{(int)Math.Abs(timeSpan.TotalHours)}h ago";
+        else
+            return $"{(int)Math.Abs(timeSpan.TotalDays)} days ago";
+    }
+}

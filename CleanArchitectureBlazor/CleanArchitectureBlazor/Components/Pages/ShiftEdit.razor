@@ -110,12 +110,12 @@ else
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Start Time *</label>
-                                    <input type="datetime-local" @bind="editShift.StartTime" class="form-control" />
+                                    <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="editShift.StartTime" class="form-control" />
                                     <ValidationMessage For="() => editShift.StartTime" class="text-danger" />
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">End Time *</label>
-                                    <input type="datetime-local" @bind="editShift.EndTime" class="form-control" />
+                                    <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="editShift.EndTime" class="form-control" />
                                     <ValidationMessage For="() => editShift.EndTime" class="text-danger" />
                                 </div>
                             </div>
