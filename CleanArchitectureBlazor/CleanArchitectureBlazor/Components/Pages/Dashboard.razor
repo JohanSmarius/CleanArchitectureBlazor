@@ -1,0 +1,317 @@
+@page "/dashboard"
+@using CleanArchitectureBlazor.Models
+@using CleanArchitectureBlazor.Services
+@inject IEventService EventService
+@inject IShiftService ShiftService
+@inject IStaffService StaffService
+@inject IStaffAssignmentService StaffAssignmentService
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard - Medical First Aid Manager</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0 text-primary">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </h1>
+            <p class="text-muted">Medical First Aid Event & Shift Management</p>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary bg-gradient rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-calendar-alt text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted mb-1">Upcoming Events</h6>
+                                <h4 class="mb-0">@upcomingEvents.Count</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-success bg-gradient rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-clock text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted mb-1">Active Shifts</h6>
+                                <h4 class="mb-0">@activeShifts.Count</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-info bg-gradient rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-users text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted mb-1">Active Staff</h6>
+                                <h4 class="mb-0">@activeStaff.Count</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-warning bg-gradient rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-user-check text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted mb-1">Staff On Duty</h6>
+                                <h4 class="mb-0">@staffOnDuty.Count</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions and Upcoming Events -->
+        <div class="row">
+            <!-- Quick Actions -->
+            <div class="col-lg-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent border-0">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bolt me-2 text-primary"></i>Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/events/create" class="btn btn-outline-primary">
+                                <i class="fas fa-plus me-2"></i>Create Event
+                            </a>
+                            <a href="/shifts/create" class="btn btn-outline-success">
+                                <i class="fas fa-clock me-2"></i>Create Shift
+                            </a>
+                            <a href="/staff/create" class="btn btn-outline-info">
+                                <i class="fas fa-user-plus me-2"></i>Add Staff
+                            </a>
+                            <a href="/assignments" class="btn btn-outline-warning">
+                                <i class="fas fa-user-check me-2"></i>Manage Assignments
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Events -->
+            <div class="col-lg-8 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-calendar-check me-2 text-primary"></i>Upcoming Events
+                        </h5>
+                        <a href="/events" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        @if (upcomingEvents.Any())
+                        {
+                            @foreach (var eventItem in upcomingEvents.Take(5))
+                            {
+                                <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-calendar text-primary"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-1">@eventItem.Name</h6>
+                                        <p class="text-muted mb-1">
+                                            <i class="fas fa-map-marker-alt me-1"></i>@eventItem.Location
+                                        </p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>@eventItem.StartDate.ToString("MMM dd, yyyy HH:mm")
+                                        </small>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-@GetEventStatusColor(eventItem.Status)">
+                                            @eventItem.Status
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No upcoming events</p>
+                                <a href="/events/create" class="btn btn-primary">Create First Event</a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Shifts -->
+        @if (todaysShifts.Any())
+        {
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-clock me-2 text-success"></i>Today's Shifts
+                            </h5>
+                            <a href="/shifts" class="btn btn-sm btn-outline-success">View All Shifts</a>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                @foreach (var shift in todaysShifts)
+                                {
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <div class="card border-0 bg-light">
+                                            <div class="card-body">
+                                                <h6 class="card-title">@shift.Name</h6>
+                                                <p class="card-text small">
+                                                    <strong>Event:</strong> @shift.Event.Name<br>
+                                                    <strong>Time:</strong> @shift.StartTime.ToString("HH:mm") - @shift.EndTime.ToString("HH:mm")<br>
+                                                    <strong>Staff:</strong> @shift.StaffAssignments.Count / @shift.RequiredStaff
+                                                </p>
+                                                <span class="badge bg-@GetShiftStatusColor(shift.Status)">
+                                                    @shift.Status
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private List<Event> upcomingEvents = new();
+    private List<Shift> activeShifts = new();
+    private List<Shift> todaysShifts = new();
+    private List<Models.Staff> activeStaff = new();
+    private List<StaffAssignment> staffOnDuty = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var loadTasks = new List<Task>
+            {
+                LoadUpcomingEventsAsync(),
+                LoadActiveShiftsAsync(),
+                LoadTodaysShiftsAsync(),
+                LoadActiveStaffAsync(),
+                LoadStaffOnDutyAsync()
+            };
+
+            await Task.WhenAll(loadTasks);
+        }
+        catch (Exception ex)
+        {
+            // Log the exception
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadUpcomingEventsAsync()
+    {
+        upcomingEvents = await EventService.GetUpcomingEventsAsync();
+    }
+
+    private async Task LoadActiveShiftsAsync()
+    {
+        var allShifts = await ShiftService.GetUpcomingShiftsAsync();
+        var now = DateTime.UtcNow;
+        activeShifts = allShifts.Where(s => s.StartTime <= now && s.EndTime >= now).ToList();
+    }
+
+    private async Task LoadTodaysShiftsAsync()
+    {
+        todaysShifts = await ShiftService.GetShiftsByDateAsync(DateTime.Today);
+    }
+
+    private async Task LoadActiveStaffAsync()
+    {
+        activeStaff = await StaffService.GetActiveStaffAsync();
+    }
+
+    private async Task LoadStaffOnDutyAsync()
+    {
+        var allAssignments = await StaffAssignmentService.GetAllAssignmentsAsync();
+        var now = DateTime.UtcNow;
+        staffOnDuty = allAssignments.Where(sa => 
+            sa.Status == AssignmentStatus.CheckedIn && 
+            sa.Shift.StartTime <= now && 
+            sa.Shift.EndTime >= now).ToList();
+    }
+
+    private string GetEventStatusColor(EventStatus status)
+    {
+        return status switch
+        {
+            EventStatus.Planned => "primary",
+            EventStatus.Active => "success",
+            EventStatus.Completed => "secondary",
+            EventStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+
+    private string GetShiftStatusColor(ShiftStatus status)
+    {
+        return status switch
+        {
+            ShiftStatus.Open => "primary",
+            ShiftStatus.Full => "info",
+            ShiftStatus.InProgress => "success",
+            ShiftStatus.Completed => "secondary",
+            ShiftStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+}

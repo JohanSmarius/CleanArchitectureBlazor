@@ -1,7 +1,80 @@
 ﻿@page "/"
+@inject NavigationManager Navigation
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Medical First Aid Manager</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-heartbeat fa-4x text-primary"></i>
+                </div>
+                <h1 class="display-4 text-primary mb-3">Medical First Aid Manager</h1>
+                <p class="lead text-muted mb-4">
+                    Efficiently manage medical first aid events, shifts, and staff assignments 
+                    for your emergency response team.
+                </p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="/dashboard" class="btn btn-primary btn-lg">
+                        <i class="fas fa-tachometer-alt me-2"></i>View Dashboard
+                    </a>
+                    <a href="/events" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-calendar-alt me-2"></i>Manage Events
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-Welcome to your new app.
+    <!-- Features Section -->
+    <div class="row py-5">
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-calendar-check fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="card-title">Event Management</h5>
+                    <p class="card-text text-muted">
+                        Create and manage medical first aid events with detailed scheduling and location information.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-clock fa-3x text-success"></i>
+                    </div>
+                    <h5 class="card-title">Shift Scheduling</h5>
+                    <p class="card-text text-muted">
+                        Organize shifts within events and assign qualified staff members to ensure proper coverage.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-users fa-3x text-info"></i>
+                    </div>
+                    <h5 class="card-title">Staff Management</h5>
+                    <p class="card-text text-muted">
+                        Maintain a database of qualified medical staff with their certifications and availability.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Auto-redirect to dashboard for returning users
+        // Navigation.NavigateTo("/dashboard");
+    }
+}

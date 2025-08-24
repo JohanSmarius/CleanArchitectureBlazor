@@ -1,0 +1,316 @@
+@page "/events"
+@using CleanArchitectureBlazor.Models
+@using CleanArchitectureBlazor.Services
+@inject IEventService EventService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Events - Medical First Aid Manager</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-primary">
+                        <i class="fas fa-calendar-alt me-2"></i>Events
+                    </h1>
+                    <p class="text-muted">Manage medical first aid events</p>
+                </div>
+                <a href="/events/create" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create Event
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (!events.Any())
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-calendar-times fa-4x text-muted mb-4"></i>
+            <h4 class="text-muted">No Events Found</h4>
+            <p class="text-muted mb-4">Start by creating your first medical first aid event.</p>
+            <a href="/events/create" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>Create First Event
+            </a>
+        </div>
+    }
+    else
+    {
+        <!-- Filter and Search -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" placeholder="Search events..." @bind="searchTerm" @oninput="OnSearchChanged" />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" @bind="statusFilter" @bind:after="OnFilterChanged">
+                    <option value="">All Statuses</option>
+                    <option value="@EventStatus.Planned">Planned</option>
+                    <option value="@EventStatus.Active">Active</option>
+                    <option value="@EventStatus.Completed">Completed</option>
+                    <option value="@EventStatus.Cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" @bind="sortBy" @bind:after="OnSortChanged">
+                    <option value="StartDate">Sort by Start Date</option>
+                    <option value="Name">Sort by Name</option>
+                    <option value="Location">Sort by Location</option>
+                    <option value="Status">Sort by Status</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Events Grid -->
+        <div class="row">
+            @foreach (var eventItem in filteredEvents)
+            {
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title mb-0">@eventItem.Name</h5>
+                                <span class="badge bg-@GetEventStatusColor(eventItem.Status)">
+                                    @eventItem.Status
+                                </span>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/events/details/@eventItem.Id">
+                                        <i class="fas fa-eye me-2"></i>View Details
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/events/edit/@eventItem.Id">
+                                        <i class="fas fa-edit me-2"></i>Edit
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><button class="dropdown-item text-danger" @onclick="() => ConfirmDelete(eventItem)">
+                                        <i class="fas fa-trash me-2"></i>Delete
+                                    </button></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                                <span class="text-muted">@eventItem.Location</span>
+                            </div>
+                            <div class="mb-3">
+                                <i class="fas fa-calendar text-muted me-2"></i>
+                                <span class="text-muted">
+                                    @eventItem.StartDate.ToString("MMM dd, yyyy")
+                                </span>
+                                @if (eventItem.StartDate.Date != eventItem.EndDate.Date)
+                                {
+                                    <span class="text-muted"> - @eventItem.EndDate.ToString("MMM dd, yyyy")</span>
+                                }
+                            </div>
+                            <div class="mb-3">
+                                <i class="fas fa-clock text-muted me-2"></i>
+                                <span class="text-muted">
+                                    @eventItem.StartDate.ToString("HH:mm") - @eventItem.EndDate.ToString("HH:mm")
+                                </span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(eventItem.Description))
+                            {
+                                <p class="card-text text-muted small">
+                                    @(eventItem.Description.Length > 100 ? eventItem.Description.Substring(0, 100) + "..." : eventItem.Description)
+                                </p>
+                            }
+                            @if (!string.IsNullOrEmpty(eventItem.ContactPerson))
+                            {
+                                <div class="mb-2">
+                                    <i class="fas fa-user text-muted me-2"></i>
+                                    <span class="text-muted small">@eventItem.ContactPerson</span>
+                                    @if (!string.IsNullOrEmpty(eventItem.ContactPhone))
+                                    {
+                                        <br>
+                                        <i class="fas fa-phone text-muted me-2"></i>
+                                        <span class="text-muted small">@eventItem.ContactPhone</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>@eventItem.Shifts.Count shift(s)
+                                </small>
+                                <div>
+                                    <a href="/events/details/@eventItem.Id" class="btn btn-sm btn-outline-primary">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (eventToDelete is not null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the event "<strong>@eventToDelete.Name</strong>"?</p>
+                    <p class="text-danger small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        This action cannot be undone and will also delete all associated shifts and assignments.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="DeleteEvent" disabled="@isDeleting">
+                        @if (isDeleting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Delete Event
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private bool isDeleting = false;
+    private List<Event> events = new();
+    private List<Event> filteredEvents = new();
+    private Event? eventToDelete;
+    
+    private string searchTerm = string.Empty;
+    private string statusFilter = string.Empty;
+    private string sortBy = "StartDate";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEvents();
+        ApplyFiltersAndSort();
+        isLoading = false;
+    }
+
+    private async Task LoadEvents()
+    {
+        events = await EventService.GetAllEventsAsync();
+    }
+
+    private void OnSearchChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        ApplyFiltersAndSort();
+    }
+
+    private void OnFilterChanged()
+    {
+        ApplyFiltersAndSort();
+    }
+
+    private void OnSortChanged()
+    {
+        ApplyFiltersAndSort();
+    }
+
+    private void ApplyFiltersAndSort()
+    {
+        var filtered = events.AsEnumerable();
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filtered = filtered.Where(e => 
+                e.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                e.Location.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                (e.Description?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
+            );
+        }
+
+        // Apply status filter
+        if (!string.IsNullOrEmpty(statusFilter) && Enum.TryParse<EventStatus>(statusFilter, out var status))
+        {
+            filtered = filtered.Where(e => e.Status == status);
+        }
+
+        // Apply sorting
+        var sorted = sortBy switch
+        {
+            "Name" => filtered.OrderBy(e => e.Name),
+            "Location" => filtered.OrderBy(e => e.Location),
+            "Status" => filtered.OrderBy(e => e.Status),
+            _ => filtered.OrderBy(e => e.StartDate)
+        };
+
+        filteredEvents = sorted.ToList();
+        StateHasChanged();
+    }
+
+    private void ConfirmDelete(Event eventItem)
+    {
+        eventToDelete = eventItem;
+    }
+
+    private void CancelDelete()
+    {
+        eventToDelete = null;
+    }
+
+    private async Task DeleteEvent()
+    {
+        if (eventToDelete is null) return;
+
+        isDeleting = true;
+        try
+        {
+            await EventService.DeleteEventAsync(eventToDelete.Id);
+            events.Remove(eventToDelete);
+            ApplyFiltersAndSort();
+            eventToDelete = null;
+        }
+        catch (Exception ex)
+        {
+            // Handle error - in a real app, show a toast notification
+            Console.WriteLine($"Error deleting event: {ex.Message}");
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    private string GetEventStatusColor(EventStatus status)
+    {
+        return status switch
+        {
+            EventStatus.Planned => "primary",
+            EventStatus.Active => "success",
+            EventStatus.Completed => "secondary",
+            EventStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+}

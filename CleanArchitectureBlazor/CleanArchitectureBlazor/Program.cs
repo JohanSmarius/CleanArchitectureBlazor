@@ -2,6 +2,7 @@ using CleanArchitectureBlazor.Client.Pages;
 using CleanArchitectureBlazor.Components;
 using CleanArchitectureBlazor.Components.Account;
 using CleanArchitectureBlazor.Data;
+using CleanArchitectureBlazor.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -40,6 +41,12 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+// Register our application services
+builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IShiftService, ShiftService>();
+builder.Services.AddScoped<IStaffService, StaffService>();
+builder.Services.AddScoped<IStaffAssignmentService, StaffAssignmentService>();
 
 var app = builder.Build();
 
