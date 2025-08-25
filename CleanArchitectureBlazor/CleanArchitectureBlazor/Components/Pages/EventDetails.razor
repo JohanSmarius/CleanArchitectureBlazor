@@ -131,6 +131,14 @@ else
                                             @eventDetail.ContactPhone
                                         </a>
                                     }
+                                    @if (!string.IsNullOrEmpty(eventDetail.ContactEmail))
+                                    {
+                                        <br>
+                                        <i class="fas fa-envelope text-muted me-2"></i>
+                                        <a href="mailto:@eventDetail.ContactEmail" class="text-decoration-none">
+                                            @eventDetail.ContactEmail
+                                        </a>
+                                    }
                                 </div>
                             </div>
                         }

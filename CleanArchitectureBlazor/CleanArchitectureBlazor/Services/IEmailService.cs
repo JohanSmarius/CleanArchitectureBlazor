@@ -16,6 +16,12 @@ public interface IEmailService
     Task SendStaffAssignmentNotificationAsync(Staff staff, Shift shift, Event @event);
     
     /// <summary>
+    /// Sends an event planned notification email to the contact person
+    /// </summary>
+    /// <param name="event">The event that has been planned</param>
+    Task SendEventPlannedNotificationAsync(Event @event);
+    
+    /// <summary>
     /// Sends an event confirmation email to the contact person
     /// </summary>
     /// <param name="event">The event being confirmed</param>

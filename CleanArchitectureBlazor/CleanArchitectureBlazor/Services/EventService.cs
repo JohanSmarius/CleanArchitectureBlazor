@@ -72,7 +72,7 @@ public class EventService : IEventService
         eventModel.UpdatedAt = DateTime.UtcNow;
         _context.Entry(existingEvent).CurrentValues.SetValues(eventModel);
 
-        // Check if status changed from something else to Planned and email hasn't been sent
+        // Check if status changed to Planned and email hasn't been sent
         if (originalStatus != EventStatus.Planned && 
             eventModel.Status == EventStatus.Planned && 
             !originalNotificationSent &&
@@ -80,22 +80,23 @@ public class EventService : IEventService
         {
             try
             {
-                // Send confirmation email
-                await _emailService.SendEventConfirmationNotificationAsync(eventModel);
+                // Send planned notification email
+                await _emailService.SendEventPlannedNotificationAsync(eventModel);
                 
-                // Set status to Confirmed and mark notification as sent
+                // Mark notification as sent but keep status as Planned
                 existingEvent.Status = EventStatus.Confirmed;
                 existingEvent.NotificationSent = true;
                 
-                _logger.LogInformation("Event confirmation email sent for event {EventId} to {ContactEmail}", 
+                _logger.LogInformation("Event planned email sent for event {EventId} to {ContactEmail}", 
                     eventModel.Id, eventModel.ContactEmail);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send event confirmation email for event {EventId}", eventModel.Id);
+                _logger.LogError(ex, "Failed to send event planned email for event {EventId}", eventModel.Id);
                 // Don't throw - we still want to save the event status change
             }
         }
+        
 
         await _context.SaveChangesAsync();
         return existingEvent;

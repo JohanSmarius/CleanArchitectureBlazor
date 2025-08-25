@@ -118,6 +118,7 @@ else
                                     <InputSelect @bind-Value="editForm.Status" class="form-select">
                                         <option value="@EventStatus.Requested">Requested</option>
                                         <option value="@EventStatus.Planned">Planned</option>
+                                        <option value="@EventStatus.Confirmed">Confirmed</option>
                                         <option value="@EventStatus.Active">Active</option>
                                         <option value="@EventStatus.Completed">Completed</option>
                                         <option value="@EventStatus.Cancelled">Cancelled</option>
@@ -136,6 +137,15 @@ else
                                     <label class="form-label">Contact Phone</label>
                                     <InputText @bind-Value="editForm.ContactPhone" class="form-control" placeholder="Enter contact phone number" />
                                     <ValidationMessage For="() => editForm.ContactPhone" class="text-danger" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Contact Email</label>
+                                    <InputText @bind-Value="editForm.ContactEmail" class="form-control" placeholder="Enter contact email address" type="email" />
+                                    <ValidationMessage For="() => editForm.ContactEmail" class="text-danger" />
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Required for status change notifications (Planned, Confirmed)
+                                    </div>
                                 </div>
                             </div>
 
@@ -436,6 +446,7 @@ else
                 Status = eventToEdit.Status,
                 ContactPerson = eventToEdit.ContactPerson,
                 ContactPhone = eventToEdit.ContactPhone,
+                ContactEmail = eventToEdit.ContactEmail,
                 CreatedAt = eventToEdit.CreatedAt,
                 UpdatedAt = eventToEdit.UpdatedAt
             };
@@ -562,6 +573,7 @@ else
         {
             EventStatus.Requested => "warning",
             EventStatus.Planned => "primary",
+            EventStatus.Confirmed => "success",
             EventStatus.Active => "success",
             EventStatus.Completed => "secondary",
             EventStatus.Cancelled => "danger",
