@@ -1,4 +1,4 @@
-@page "/events"
+ @page "/events"
 @using CleanArchitectureBlazor.Models
 @using CleanArchitectureBlazor.Services
 @inject IEventService EventService
@@ -254,8 +254,12 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Location *</label>
-                                <InputText @bind-Value="newEvent.Location" class="form-control" placeholder="Enter event location" />
+                                <InputTextArea @bind-Value="newEvent.Location" class="form-control" rows="5" placeholder="Enter event location" />
                                 <ValidationMessage For="() => newEvent.Location" class="text-danger" />
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    You can enter multiple lines for detailed address or location information
+                                </div>
                             </div>
                         </div>
                         
@@ -347,8 +351,12 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Location *</label>
-                                <InputText @bind-Value="editEvent.Location" class="form-control" placeholder="Enter event location" />
+                                <InputTextArea @bind-Value="editEvent.Location" class="form-control" rows="2" placeholder="Enter event location" />
                                 <ValidationMessage For="() => editEvent.Location" class="text-danger" />
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    You can enter multiple lines for detailed address or location information
+                                </div>
                             </div>
                         </div>
                         
