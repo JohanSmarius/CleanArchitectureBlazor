@@ -1,4 +1,4 @@
- @page "/events"
+@page "/events"
 @using CleanArchitectureBlazor.Models
 @using CleanArchitectureBlazor.Services
 @inject IEventService EventService
@@ -25,7 +25,18 @@
         </div>
     </div>
 
-    @if (isLoading)
+    @if (hasError)
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Error Loading Events</strong>
+            <p class="mb-2">@errorMessage</p>
+            <button class="btn btn-outline-danger btn-sm" @onclick="RetryLoadEvents">
+                <i class="fas fa-redo me-1"></i>Retry
+            </button>
+        </div>
+    }
+    else if (isLoading)
     {
         <div class="d-flex justify-content-center py-5">
             <div class="spinner-border text-primary" role="status">
@@ -46,9 +57,9 @@
     }
     else
     {
-        <!-- Filter and Search -->
+        <!-- Filter, Search, and View Toggle -->
         <div class="row mb-4">
-            <div class="col-md-6">
+            <div class="col-md-5">
                 <div class="input-group">
                     <span class="input-group-text">
                         <i class="fas fa-search"></i>
@@ -56,7 +67,7 @@
                     <input type="text" class="form-control" placeholder="Search events..." @bind="searchTerm" @oninput="OnSearchChanged" />
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <select class="form-select" @bind="statusFilter" @bind:after="OnFilterChanged">
                     <option value="">All Statuses</option>
                     <option value="@EventStatus.Requested">Requested</option>
@@ -67,7 +78,7 @@
                     <option value="@EventStatus.Cancelled">Cancelled</option>
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <select class="form-select" @bind="sortBy" @bind:after="OnSortChanged">
                     <option value="StartDate">Sort by Start Date</option>
                     <option value="Name">Sort by Name</option>
@@ -75,121 +86,293 @@
                     <option value="Status">Sort by Status</option>
                 </select>
             </div>
+            <div class="col-md-3">
+                <div class="d-flex justify-content-end">
+                    <div class="btn-group" role="group" aria-label="View options">
+                        <button type="button" 
+                                class="btn @(viewMode == "cards" ? "btn-primary" : "btn-outline-primary")" 
+                                @onclick="@(() => SetViewMode("cards"))"
+                                title="Card View">
+                            <i class="fas fa-th-large me-1"></i>Cards
+                        </button>
+                        <button type="button" 
+                                class="btn @(viewMode == "table" ? "btn-primary" : "btn-outline-primary")" 
+                                @onclick="@(() => SetViewMode("table"))"
+                                title="Table View">
+                            <i class="fas fa-table me-1"></i>Grid
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Events Grid -->
-        <div class="row">
-            @foreach (var eventItem in filteredEvents)
-            {
-                <div class="col-lg-6 col-xl-4 mb-4" @onclick="CloseDropdown">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="card-title mb-0">@eventItem.Name</h5>
-                                <span class="badge bg-@GetEventStatusColor(eventItem.Status)">
-                                    @eventItem.Status
-                                </span>
-                            </div>
-                            <div class="dropdown position-relative">
-                                <button class="btn btn-sm btn-outline-secondary" type="button" 
-                                        @onclick="@((e) => ToggleDropdown(eventItem.Id))" 
-                                        @onclick:stopPropagation="true">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                                @if (openDropdownId == eventItem.Id)
-                                {
-                                    <ul class="dropdown-menu show position-absolute" style="right: 0; left: auto; z-index: 1050;">
-                                        <li>
-                                            <button class="dropdown-item" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
-                                                <i class="fas fa-eye me-2"></i>View Details
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button class="dropdown-item" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
-                                                <i class="fas fa-clock me-2"></i>Create Shift
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button class="dropdown-item" @onclick="@((e) => OpenEditEventDialog(eventItem))" @onclick:stopPropagation="true">
-                                                <i class="fas fa-edit me-2"></i>Edit
-                                            </button>
-                                        </li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <button class="dropdown-item text-danger" @onclick="@((e) => ConfirmDelete(eventItem))" @onclick:stopPropagation="true">
-                                                <i class="fas fa-trash me-2"></i>Delete
-                                            </button>
-                                        </li>
-                                    </ul>
-                                }
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <i class="fas fa-map-marker-alt text-muted me-2"></i>
-                                <span class="text-muted">@eventItem.Location</span>
-                            </div>
-                            <div class="mb-3">
-                                <i class="fas fa-calendar text-muted me-2"></i>
-                                <span class="text-muted">
-                                    @eventItem.StartDate.ToString("MMM dd, yyyy")
-                                </span>
-                                @if (eventItem.StartDate.Date != eventItem.EndDate.Date)
-                                {
-                                    <span class="text-muted"> - @eventItem.EndDate.ToString("MMM dd, yyyy")</span>
-                                }
-                            </div>
-                            <div class="mb-3">
-                                <i class="fas fa-clock text-muted me-2"></i>
-                                <span class="text-muted">
-                                    @eventItem.StartDate.ToString("HH:mm") - @eventItem.EndDate.ToString("HH:mm")
-                                </span>
-                            </div>
-                            @if (!string.IsNullOrEmpty(eventItem.Description))
-                            {
-                                <p class="card-text text-muted small">
-                                    @(eventItem.Description.Length > 100 ? eventItem.Description.Substring(0, 100) + "..." : eventItem.Description)
-                                </p>
-                            }
-                            @if (!string.IsNullOrEmpty(eventItem.ContactPerson))
-                            {
-                                <div class="mb-2">
-                                    <i class="fas fa-user text-muted me-2"></i>
-                                    <span class="text-muted small">@eventItem.ContactPerson</span>
-                                    @if (!string.IsNullOrEmpty(eventItem.ContactPhone))
+        @if (viewMode == "cards")
+        {
+            <!-- Events Card View -->
+            <div class="row">
+                @foreach (var eventItem in filteredEvents)
+                {
+                    <div class="col-lg-6 col-xl-4 mb-4" @onclick="CloseDropdown">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="card-title mb-0">@eventItem.Name</h5>
+                                    <span class="badge bg-@GetEventStatusColor(eventItem.Status)">
+                                        @eventItem.Status
+                                    </span>
+                                </div>
+                                <div class="dropdown position-relative">
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                            @onclick="@((e) => ToggleDropdown(eventItem.Id))" 
+                                            @onclick:stopPropagation="true">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    @if (openDropdownId == eventItem.Id)
                                     {
-                                        <br>
-                                        <i class="fas fa-phone text-muted me-2"></i>
-                                        <span class="text-muted small">@eventItem.ContactPhone</span>
-                                    }
-                                    @if (!string.IsNullOrEmpty(eventItem.ContactEmail))
-                                    {
-                                        <br>
-                                        <i class="fas fa-envelope text-muted me-2"></i>
-                                        <span class="text-muted small">@eventItem.ContactEmail</span>
+                                        <ul class="dropdown-menu show position-absolute" style="right: 0; left: auto; z-index: 1050;">
+                                            <li>
+                                                <button class="dropdown-item" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
+                                                    <i class="fas fa-eye me-2"></i>View Details
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button class="dropdown-item" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
+                                                    <i class="fas fa-clock me-2"></i>Create Shift
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button class="dropdown-item" @onclick="@((e) => OpenEditEventDialog(eventItem))" @onclick:stopPropagation="true">
+                                                    <i class="fas fa-edit me-2"></i>Edit
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button class="dropdown-item text-danger" @onclick="@((e) => ConfirmDelete(eventItem))" @onclick:stopPropagation="true">
+                                                    <i class="fas fa-trash me-2"></i>Delete
+                                                </button>
+                                            </li>
+                                        </ul>
                                     }
                                 </div>
-                            }
-                        </div>
-                        <div class="card-footer bg-transparent border-0">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                    <i class="fas fa-clock me-1"></i>@eventItem.Shifts.Count shift(s)
-                                </small>
-                                <div class="btn-group" role="group">
-                                    <button class="btn btn-sm btn-outline-success" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
-                                        <i class="fas fa-plus me-1"></i>Add Shift
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
-                                        View Details
-                                    </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                                    <span class="text-muted">@eventItem.Location</span>
+                                </div>
+                                <div class="mb-3">
+                                    <i class="fas fa-calendar text-muted me-2"></i>
+                                    <span class="text-muted">
+                                        @eventItem.StartDate.ToString("MMM dd, yyyy")
+                                    </span>
+                                    @if (eventItem.StartDate.Date != eventItem.EndDate.Date)
+                                    {
+                                        <span class="text-muted"> - @eventItem.EndDate.ToString("MMM dd, yyyy")</span>
+                                    }
+                                </div>
+                                <div class="mb-3">
+                                    <i class="fas fa-clock text-muted me-2"></i>
+                                    <span class="text-muted">
+                                        @eventItem.StartDate.ToString("HH:mm") - @eventItem.EndDate.ToString("HH:mm")
+                                    </span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(eventItem.Description))
+                                {
+                                    <p class="card-text text-muted small">
+                                        @(eventItem.Description.Length > 100 ? eventItem.Description.Substring(0, 100) + "..." : eventItem.Description)
+                                    </p>
+                                }
+                                @if (!string.IsNullOrEmpty(eventItem.ContactPerson))
+                                {
+                                    <div class="mb-2">
+                                        <i class="fas fa-user text-muted me-2"></i>
+                                        <span class="text-muted small">@eventItem.ContactPerson</span>
+                                        @if (!string.IsNullOrEmpty(eventItem.ContactPhone))
+                                        {
+                                            <br>
+                                            <i class="fas fa-phone text-muted me-2"></i>
+                                            <span class="text-muted small">@eventItem.ContactPhone</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(eventItem.ContactEmail))
+                                        {
+                                            <br>
+                                            <i class="fas fa-envelope text-muted me-2"></i>
+                                            <span class="text-muted small">@eventItem.ContactEmail</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <div class="card-footer bg-transparent border-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>@eventItem.Shifts.Count shift(s)
+                                    </small>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-success" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
+                                            <i class="fas fa-plus me-1"></i>Add Shift
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
+                                            View Details
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                }
+            </div>
+        }
+        else
+        {
+            <!-- Events Table View -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-table me-2"></i>Events Grid (@filteredEvents.Count)
+                        </h5>
+                        <small class="text-muted">@filteredEvents.Count of @events.Count events</small>
+                    </div>
                 </div>
-            }
-        </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">Event Name</th>
+                                    <th scope="col">Date & Time</th>
+                                    <th scope="col">Location</th>
+                                    <th scope="col">Contact</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Shifts</th>
+                                    <th scope="col" class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var eventItem in filteredEvents)
+                                {
+                                    <tr class="@(eventItem.Status == EventStatus.Cancelled ? "table-secondary" : "")">
+                                        <td>
+                                            <div class="fw-medium">@eventItem.Name</div>
+                                            @if (!string.IsNullOrEmpty(eventItem.Description))
+                                            {
+                                                <small class="text-muted">
+                                                    @(eventItem.Description.Length > 60 ? eventItem.Description.Substring(0, 60) + "..." : eventItem.Description)
+                                                </small>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="fw-medium">@eventItem.StartDate.ToString("MMM dd, yyyy")</div>
+                                            <small class="text-muted">
+                                                @eventItem.StartDate.ToString("HH:mm") - @eventItem.EndDate.ToString("HH:mm")
+                                                @if (eventItem.StartDate.Date != eventItem.EndDate.Date)
+                                                {
+                                                    <text><br/>to @eventItem.EndDate.ToString("MMM dd")</text>
+                                                }
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="text-wrap" style="max-width: 200px;">
+                                                @(eventItem.Location.Length > 50 ? eventItem.Location.Substring(0, 50) + "..." : eventItem.Location)
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(eventItem.ContactPerson))
+                                            {
+                                                <div class="fw-medium">@eventItem.ContactPerson</div>
+                                                @if (!string.IsNullOrEmpty(eventItem.ContactPhone))
+                                                {
+                                                    <small class="text-muted d-block">
+                                                        <i class="fas fa-phone me-1"></i>@eventItem.ContactPhone
+                                                    </small>
+                                                }
+                                                @if (!string.IsNullOrEmpty(eventItem.ContactEmail))
+                                                {
+                                                    <small class="text-muted d-block">
+                                                        <i class="fas fa-envelope me-1"></i>@eventItem.ContactEmail
+                                                    </small>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No contact</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-@GetEventStatusColor(eventItem.Status)">
+                                                @eventItem.Status
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="fw-medium me-2">@eventItem.Shifts.Count</span>
+                                                @if (eventItem.Shifts.Count == 0)
+                                                {
+                                                    <span class="badge bg-warning text-dark">No Shifts</span>
+                                                }
+                                                else
+                                                {
+                                                    var totalRequired = eventItem.Shifts.Sum(s => s.RequiredStaff);
+                                                    var totalAssigned = eventItem.Shifts.Sum(s => s.StaffAssignments.Count);
+                                                    if (totalAssigned >= totalRequired)
+                                                    {
+                                                        <span class="badge bg-success">Fully Staffed</span>
+                                                    }
+                                                    else if (totalAssigned > 0)
+                                                    {
+                                                        <span class="badge bg-warning text-dark">Partial</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger">Unstaffed</span>
+                                                    }
+                                                }
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                                        @onclick="@((e) => ToggleDropdown(eventItem.Id))" 
+                                                        @onclick:stopPropagation="true"
+                                                        aria-expanded="@(openDropdownId == eventItem.Id)">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                @if (openDropdownId == eventItem.Id)
+                                                {
+                                                    <ul class="dropdown-menu show position-absolute" style="right: 0; left: auto; z-index: 1050;">
+                                                        <li>
+                                                            <button class="dropdown-item" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
+                                                                <i class="fas fa-eye me-2"></i>View Details
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
+                                                                <i class="fas fa-clock me-2"></i>Create Shift
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" @onclick="@((e) => OpenEditEventDialog(eventItem))" @onclick:stopPropagation="true">
+                                                                <i class="fas fa-edit me-2"></i>Edit
+                                                            </button>
+                                                        </li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <button class="dropdown-item text-danger" @onclick="@((e) => ConfirmDelete(eventItem))" @onclick:stopPropagation="true">
+                                                                <i class="fas fa-trash me-2"></i>Delete
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
     }
 </div>
 
@@ -569,6 +752,9 @@
     private bool showCreateDialog = false;
     private bool showEditDialog = false;
     private bool showCreateShiftDialog = false;
+    private bool hasError = false;
+    private string errorMessage = string.Empty;
+    
     private List<Event> events = new();
     private List<Event> filteredEvents = new();
     private Event? eventToDelete;
@@ -581,11 +767,51 @@
     private string searchTerm = string.Empty;
     private string statusFilter = string.Empty;
     private string sortBy = "StartDate";
+    private string viewMode = "cards"; // "cards" or "table"
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadEvents();
-        ApplyFiltersAndSort();
+        await LoadEventsWithErrorHandling();
+        isLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Force a refresh on first render to ensure proper loading
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void SetViewMode(string mode)
+    {
+        viewMode = mode;
+        CloseDropdown(); // Close any open dropdowns when switching views
+        StateHasChanged();
+    }
+
+    private async Task LoadEventsWithErrorHandling()
+    {
+        try
+        {
+            hasError = false;
+            errorMessage = string.Empty;
+            await LoadEvents();
+            ApplyFiltersAndSort();
+        }
+        catch (Exception ex)
+        {
+            hasError = true;
+            errorMessage = ex.Message;
+            Console.WriteLine($"Error loading events: {ex}");
+        }
+    }
+
+    private async Task RetryLoadEvents()
+    {
+        isLoading = true;
+        await LoadEventsWithErrorHandling();
         isLoading = false;
     }
 
@@ -612,35 +838,44 @@
 
     private void ApplyFiltersAndSort()
     {
-        var filtered = events.AsEnumerable();
-
-        // Apply search filter
-        if (!string.IsNullOrWhiteSpace(searchTerm))
+        try
         {
-            filtered = filtered.Where(e => 
-                e.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                e.Location.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                (e.Description?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
-            );
+            var filtered = events.AsEnumerable();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                filtered = filtered.Where(e => 
+                    e.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    e.Location.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    (e.Description?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
+                );
+            }
+
+            // Apply status filter
+            if (!string.IsNullOrEmpty(statusFilter) && Enum.TryParse<EventStatus>(statusFilter, out var status))
+            {
+                filtered = filtered.Where(e => e.Status == status);
+            }
+
+            // Apply sorting
+            var sorted = sortBy switch
+            {
+                "Name" => filtered.OrderBy(e => e.Name),
+                "Location" => filtered.OrderBy(e => e.Location),
+                "Status" => filtered.OrderBy(e => e.Status),
+                _ => filtered.OrderBy(e => e.StartDate)
+            };
+
+            filteredEvents = sorted.ToList();
+            StateHasChanged();
         }
-
-        // Apply status filter
-        if (!string.IsNullOrEmpty(statusFilter) && Enum.TryParse<EventStatus>(statusFilter, out var status))
+        catch (Exception ex)
         {
-            filtered = filtered.Where(e => e.Status == status);
+            Console.WriteLine($"Error applying filters: {ex.Message}");
+            // Fallback to showing all events if filtering fails
+            filteredEvents = events.ToList();
         }
-
-        // Apply sorting
-        var sorted = sortBy switch
-        {
-            "Name" => filtered.OrderBy(e => e.Name),
-            "Location" => filtered.OrderBy(e => e.Location),
-            "Status" => filtered.OrderBy(e => e.Status),
-            _ => filtered.OrderBy(e => e.StartDate)
-        };
-
-        filteredEvents = sorted.ToList();
-        StateHasChanged();
     }
 
     private void ToggleDropdown(int eventId)
@@ -665,7 +900,16 @@
     private void NavigateToDetails(int eventId)
     {
         CloseDropdown();
-        Navigation.NavigateTo($"/events/details/{eventId}");
+        try
+        {
+            Navigation.NavigateTo($"/events/details/{eventId}", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Navigation error: {ex.Message}");
+            // Fallback navigation method
+            Navigation.NavigateTo($"/events/details/{eventId}");
+        }
     }
 
     private void ConfirmDelete(Event eventItem)
@@ -695,8 +939,10 @@
         }
         catch (Exception ex)
         {
-            // Handle error - in a real app, show a toast notification
             Console.WriteLine($"Error deleting event: {ex.Message}");
+            // In a real app, show a toast notification
+            hasError = true;
+            errorMessage = $"Failed to delete event: {ex.Message}";
         }
         finally
         {
@@ -742,28 +988,37 @@
     {
         CloseDropdown(); // Close dropdown when opening modal
         
-        // Get the full event with all related data
-        var fullEvent = await EventService.GetEventByIdAsync(eventItem.Id);
-        if (fullEvent != null)
+        try
         {
-            editEvent = new Event
+            // Get the full event with all related data
+            var fullEvent = await EventService.GetEventByIdAsync(eventItem.Id);
+            if (fullEvent != null)
             {
-                Id = fullEvent.Id,
-                Name = fullEvent.Name,
-                StartDate = fullEvent.StartDate,
-                EndDate = fullEvent.EndDate,
-                Location = fullEvent.Location,
-                Description = fullEvent.Description,
-                Status = fullEvent.Status,
-                ContactPerson = fullEvent.ContactPerson,
-                ContactPhone = fullEvent.ContactPhone,
-                ContactEmail = fullEvent.ContactEmail,
-                CreatedAt = fullEvent.CreatedAt,
-                UpdatedAt = fullEvent.UpdatedAt,
-                Shifts = fullEvent.Shifts ?? new List<Shift>()
-            };
-            showEditDialog = true;
-            StateHasChanged();
+                editEvent = new Event
+                {
+                    Id = fullEvent.Id,
+                    Name = fullEvent.Name,
+                    StartDate = fullEvent.StartDate,
+                    EndDate = fullEvent.EndDate,
+                    Location = fullEvent.Location,
+                    Description = fullEvent.Description,
+                    Status = fullEvent.Status,
+                    ContactPerson = fullEvent.ContactPerson,
+                    ContactPhone = fullEvent.ContactPhone,
+                    ContactEmail = fullEvent.ContactEmail,
+                    CreatedAt = fullEvent.CreatedAt,
+                    UpdatedAt = fullEvent.UpdatedAt,
+                    Shifts = fullEvent.Shifts ?? new List<Shift>()
+                };
+                showEditDialog = true;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading event for edit: {ex.Message}");
+            hasError = true;
+            errorMessage = $"Failed to load event for editing: {ex.Message}";
         }
     }
 
@@ -793,8 +1048,9 @@
         }
         catch (Exception ex)
         {
-            // Handle error - in a real app, show a toast notification
             Console.WriteLine($"Error updating event: {ex.Message}");
+            hasError = true;
+            errorMessage = $"Failed to update event: {ex.Message}";
         }
         finally
         {
@@ -815,16 +1071,16 @@
             await CreateDefaultShift(createdEvent);
             
             // Refresh the events list
-            await LoadEvents();
-            ApplyFiltersAndSort();
+            await LoadEventsWithErrorHandling();
             
             // Close the dialog
             CloseCreateEventDialog();
         }
         catch (Exception ex)
         {
-            // Handle error - in a real app, show a toast notification
             Console.WriteLine($"Error creating event: {ex.Message}");
+            hasError = true;
+            errorMessage = $"Failed to create event: {ex.Message}";
         }
         finally
         {
@@ -860,28 +1116,37 @@
     {
         CloseDropdown(); // Close any open dropdown
         
-        // Get the full event with all related data to see existing shifts
-        var fullEvent = await EventService.GetEventByIdAsync(eventItem.Id);
-        if (fullEvent != null)
+        try
         {
-            selectedEventForShift = fullEvent;
-            
-            // Calculate the next available time slot
-            var availableTimeSlot = CalculateNextAvailableTimeSlot(fullEvent);
-            
-            // Initialize the new shift with default values based on available time
-            newShift = new Shift
+            // Get the full event with all related data to see existing shifts
+            var fullEvent = await EventService.GetEventByIdAsync(eventItem.Id);
+            if (fullEvent != null)
             {
-                EventId = fullEvent.Id,
-                Name = $"Shift - {fullEvent.Name}",
-                StartTime = availableTimeSlot.StartTime,
-                EndTime = availableTimeSlot.EndTime,
-                RequiredStaff = 1,
-                Status = ShiftStatus.Open
-            };
-            
-            showCreateShiftDialog = true;
-            StateHasChanged();
+                selectedEventForShift = fullEvent;
+                
+                // Calculate the next available time slot
+                var availableTimeSlot = CalculateNextAvailableTimeSlot(fullEvent);
+                
+                // Initialize the new shift with default values based on available time
+                newShift = new Shift
+                {
+                    EventId = fullEvent.Id,
+                    Name = $"Shift - {fullEvent.Name}",
+                    StartTime = availableTimeSlot.StartTime,
+                    EndTime = availableTimeSlot.EndTime,
+                    RequiredStaff = 1,
+                    Status = ShiftStatus.Open
+                };
+                
+                showCreateShiftDialog = true;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error opening create shift dialog: {ex.Message}");
+            hasError = true;
+            errorMessage = $"Failed to load event for shift creation: {ex.Message}";
         }
     }
 
@@ -903,14 +1168,15 @@
             // Validate that shift times are within event duration
             if (newShift.StartTime < selectedEventForShift.StartDate || newShift.EndTime > selectedEventForShift.EndDate)
             {
-                // In a real app, show a toast notification or validation error
-                Console.WriteLine("Shift times must be within the event duration");
+                hasError = true;
+                errorMessage = "Shift times must be within the event duration";
                 return;
             }
 
             if (newShift.StartTime >= newShift.EndTime)
             {
-                Console.WriteLine("End time must be after start time");
+                hasError = true;
+                errorMessage = "End time must be after start time";
                 return;
             }
 
@@ -924,16 +1190,16 @@
             await ShiftService.CreateShiftAsync(newShift);
             
             // Refresh the events list to update shift counts
-            await LoadEvents();
-            ApplyFiltersAndSort();
+            await LoadEventsWithErrorHandling();
             
             // Close the dialog
             CloseCreateShiftDialog();
         }
         catch (Exception ex)
         {
-            // Handle error - in a real app, show a toast notification
             Console.WriteLine($"Error creating shift: {ex.Message}");
+            hasError = true;
+            errorMessage = $"Failed to create shift: {ex.Message}";
         }
         finally
         {

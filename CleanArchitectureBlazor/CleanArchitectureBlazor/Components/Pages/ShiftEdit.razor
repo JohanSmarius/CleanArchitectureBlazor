@@ -429,9 +429,19 @@ else
 
     private string staffSearchTerm = string.Empty;
     private string staffRoleFilter = string.Empty;
+    private string? returnUrl;
 
     protected override async Task OnInitializedAsync()
     {
+        // Capture return URL from query parameter or determine from referrer
+        var uri = new Uri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        
+        if (query.TryGetValue("returnUrl", out var returnUrlValue))
+        {
+            returnUrl = returnUrlValue.FirstOrDefault();
+        }
+
         await LoadShiftDetails();
         isLoading = false;
     }
@@ -447,7 +457,7 @@ else
         shift = await ShiftService.GetShiftByIdAsync(ShiftId);
         if (shift != null)
         {
-            // Create a copy for editing
+            // Create a copy for editing - exclude navigation properties to avoid tracking conflicts
             editShift = new Shift
             {
                 Id = shift.Id,
@@ -459,9 +469,8 @@ else
                 Description = shift.Description,
                 Status = shift.Status,
                 CreatedAt = shift.CreatedAt,
-                UpdatedAt = shift.UpdatedAt,
-                Event = shift.Event,
-                StaffAssignments = shift.StaffAssignments
+                UpdatedAt = shift.UpdatedAt
+                // Note: Don't copy Event and StaffAssignments navigation properties
             };
 
             currentAssignments = shift.StaffAssignments.ToList();
@@ -672,8 +681,8 @@ else
 
             await ShiftService.UpdateShiftAsync(editShift);
             
-            // Navigate back to event details
-            Navigation.NavigateTo($"/events/details/{shift.EventId}");
+            // Navigate back to the calling page
+            NavigateBack();
         }
         catch (Exception ex)
         {
@@ -688,12 +697,24 @@ else
 
     private void Cancel()
     {
-        if (shift != null)
+        NavigateBack();
+    }
+
+    private void NavigateBack()
+    {
+        if (!string.IsNullOrEmpty(returnUrl))
         {
+            // Navigate to the specified return URL
+            Navigation.NavigateTo(returnUrl);
+        }
+        else if (shift != null)
+        {
+            // Default fallback: navigate to event details
             Navigation.NavigateTo($"/events/details/{shift.EventId}");
         }
         else
         {
+            // Ultimate fallback: navigate to events list
             Navigation.NavigateTo("/events");
         }
     }
@@ -724,4 +745,4 @@ else
             _ => "secondary"
         };
     }
-}
+}}

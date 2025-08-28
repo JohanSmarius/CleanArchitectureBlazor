@@ -86,19 +86,41 @@
 
     protected override void OnInitialized()
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        NavigationManager.LocationChanged += OnLocationChanged;
+        try
+        {
+            currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+            NavigationManager.LocationChanged += OnLocationChanged;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"NavMenu initialization error: {ex.Message}");
+            currentUrl = "";
+        }
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
-        StateHasChanged();
+        try
+        {
+            currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"NavMenu location change error: {ex.Message}");
+        }
     }
 
     public void Dispose()
     {
-        NavigationManager.LocationChanged -= OnLocationChanged;
+        try
+        {
+            NavigationManager.LocationChanged -= OnLocationChanged;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"NavMenu dispose error: {ex.Message}");
+        }
     }
 }
 

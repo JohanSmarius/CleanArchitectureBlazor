@@ -68,9 +68,19 @@ public class ShiftService : IShiftService
     public async Task<Shift> UpdateShiftAsync(Shift shift)
     {
         shift.UpdatedAt = DateTime.UtcNow;
-        _context.Shifts.Update(shift);
+
+        // Find the existing entity in the context
+        var existingShift = await _context.Shifts.FindAsync(shift.Id);
+        if (existingShift == null)
+        {
+            throw new InvalidOperationException($"Shift with ID {shift.Id} not found.");
+        }
+
+        // Update only the scalar properties to avoid navigation property tracking conflicts
+        _context.Entry(existingShift).CurrentValues.SetValues(shift);
+
         await _context.SaveChangesAsync();
-        return shift;
+        return existingShift;
     }
 
     public async Task DeleteShiftAsync(int id)
