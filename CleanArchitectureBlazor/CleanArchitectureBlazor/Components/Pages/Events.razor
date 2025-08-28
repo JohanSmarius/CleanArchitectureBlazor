@@ -46,9 +46,9 @@
     }
     else
     {
-        <!-- Filter, Search, and View Toggle -->
+        <!-- Filter and Search -->
         <div class="row mb-4">
-            <div class="col-md-5">
+            <div class="col-md-6">
                 <div class="input-group">
                     <span class="input-group-text">
                         <i class="fas fa-search"></i>
@@ -56,7 +56,7 @@
                     <input type="text" class="form-control" placeholder="Search events..." @bind="searchTerm" @oninput="OnSearchChanged" />
                 </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <select class="form-select" @bind="statusFilter" @bind:after="OnFilterChanged">
                     <option value="">All Statuses</option>
                     <option value="@EventStatus.Requested">Requested</option>
@@ -67,7 +67,7 @@
                     <option value="@EventStatus.Cancelled">Cancelled</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <select class="form-select" @bind="sortBy" @bind:after="OnSortChanged">
                     <option value="StartDate">Sort by Start Date</option>
                     <option value="Name">Sort by Name</option>
@@ -75,263 +75,121 @@
                     <option value="Status">Sort by Status</option>
                 </select>
             </div>
-            <div class="col-md-3">
-                <div class="d-flex justify-content-end">
-                    <div class="btn-group" role="group" aria-label="View toggle">
-                        <button type="button" class="btn @(viewMode == "cards" ? "btn-primary" : "btn-outline-primary")" 
-                                @onclick='() => ToggleView("cards")' title="Card View">
-                            <i class="fas fa-th-large"></i>
-                            <span class="d-none d-sm-inline ms-1">Cards</span>
-                        </button>
-                        <button type="button" class="btn @(viewMode == "grid" ? "btn-primary" : "btn-outline-primary")" 
-                                @onclick='() => ToggleView("grid")' title="Grid View">
-                            <i class="fas fa-list"></i>
-                            <span class="d-none d-sm-inline ms-1">Grid</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        @if (viewMode == "cards")
-        {
-            <!-- Events Cards Layout -->
-            <div class="row">
-                @foreach (var eventItem in filteredEvents)
-                {
-                    <div class="col-lg-6 col-xl-4 mb-4" @onclick="CloseDropdown">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="card-title mb-0">@eventItem.Name</h5>
-                                    <span class="badge bg-@GetEventStatusColor(eventItem.Status)">
-                                        @eventItem.Status
-                                    </span>
+        <!-- Events Grid -->
+        <div class="row">
+            @foreach (var eventItem in filteredEvents)
+            {
+                <div class="col-lg-6 col-xl-4 mb-4" @onclick="CloseDropdown">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title mb-0">@eventItem.Name</h5>
+                                <span class="badge bg-@GetEventStatusColor(eventItem.Status)">
+                                    @eventItem.Status
+                                </span>
+                            </div>
+                            <div class="dropdown position-relative">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                        @onclick="@((e) => ToggleDropdown(eventItem.Id))" 
+                                        @onclick:stopPropagation="true">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                @if (openDropdownId == eventItem.Id)
+                                {
+                                    <ul class="dropdown-menu show position-absolute" style="right: 0; left: auto; z-index: 1050;">
+                                        <li>
+                                            <button class="dropdown-item" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
+                                                <i class="fas fa-eye me-2"></i>View Details
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
+                                                <i class="fas fa-clock me-2"></i>Create Shift
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item" @onclick="@((e) => OpenEditEventDialog(eventItem))" @onclick:stopPropagation="true">
+                                                <i class="fas fa-edit me-2"></i>Edit
+                                            </button>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <button class="dropdown-item text-danger" @onclick="@((e) => ConfirmDelete(eventItem))" @onclick:stopPropagation="true">
+                                                <i class="fas fa-trash me-2"></i>Delete
+                                            </button>
+                                        </li>
+                                    </ul>
+                                }
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                                <span class="text-muted">@eventItem.Location</span>
+                            </div>
+                            <div class="mb-3">
+                                <i class="fas fa-calendar text-muted me-2"></i>
+                                <span class="text-muted">
+                                    @eventItem.StartDate.ToString("MMM dd, yyyy")
+                                </span>
+                                @if (eventItem.StartDate.Date != eventItem.EndDate.Date)
+                                {
+                                    <span class="text-muted"> - @eventItem.EndDate.ToString("MMM dd, yyyy")</span>
+                                }
+                            </div>
+                            <div class="mb-3">
+                                <i class="fas fa-clock text-muted me-2"></i>
+                                <span class="text-muted">
+                                    @eventItem.StartDate.ToString("HH:mm") - @eventItem.EndDate.ToString("HH:mm")
+                                </span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(eventItem.Description))
+                            {
+                                <p class="card-text text-muted small">
+                                    @(eventItem.Description.Length > 100 ? eventItem.Description.Substring(0, 100) + "..." : eventItem.Description)
+                                </p>
+                            }
+                            @if (!string.IsNullOrEmpty(eventItem.ContactPerson))
+                            {
+                                <div class="mb-2">
+                                    <i class="fas fa-user text-muted me-2"></i>
+                                    <span class="text-muted small">@eventItem.ContactPerson</span>
+                                    @if (!string.IsNullOrEmpty(eventItem.ContactPhone))
+                                    {
+                                        <br>
+                                        <i class="fas fa-phone text-muted me-2"></i>
+                                        <span class="text-muted small">@eventItem.ContactPhone</span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(eventItem.ContactEmail))
+                                    {
+                                        <br>
+                                        <i class="fas fa-envelope text-muted me-2"></i>
+                                        <span class="text-muted small">@eventItem.ContactEmail</span>
+                                    }
                                 </div>
-                                <div class="dropdown position-relative">
-                                    <button class="btn btn-sm btn-outline-secondary" type="button" 
-                                            @onclick="@((e) => ToggleDropdown(eventItem.Id))" 
-                                            @onclick:stopPropagation="true">
-                                        <i class="fas fa-ellipsis-v"></i>
+                            }
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>@eventItem.Shifts.Count shift(s)
+                                </small>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-outline-success" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
+                                        <i class="fas fa-plus me-1"></i>Add Shift
                                     </button>
-                                    @if (openDropdownId == eventItem.Id)
-                                    {
-                                        <ul class="dropdown-menu show position-absolute" style="right: 0; left: auto; z-index: 1050;">
-                                            <li>
-                                                <button class="dropdown-item" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
-                                                    <i class="fas fa-eye me-2"></i>View Details
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button class="dropdown-item" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
-                                                    <i class="fas fa-clock me-2"></i>Create Shift
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button class="dropdown-item" @onclick="@((e) => OpenEditEventDialog(eventItem))" @onclick:stopPropagation="true">
-                                                    <i class="fas fa-edit me-2"></i>Edit
-                                                </button>
-                                            </li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <button class="dropdown-item text-danger" @onclick="@((e) => ConfirmDelete(eventItem))" @onclick:stopPropagation="true">
-                                                    <i class="fas fa-trash me-2"></i>Delete
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    }
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <i class="fas fa-map-marker-alt text-muted me-2"></i>
-                                    <span class="text-muted">@eventItem.Location</span>
-                                </div>
-                                <div class="mb-3">
-                                    <i class="fas fa-calendar text-muted me-2"></i>
-                                    <span class="text-muted">
-                                        @eventItem.StartDate.ToString("MMM dd, yyyy")
-                                    </span>
-                                    @if (eventItem.StartDate.Date != eventItem.EndDate.Date)
-                                    {
-                                        <span class="text-muted"> - @eventItem.EndDate.ToString("MMM dd, yyyy")</span>
-                                    }
-                                </div>
-                                <div class="mb-3">
-                                    <i class="fas fa-clock text-muted me-2"></i>
-                                    <span class="text-muted">
-                                        @eventItem.StartDate.ToString("HH:mm") - @eventItem.EndDate.ToString("HH:mm")
-                                    </span>
-                                </div>
-                                @if (!string.IsNullOrEmpty(eventItem.Description))
-                                {
-                                    <p class="card-text text-muted small">
-                                        @(eventItem.Description.Length > 100 ? eventItem.Description.Substring(0, 100) + "..." : eventItem.Description)
-                                    </p>
-                                }
-                                @if (!string.IsNullOrEmpty(eventItem.ContactPerson))
-                                {
-                                    <div class="mb-2">
-                                        <i class="fas fa-user text-muted me-2"></i>
-                                        <span class="text-muted small">@eventItem.ContactPerson</span>
-                                        @if (!string.IsNullOrEmpty(eventItem.ContactPhone))
-                                        {
-                                            <br>
-                                            <i class="fas fa-phone text-muted me-2"></i>
-                                            <span class="text-muted small">@eventItem.ContactPhone</span>
-                                        }
-                                        @if (!string.IsNullOrEmpty(eventItem.ContactEmail))
-                                        {
-                                            <br>
-                                            <i class="fas fa-envelope text-muted me-2"></i>
-                                            <span class="text-muted small">@eventItem.ContactEmail</span>
-                                        }
-                                    </div>
-                                }
-                            </div>
-                            <div class="card-footer bg-transparent border-0">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock me-1"></i>@eventItem.Shifts.Count shift(s)
-                                    </small>
-                                    <div class="btn-group" role="group">
-                                        <button class="btn btn-sm btn-outline-success" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
-                                            <i class="fas fa-plus me-1"></i>Add Shift
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
-                                            View Details
-                                        </button>
-                                    </div>
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
+                                        View Details
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
-                }
-            </div>
-        }
-        else
-        {
-            <!-- Events Grid/Table Layout -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th scope="col" class="border-0 ps-3">Event</th>
-                                    <th scope="col" class="border-0 d-none d-md-table-cell">Location</th>
-                                    <th scope="col" class="border-0 d-none d-lg-table-cell">Date & Time</th>
-                                    <th scope="col" class="border-0 d-none d-lg-table-cell">Status</th>
-                                    <th scope="col" class="border-0 d-none d-xl-table-cell">Contact</th>
-                                    <th scope="col" class="border-0 text-center">Shifts</th>
-                                    <th scope="col" class="border-0 text-end pe-3">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var eventItem in filteredEvents)
-                                {
-                                    <tr>
-                                        <td class="ps-3 align-middle">
-                                            <div>
-                                                <h6 class="mb-1 fw-semibold">@eventItem.Name</h6>
-                                                <div class="d-md-none">
-                                                    <small class="text-muted d-block">
-                                                        <i class="fas fa-map-marker-alt me-1"></i>@eventItem.Location
-                                                    </small>
-                                                    <small class="text-muted d-block">
-                                                        <i class="fas fa-calendar me-1"></i>@eventItem.StartDate.ToString("MMM dd, yyyy HH:mm")
-                                                    </small>
-                                                    <span class="badge bg-@GetEventStatusColor(eventItem.Status) mt-1">@eventItem.Status</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="d-none d-md-table-cell align-middle">
-                                            <span class="text-muted">@eventItem.Location</span>
-                                        </td>
-                                        <td class="d-none d-lg-table-cell align-middle">
-                                            <div>
-                                                <div class="fw-medium">@eventItem.StartDate.ToString("MMM dd, yyyy")</div>
-                                                <small class="text-muted">
-                                                    @eventItem.StartDate.ToString("HH:mm") - @eventItem.EndDate.ToString("HH:mm")
-                                                </small>
-                                            </div>
-                                        </td>
-                                        <td class="d-none d-lg-table-cell align-middle">
-                                            <span class="badge bg-@GetEventStatusColor(eventItem.Status)">
-                                                @eventItem.Status
-                                            </span>
-                                        </td>
-                                        <td class="d-none d-xl-table-cell align-middle">
-                                            @if (!string.IsNullOrEmpty(eventItem.ContactPerson))
-                                            {
-                                                <div>
-                                                    <div class="fw-medium">@eventItem.ContactPerson</div>
-                                                    @if (!string.IsNullOrEmpty(eventItem.ContactEmail))
-                                                    {
-                                                        <small class="text-muted">@eventItem.ContactEmail</small>
-                                                    }
-                                                    else if (!string.IsNullOrEmpty(eventItem.ContactPhone))
-                                                    {
-                                                        <small class="text-muted">@eventItem.ContactPhone</small>
-                                                    }
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted">-</span>
-                                            }
-                                        </td>
-                                        <td class="text-center align-middle">
-                                            <span class="badge bg-info">
-                                                @eventItem.Shifts.Count
-                                            </span>
-                                        </td>
-                                        <td class="text-end pe-3 align-middle">
-                                            <div class="d-flex justify-content-end gap-1">
-                                                <button class="btn btn-sm btn-outline-primary" 
-                                                        @onclick="@((e) => NavigateToDetails(eventItem.Id))" 
-                                                        title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-success" 
-                                                        @onclick="@((e) => OpenCreateShiftDialog(eventItem))" 
-                                                        title="Add Shift">
-                                                    <i class="fas fa-plus"></i>
-                                                </button>
-                                                <div class="dropdown">
-                                                    <button class="btn btn-sm btn-outline-secondary" type="button" 
-                                                            @onclick="@((e) => ToggleDropdown(eventItem.Id))" 
-                                                            @onclick:stopPropagation="true"
-                                                            title="More actions">
-                                                        <i class="fas fa-ellipsis-v"></i>
-                                                    </button>
-                                                    @if (openDropdownId == eventItem.Id)
-                                                    {
-                                                        <ul class="dropdown-menu show dropdown-menu-end" style="z-index: 1050;">
-                                                            <li>
-                                                                <button class="dropdown-item" @onclick="@((e) => OpenEditEventDialog(eventItem))" @onclick:stopPropagation="true">
-                                                                    <i class="fas fa-edit me-2"></i>Edit Event
-                                                                </button>
-                                                            </li>
-                                                            <li><hr class="dropdown-divider"></li>
-                                                            <li>
-                                                                <button class="dropdown-item text-danger" @onclick="@((e) => ConfirmDelete(eventItem))" @onclick:stopPropagation="true">
-                                                                    <i class="fas fa-trash me-2"></i>Delete
-                                                                </button>
-                                                            </li>
-                                                        </ul>
-                                                    }
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
-            </div>
-        }
+            }
+        </div>
     }
 </div>
 
@@ -715,20 +573,12 @@
     private string searchTerm = string.Empty;
     private string statusFilter = string.Empty;
     private string sortBy = "StartDate";
-    private string viewMode = "cards"; // New property for view mode
 
     protected override async Task OnInitializedAsync()
     {
         await LoadEvents();
         ApplyFiltersAndSort();
         isLoading = false;
-    }
-
-    private void ToggleView(string mode)
-    {
-        viewMode = mode;
-        CloseDropdown(); // Close any open dropdowns when changing view
-        StateHasChanged();
     }
 
     private async Task LoadEvents()
@@ -1178,7 +1028,8 @@
         }
 
         // Check for gaps between existing shifts
-        for (int i = 0; i < existingShifts.Count - 1; i++){
+        for (int i = 0; i < existingShifts.Count - 1; i++)
+        {
             var currentShiftEnd = existingShifts[i].EndTime;
             var nextShiftStart = existingShifts[i + 1].StartTime;
             
