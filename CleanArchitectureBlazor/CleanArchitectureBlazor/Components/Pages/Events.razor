@@ -75,6 +75,7 @@
                     <option value="@EventStatus.Confirmed">Confirmed</option>
                     <option value="@EventStatus.Active">Active</option>
                     <option value="@EventStatus.Completed">Completed</option>
+                    <option value="@EventStatus.SendInvoice">Send Invoice</option>
                     <option value="@EventStatus.Cancelled">Cancelled</option>
                 </select>
             </div>
@@ -120,39 +121,6 @@
                                     <span class="badge bg-@GetEventStatusColor(eventItem.Status)">
                                         @eventItem.Status
                                     </span>
-                                </div>
-                                <div class="dropdown position-relative">
-                                    <button class="btn btn-sm btn-outline-secondary" type="button" 
-                                            @onclick="@((e) => ToggleDropdown(eventItem.Id))" 
-                                            @onclick:stopPropagation="true">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                    @if (openDropdownId == eventItem.Id)
-                                    {
-                                        <ul class="dropdown-menu show position-absolute" style="right: 0; left: auto; z-index: 1050;">
-                                            <li>
-                                                <button class="dropdown-item" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
-                                                    <i class="fas fa-eye me-2"></i>View Details
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button class="dropdown-item" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
-                                                    <i class="fas fa-clock me-2"></i>Create Shift
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button class="dropdown-item" @onclick="@((e) => OpenEditEventDialog(eventItem))" @onclick:stopPropagation="true">
-                                                    <i class="fas fa-edit me-2"></i>Edit
-                                                </button>
-                                            </li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <button class="dropdown-item text-danger" @onclick="@((e) => ConfirmDelete(eventItem))" @onclick:stopPropagation="true">
-                                                    <i class="fas fa-trash me-2"></i>Delete
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    }
                                 </div>
                             </div>
                             <div class="card-body">
@@ -208,9 +176,6 @@
                                         <i class="fas fa-clock me-1"></i>@eventItem.Shifts.Count shift(s)
                                     </small>
                                     <div class="btn-group" role="group">
-                                        <button class="btn btn-sm btn-outline-success" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
-                                            <i class="fas fa-plus me-1"></i>Add Shift
-                                        </button>
                                         <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
                                             View Details
                                         </button>
@@ -330,40 +295,9 @@
                                             </div>
                                         </td>
                                         <td class="text-center">
-                                            <div class="dropdown">
-                                                <button class="btn btn-sm btn-outline-secondary" type="button" 
-                                                        @onclick="@((e) => ToggleDropdown(eventItem.Id))" 
-                                                        @onclick:stopPropagation="true"
-                                                        aria-expanded="@(openDropdownId == eventItem.Id)">
-                                                    <i class="fas fa-ellipsis-v"></i>
-                                                </button>
-                                                @if (openDropdownId == eventItem.Id)
-                                                {
-                                                    <ul class="dropdown-menu show position-absolute" style="right: 0; left: auto; z-index: 1050;">
-                                                        <li>
-                                                            <button class="dropdown-item" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
-                                                                <i class="fas fa-eye me-2"></i>View Details
-                                                            </button>
-                                                        </li>
-                                                        <li>
-                                                            <button class="dropdown-item" @onclick="@((e) => OpenCreateShiftDialog(eventItem))" @onclick:stopPropagation="true">
-                                                                <i class="fas fa-clock me-2"></i>Create Shift
-                                                            </button>
-                                                        </li>
-                                                        <li>
-                                                            <button class="dropdown-item" @onclick="@((e) => OpenEditEventDialog(eventItem))" @onclick:stopPropagation="true">
-                                                                <i class="fas fa-edit me-2"></i>Edit
-                                                            </button>
-                                                        </li>
-                                                        <li><hr class="dropdown-divider"></li>
-                                                        <li>
-                                                            <button class="dropdown-item text-danger" @onclick="@((e) => ConfirmDelete(eventItem))" @onclick:stopPropagation="true">
-                                                                <i class="fas fa-trash me-2"></i>Delete
-                                                            </button>
-                                                        </li>
-                                                    </ul>
-                                                }
-                                            </div>
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
+                                                <i class="fas fa-edit me-1"></i>Details
+                                            </button>
                                         </td>
                                     </tr>
                                 }
@@ -565,6 +499,7 @@
                                     <option value="@EventStatus.Confirmed">Confirmed</option>
                                     <option value="@EventStatus.Active">Active</option>
                                     <option value="@EventStatus.Completed">Completed</option>
+                                    <option value="@EventStatus.SendInvoice">Send Invoice</option>
                                     <option value="@EventStatus.Cancelled">Cancelled</option>
                                 </InputSelect>
                                 <ValidationMessage For="() => editEvent.Status" class="text-danger" />
@@ -912,6 +847,20 @@
         }
     }
 
+    private void NavigateToEdit(int eventId)
+    {
+        try
+        {
+            Navigation.NavigateTo($"/events/edit/{eventId}", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Navigation error: {ex.Message}");
+            // Fallback navigation method
+            Navigation.NavigateTo($"/events/edit/{eventId}");
+        }
+    }
+
     private void ConfirmDelete(Event eventItem)
     {
         eventToDelete = eventItem;
@@ -960,6 +909,7 @@
             EventStatus.Confirmed => "success",
             EventStatus.Active => "success",
             EventStatus.Completed => "secondary",
+            EventStatus.SendInvoice => "info",
             EventStatus.Cancelled => "danger",
             _ => "secondary"
         };

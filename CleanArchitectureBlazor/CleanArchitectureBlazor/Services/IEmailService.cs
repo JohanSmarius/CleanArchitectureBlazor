@@ -28,6 +28,12 @@ public interface IEmailService
     Task SendEventConfirmationNotificationAsync(Event @event);
     
     /// <summary>
+    /// Sends an invoice notification email to the contact person
+    /// </summary>
+    /// <param name="event">The event for which invoice is being sent</param>
+    Task SendEventInvoiceNotificationAsync(Event @event);
+    
+    /// <summary>
     /// Sends a general email
     /// </summary>
     /// <param name="to">Recipient email address</param>

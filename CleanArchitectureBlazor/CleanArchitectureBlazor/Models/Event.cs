@@ -58,5 +58,6 @@ public enum EventStatus
     Confirmed,
     Active,
     Completed,
+    SendInvoice,
     Cancelled
 }

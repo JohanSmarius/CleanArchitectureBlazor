@@ -96,7 +96,29 @@ public class EventService : IEventService
                 // Don't throw - we still want to save the event status change
             }
         }
-        
+
+        // Check if status changed to SendInvoice
+        if (originalStatus != EventStatus.SendInvoice && 
+            eventModel.Status == EventStatus.SendInvoice && 
+            !string.IsNullOrEmpty(eventModel.ContactEmail))
+        {
+            try
+            {
+                // Send invoice notification email
+                await _emailService.SendEventInvoiceNotificationAsync(eventModel);
+                
+                // Mark notification as sent and keep status as SendInvoice
+                existingEvent.NotificationSent = true;
+                
+                _logger.LogInformation("Event invoice email sent for event {EventId} to {ContactEmail}", 
+                    eventModel.Id, eventModel.ContactEmail);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send event invoice email for event {EventId}", eventModel.Id);
+                // Don't throw - we still want to save the event status change
+            }
+        }
 
         await _context.SaveChangesAsync();
         return existingEvent;
