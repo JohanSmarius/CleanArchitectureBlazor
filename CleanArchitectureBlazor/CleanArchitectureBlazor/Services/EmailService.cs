@@ -1,6 +1,8 @@
+using CleanArchitectureBlazor.Configuration;
 using CleanArchitectureBlazor.Models;
-using System.Net.Mail;
+using Microsoft.Extensions.Options;
 using System.Net;
+using System.Net.Mail;
 using System.Text;
 
 namespace CleanArchitectureBlazor.Services;
@@ -10,11 +12,13 @@ namespace CleanArchitectureBlazor.Services;
 /// </summary>
 public class EmailService : IEmailService
 {
+    private readonly IOptions<EmailOptions> _emailOptions;
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
 
-    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+    public EmailService(IOptions<EmailOptions> emailOptions, IConfiguration configuration, ILogger<EmailService> logger)
     {
+        _emailOptions = emailOptions;
         _configuration = configuration;
         _logger = logger;
     }
@@ -69,16 +73,16 @@ public class EmailService : IEmailService
     /// </summary>
     public async Task SendEventInvoiceNotificationAsync(Event @event)
     {
-        if (string.IsNullOrEmpty(@event.ContactEmail))
+        if (string.IsNullOrEmpty(_emailOptions.Value.FinancialDepartmentEmail))
         {
-            _logger.LogWarning("Cannot send event invoice email for event {EventId}: No contact email provided", @event.Id);
+            _logger.LogWarning("Cannot send event invoice email for event {EventId}: No financial email provided", @event.Id);
             return;
         }
 
         var subject = $"Invoice for Event: {@event.Name}";
         var htmlBody = GenerateEventInvoiceEmailBody(@event);
         
-        await SendEmailAsync(@event.ContactEmail, subject, htmlBody);
+        await SendEmailAsync(_emailOptions.Value.FinancialDepartmentEmail, subject, htmlBody);
     }
 
     /// <summary>

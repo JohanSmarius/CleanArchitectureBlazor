@@ -1,6 +1,7 @@
 using CleanArchitectureBlazor.Client.Pages;
 using CleanArchitectureBlazor.Components;
 using CleanArchitectureBlazor.Components.Account;
+using CleanArchitectureBlazor.Configuration;
 using CleanArchitectureBlazor.Data;
 using CleanArchitectureBlazor.Services;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -49,6 +50,13 @@ builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<IStaffService, StaffService>();
 builder.Services.AddScoped<IStaffAssignmentService, StaffAssignmentService>();
 
+builder.Services.Configure<EmailOptions>(
+    builder.Configuration.GetSection(EmailOptions.SectionName)
+);
+
+// Register IOptions<EmailOptions> if you need to inject it directly elsewhere
+builder.Services.AddOptions<EmailOptions>().Bind(builder.Configuration.GetSection(EmailOptions.SectionName));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -63,7 +71,7 @@ else
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForErrors: true);
+app.UseStatusCodePagesWithReExecute("/not-found");
 
 app.UseHttpsRedirection();
 
