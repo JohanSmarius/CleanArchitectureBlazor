@@ -4,26 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CleanArchitectureBlazor.Services;
 
-/// <summary>
-/// Service for managing shifts
-/// </summary>
-public interface IShiftService
-{
-    Task<List<Shift>> GetAllShiftsAsync();
-    Task<Shift?> GetShiftByIdAsync(int id);
-    Task<List<Shift>> GetShiftsByEventIdAsync(int eventId);
-    Task<Shift> CreateShiftAsync(Shift shift);
-    Task<Shift> UpdateShiftAsync(Shift shift);
-    Task DeleteShiftAsync(int id);
-    Task<List<Shift>> GetUpcomingShiftsAsync();
-    Task<List<Shift>> GetShiftsByDateAsync(DateTime date);
-}
-
-public class ShiftService : IShiftService
+public class ShiftRepository : IShiftRepository
 {
     private readonly ApplicationDbContext _context;
 
-    public ShiftService(ApplicationDbContext context)
+    public ShiftRepository(ApplicationDbContext context)
     {
         _context = context;
     }

@@ -1,8 +1,8 @@
 @page "/staff/details/{StaffId:int}"
 @using Domain
 @using CleanArchitectureBlazor.Services
-@inject IStaffService StaffService
-@inject IStaffAssignmentService StaffAssignmentService
+@inject IStaffRepository StaffService
+@inject IStaffAssignmentRepository StaffAssignmentService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 

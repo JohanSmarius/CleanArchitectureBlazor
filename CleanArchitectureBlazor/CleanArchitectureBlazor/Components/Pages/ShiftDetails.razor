@@ -1,8 +1,8 @@
 @page "/shifts/details/{ShiftId:int}"
 @using Domain
 @using CleanArchitectureBlazor.Services
-@inject IShiftService ShiftService
-@inject IStaffAssignmentService StaffAssignmentService
+@inject IShiftRepository ShiftService
+@inject IStaffAssignmentRepository StaffAssignmentService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 
