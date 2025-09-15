@@ -1,8 +1,9 @@
 using Domain;
 using CleanArchitectureBlazor.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-namespace CleanArchitectureBlazor.Services;
+namespace Infrastructure;
 
 public class StaffAssignmentRepository : IStaffAssignmentRepository
 {

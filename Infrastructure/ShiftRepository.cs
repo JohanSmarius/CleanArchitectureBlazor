@@ -2,7 +2,7 @@ using Domain;
 using CleanArchitectureBlazor.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace CleanArchitectureBlazor.Services;
+namespace Infrastructure;
 
 public class ShiftRepository : IShiftRepository
 {

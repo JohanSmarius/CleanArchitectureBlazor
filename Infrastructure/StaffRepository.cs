@@ -1,8 +1,8 @@
-using Domain;
 using CleanArchitectureBlazor.Data;
+using Domain;
 using Microsoft.EntityFrameworkCore;
 
-namespace CleanArchitectureBlazor.Services;
+namespace Infrastructure;
 
 public class StaffRepository : IStaffRepository
 {

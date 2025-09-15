@@ -4,8 +4,10 @@ using System.Net;
 using System.Net.Mail;
 using System.Text;
 using Domain;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
-namespace CleanArchitectureBlazor.Services;
+namespace Infrastructure;
 
 /// <summary>
 /// SMTP-based email service for sending notifications
@@ -109,7 +111,7 @@ public class EmailService : IEmailService
 
             using var client = new SmtpClient(host, port);
 
-            if (smtpConfig.GetValue<bool>("EnableSsl", true))
+            if (_emailOptions.Value.EnableSsl)
             {
                 client.EnableSsl = enableSsl;
                 client.Credentials = new NetworkCredential(username, password);

@@ -1,11 +1,9 @@
-using Domain;
-
-namespace CleanArchitectureBlazor.Services;
+namespace Domain;
 
 /// <summary>
 /// Service for managing events
 /// </summary>
-public interface IEventService
+public interface IEventRepository
 {
     Task<List<Event>> GetAllEventsAsync();
     Task<Event?> GetEventByIdAsync(int id);

@@ -1,16 +1,17 @@
 using CleanArchitectureBlazor.Data;
 using Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-namespace CleanArchitectureBlazor.Services;
+namespace Infrastructure;
 
-public class EventService : IEventService
+public class EventRepository : IEventRepository
 {
     private readonly ApplicationDbContext _context;
     private readonly IEmailService _emailService;
-    private readonly ILogger<EventService> _logger;
+    private readonly ILogger<EventRepository> _logger;
 
-    public EventService(ApplicationDbContext context, IEmailService emailService, ILogger<EventService> logger)
+    public EventRepository(ApplicationDbContext context, IEmailService emailService, ILogger<EventRepository> logger)
     {
         _context = context;
         _emailService = emailService;
