@@ -8,13 +8,11 @@ namespace Infrastructure;
 public class EventRepository : IEventRepository
 {
     private readonly ApplicationDbContext _context;
-    private readonly IEmailService _emailService;
     private readonly ILogger<EventRepository> _logger;
 
-    public EventRepository(ApplicationDbContext context, IEmailService emailService, ILogger<EventRepository> logger)
+    public EventRepository(ApplicationDbContext context, ILogger<EventRepository> logger)
     {
         _context = context;
-        _emailService = emailService;
         _logger = logger;
     }
 
@@ -51,61 +49,18 @@ public class EventRepository : IEventRepository
             throw new InvalidOperationException($"Event with ID {eventModel.Id} not found.");
         }
 
-        // Store the original status to check for changes
-        var originalStatus = existingEvent.Status;
-        var originalNotificationSent = existingEvent.NotificationSent;
-
-        // Update the entity
-        eventModel.UpdatedAt = DateTime.UtcNow;
-        _context.Entry(existingEvent).CurrentValues.SetValues(eventModel);
-
-        // Check if status changed to Planned and email hasn't been sent
-        if (originalStatus != EventStatus.Planned && 
-            eventModel.Status == EventStatus.Planned && 
-            !originalNotificationSent &&
-            !string.IsNullOrEmpty(eventModel.ContactEmail))
-        {
-            try
-            {
-                // Send planned notification email
-                await _emailService.SendEventPlannedNotificationAsync(eventModel);
-                
-                // Mark notification as sent but keep status as Planned
-                existingEvent.Status = EventStatus.Confirmed;
-                existingEvent.NotificationSent = true;
-                
-                _logger.LogInformation("Event planned email sent for event {EventId} to {ContactEmail}", 
-                    eventModel.Id, eventModel.ContactEmail);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send event planned email for event {EventId}", eventModel.Id);
-                // Don't throw - we still want to save the event status change
-            }
-        }
-
-        // Check if status changed to SendInvoice
-        if (originalStatus != EventStatus.SendInvoice && 
-            eventModel.Status == EventStatus.SendInvoice && 
-            !string.IsNullOrEmpty(eventModel.ContactEmail))
-        {
-            try
-            {
-                // Send invoice notification email
-                await _emailService.SendEventInvoiceNotificationAsync(eventModel);
-                
-                // Mark notification as sent and keep status as SendInvoice
-                existingEvent.NotificationSent = true;
-                
-                _logger.LogInformation("Event invoice email sent for event {EventId} to {ContactEmail}", 
-                    eventModel.Id, eventModel.ContactEmail);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send event invoice email for event {EventId}", eventModel.Id);
-                // Don't throw - we still want to save the event status change
-            }
-        }
+        // Map incoming values (business rules applied earlier in service layer)
+        existingEvent.Name = eventModel.Name;
+        existingEvent.StartDate = eventModel.StartDate;
+        existingEvent.EndDate = eventModel.EndDate;
+        existingEvent.Location = eventModel.Location;
+        existingEvent.Description = eventModel.Description;
+        existingEvent.Status = eventModel.Status;
+        existingEvent.ContactPerson = eventModel.ContactPerson;
+        existingEvent.ContactPhone = eventModel.ContactPhone;
+        existingEvent.ContactEmail = eventModel.ContactEmail;
+        existingEvent.NotificationSent = eventModel.NotificationSent;
+        existingEvent.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
         return existingEvent;
