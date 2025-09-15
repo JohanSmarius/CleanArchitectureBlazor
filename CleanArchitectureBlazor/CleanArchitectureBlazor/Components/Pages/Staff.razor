@@ -1,6 +1,6 @@
 @page "/staff"
-@using CleanArchitectureBlazor.Models
 @using CleanArchitectureBlazor.Services
+
 @inject IStaffService StaffService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
@@ -342,10 +342,10 @@
     private bool isDeactivating = false;
     private bool showStaffDialog = false;
     private bool isEditMode = false;
-    private List<CleanArchitectureBlazor.Models.Staff> staff = new();
-    private List<CleanArchitectureBlazor.Models.Staff> filteredStaff = new();
-    private CleanArchitectureBlazor.Models.Staff? staffToDeactivate;
-    private CleanArchitectureBlazor.Models.Staff staffForm = new();
+    private List<Domain.Staff> staff = new();
+    private List<Domain.Staff> filteredStaff = new();
+    private Domain.Staff? staffToDeactivate;
+    private Domain.Staff staffForm = new();
     private int? openDropdownId = null;
     
     private string searchTerm = string.Empty;
@@ -435,17 +435,17 @@
     {
         CloseDropdown();
         isEditMode = false;
-        staffForm = new CleanArchitectureBlazor.Models.Staff { IsActive = true };
+        staffForm = new Domain.Staff { IsActive = true };
         emailError = string.Empty;
         showStaffDialog = true;
         StateHasChanged();
     }
 
-    private void OpenEditStaffDialog(CleanArchitectureBlazor.Models.Staff staffMember)
+    private void OpenEditStaffDialog(Domain.Staff staffMember)
     {
         CloseDropdown();
         isEditMode = true;
-        staffForm = new CleanArchitectureBlazor.Models.Staff
+        staffForm = new Domain.Staff
         {
             Id = staffMember.Id,
             FirstName = staffMember.FirstName,
@@ -467,7 +467,7 @@
     private void CloseStaffDialog()
     {
         showStaffDialog = false;
-        staffForm = new CleanArchitectureBlazor.Models.Staff();
+        staffForm = new Domain.Staff();
         emailError = string.Empty;
         StateHasChanged();
     }
@@ -518,7 +518,7 @@
         }
     }
 
-    private void ConfirmDeactivateStaff(CleanArchitectureBlazor.Models.Staff staffMember)
+    private void ConfirmDeactivateStaff(Domain.Staff staffMember)
     {
         staffToDeactivate = staffMember;
         CloseDropdown();
@@ -562,7 +562,7 @@
         }
     }
 
-    private async Task ReactivateStaff(CleanArchitectureBlazor.Models.Staff staffMember)
+    private async Task ReactivateStaff(Domain.Staff staffMember)
     {
         CloseDropdown();
         try

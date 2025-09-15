@@ -1,5 +1,5 @@
 @page "/dashboard"
-@using CleanArchitectureBlazor.Models
+@using Domain
 @using CleanArchitectureBlazor.Services
 @inject IEventService EventService
 @inject IShiftService ShiftService
@@ -220,11 +220,11 @@
 
 @code {
     private bool isLoading = true;
-    private List<Event> upcomingEvents = new();
-    private List<Shift> activeShifts = new();
-    private List<Shift> todaysShifts = new();
-    private List<Models.Staff> activeStaff = new();
-    private List<StaffAssignment> staffOnDuty = new();
+    private List<Domain.Event> upcomingEvents = new();
+    private List<Domain.Shift> activeShifts = new();
+    private List<Domain.Shift> todaysShifts = new();
+    private List<Domain.Staff> activeStaff = new();
+    private List<Domain.StaffAssignment> staffOnDuty = new();
 
     protected override async Task OnInitializedAsync()
     {

@@ -1,6 +1,6 @@
+using Domain;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using CleanArchitectureBlazor.Models;
 
 namespace CleanArchitectureBlazor.Data
 {

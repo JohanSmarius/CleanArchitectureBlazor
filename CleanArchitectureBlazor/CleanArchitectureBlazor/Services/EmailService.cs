@@ -1,9 +1,9 @@
 using CleanArchitectureBlazor.Configuration;
-using CleanArchitectureBlazor.Models;
 using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Mail;
 using System.Text;
+using Domain;
 
 namespace CleanArchitectureBlazor.Services;
 

@@ -1,4 +1,4 @@
-using CleanArchitectureBlazor.Models;
+using Domain;
 
 namespace CleanArchitectureBlazor.Services;
 

@@ -1,5 +1,5 @@
 @page "/shifts/edit/{ShiftId:int}"
-@using CleanArchitectureBlazor.Models
+@using Domain
 @using CleanArchitectureBlazor.Services
 @inject IShiftService ShiftService
 @inject IStaffService StaffService
@@ -420,12 +420,12 @@ else
     private bool isRemovingStaff = false;
     private bool showAddStaffDialog = false;
 
-    private Shift? shift;
-    private Shift editShift = new();
-    private List<StaffAssignment> currentAssignments = new();
-    private List<CleanArchitectureBlazor.Models.Staff> availableStaff = new();
-    private List<CleanArchitectureBlazor.Models.Staff> filteredAvailableStaff = new();
-    private StaffAssignment? staffToRemove;
+    private Domain.Shift? shift;
+    private Domain.Shift editShift = new();
+    private List<Domain.StaffAssignment> currentAssignments = new();
+    private List<Domain.Staff> availableStaff = new();
+    private List<Domain.Staff> filteredAvailableStaff = new();
+    private Domain.StaffAssignment? staffToRemove;
 
     private string staffSearchTerm = string.Empty;
     private string staffRoleFilter = string.Empty;
@@ -458,7 +458,7 @@ else
         if (shift != null)
         {
             // Create a copy for editing - exclude navigation properties to avoid tracking conflicts
-            editShift = new Shift
+            editShift = new Domain.Shift
             {
                 Id = shift.Id,
                 EventId = shift.EventId,
@@ -488,7 +488,7 @@ else
             var assignedStaffIds = currentAssignments.Select(a => a.StaffId).ToHashSet();
             
             // Filter out already assigned staff and check availability
-            var availableStaffList = new List<CleanArchitectureBlazor.Models.Staff>();
+            var availableStaffList = new List<Domain.Staff>();
             
             foreach (var staffMember in allStaff)
             {
@@ -576,11 +576,11 @@ else
         StateHasChanged();
     }
 
-    private async Task AddStaffToShift(CleanArchitectureBlazor.Models.Staff staffMember)
+    private async Task AddStaffToShift(Domain.Staff staffMember)
     {
         try
         {
-            var assignment = new StaffAssignment
+            var assignment = new Domain.StaffAssignment
             {
                 ShiftId = ShiftId,
                 StaffId = staffMember.Id,

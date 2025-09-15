@@ -1,5 +1,5 @@
-using CleanArchitectureBlazor.Models;
 using CleanArchitectureBlazor.Data;
+using Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace CleanArchitectureBlazor.Services;

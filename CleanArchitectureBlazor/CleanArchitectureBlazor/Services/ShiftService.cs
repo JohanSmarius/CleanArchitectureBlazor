@@ -1,4 +1,4 @@
-using CleanArchitectureBlazor.Models;
+using Domain;
 using CleanArchitectureBlazor.Data;
 using Microsoft.EntityFrameworkCore;
 

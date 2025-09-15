@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace CleanArchitectureBlazor.Models;
+namespace Domain;
 
 /// <summary>
 /// Represents a staff member

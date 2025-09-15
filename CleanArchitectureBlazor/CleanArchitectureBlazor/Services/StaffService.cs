@@ -1,4 +1,4 @@
-using CleanArchitectureBlazor.Models;
+using Domain;
 using CleanArchitectureBlazor.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,11 +11,11 @@ public interface IStaffService
 {
     Task<List<Staff>> GetAllStaffAsync();
     Task<Staff?> GetStaffByIdAsync(int id);
-    Task<Staff> CreateStaffAsync(Staff staff);
-    Task<Staff> UpdateStaffAsync(Staff staff);
+    Task<Staff> CreateStaffAsync(Domain.Staff staff);
+    Task<Staff> UpdateStaffAsync(Domain.Staff staff);
     Task DeleteStaffAsync(int id);
-    Task<List<Staff>> GetActiveStaffAsync();
-    Task<List<Staff>> GetStaffByRoleAsync(StaffRole role);
+    Task<List<Domain.Staff>> GetActiveStaffAsync();
+    Task<List<Domain.Staff>> GetStaffByRoleAsync(StaffRole role);
     Task<bool> IsEmailUniqueAsync(string email, int? excludeId = null);
 }
 
@@ -28,7 +28,7 @@ public class StaffService : IStaffService
         _context = context;
     }
 
-    public async Task<List<Staff>> GetAllStaffAsync()
+    public async Task<List<Domain.Staff>> GetAllStaffAsync()
     {
         return await _context.Staff
             .OrderBy(s => s.LastName)
@@ -36,7 +36,7 @@ public class StaffService : IStaffService
             .ToListAsync();
     }
 
-    public async Task<Staff?> GetStaffByIdAsync(int id)
+    public async Task<Domain.Staff?> GetStaffByIdAsync(int id)
     {
         return await _context.Staff
             .Include(s => s.StaffAssignments)
@@ -45,7 +45,7 @@ public class StaffService : IStaffService
             .FirstOrDefaultAsync(s => s.Id == id);
     }
 
-    public async Task<Staff> CreateStaffAsync(Staff staff)
+    public async Task<Domain.Staff> CreateStaffAsync(Staff staff)
     {
         staff.CreatedAt = DateTime.UtcNow;
         _context.Staff.Add(staff);
@@ -53,7 +53,7 @@ public class StaffService : IStaffService
         return staff;
     }
 
-    public async Task<Staff> UpdateStaffAsync(Staff staff)
+    public async Task<Domain.Staff> UpdateStaffAsync(Staff staff)
     {
         staff.UpdatedAt = DateTime.UtcNow;
         _context.Staff.Update(staff);
@@ -74,7 +74,7 @@ public class StaffService : IStaffService
         }
     }
 
-    public async Task<List<Staff>> GetActiveStaffAsync()
+    public async Task<List<Domain.Staff>> GetActiveStaffAsync()
     {
         return await _context.Staff
             .Where(s => s.IsActive)

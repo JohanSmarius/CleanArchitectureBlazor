@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace CleanArchitectureBlazor.Models;
+namespace Domain;
 
 /// <summary>
 /// Represents a shift within an event
