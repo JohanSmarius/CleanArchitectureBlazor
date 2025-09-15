@@ -1,6 +1,4 @@
-using Domain;
-
-namespace CleanArchitectureBlazor.Services;
+namespace Domain;
 
 /// <summary>
 /// Service for managing shifts
