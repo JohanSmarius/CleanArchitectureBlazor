@@ -1,6 +1,7 @@
 @page "/shifts/edit/{ShiftId:int}"
-@using Entities
 @using Application
+@using Application.DataAdapters
+@using Entities
 @inject IShiftRepository ShiftService
 @inject IStaffRepository StaffService
 @inject IStaffAssignmentRepository StaffAssignmentService

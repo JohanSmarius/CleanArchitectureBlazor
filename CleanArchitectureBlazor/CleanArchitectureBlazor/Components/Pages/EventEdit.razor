@@ -1,6 +1,7 @@
 @page "/events/edit/{EventId:int}"
-@using Entities
 @using Application
+@using Application.DataAdapters
+@using Entities
 @inject IEventRepository EventRepository
 @inject IShiftRepository ShiftService
 @inject IEventService EventService
@@ -473,7 +474,7 @@ else
             // Navigate back to event details
             Navigation.NavigateTo($"/events/details/{EventId}");
         }
-        catch (DomainException ex)
+        catch (ÀpplicationException ex)
         {
             validationError = ex.Message;
         }

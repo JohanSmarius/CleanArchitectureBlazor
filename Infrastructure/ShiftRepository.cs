@@ -2,6 +2,7 @@ using Entities;
 using Application;
 using CleanArchitectureBlazor.Data;
 using Microsoft.EntityFrameworkCore;
+using Application.DataAdapters;
 
 namespace Infrastructure;
 
@@ -86,7 +87,7 @@ public class ShiftRepository : IShiftRepository
             .Include(s => s.Event)
             .Include(s => s.StaffAssignments)
             .ThenInclude(sa => sa.Staff)
-            .Where(s => s.StartTime >= now && s.Status != ShiftStatus.Cancelled)
+            .Where(s => s.StartTime >= now && s.Status != Entities.ShiftStatus.Cancelled)
             .OrderBy(s => s.StartTime)
             .ToListAsync();
     }

@@ -5,17 +5,17 @@ using System.Text;
 
 namespace Entities
 {
-    public class DomainException : Exception
+    public class ÀpplicationException : Exception
     {
-        public DomainException()
+        public ÀpplicationException()
         {
         }
 
-        public DomainException(string? message) : base(message)
+        public ÀpplicationException(string? message) : base(message)
         {
         }
 
-        public DomainException(string? message, Exception? innerException) : base(message, innerException)
+        public ÀpplicationException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
     }

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 
 using Entities;
+using Application.DataAdapters;
 
 namespace Application;
 
@@ -26,7 +27,7 @@ public class EventService : IEventService
         // Validate dates
         if (updated.StartDate >= updated.EndDate)
         {
-            throw new DomainException("End date must be after start date.");
+            throw new ÀpplicationException("End date must be after start date.");
         }
 
         // Check if date changes affect existing shifts
@@ -38,7 +39,7 @@ public class EventService : IEventService
 
             if (conflictingShifts.Any())
             {
-                throw new DomainException($"Cannot change event dates. {conflictingShifts.Count} shift(s) would fall outside the new event timeframe.");
+                throw new ÀpplicationException($"Cannot change event dates. {conflictingShifts.Count} shift(s) would fall outside the new event timeframe.");
             }
         }
 
@@ -57,7 +58,7 @@ public class EventService : IEventService
                 await _emailService.SendEventPlannedNotificationAsync(existing);
                 if (decision.PromoteToConfirmedAfterPlanned)
                 {
-                    existing.Status = EventStatus.Confirmed;
+                    existing.Status = Entities.EventStatus.Confirmed;
                     existing.NotificationSent = true;
                 }
                 _logger.LogInformation("Planned notification sent for Event {EventId}", existing.Id);

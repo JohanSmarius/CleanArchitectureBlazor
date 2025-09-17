@@ -3,6 +3,7 @@ using Entities;
 using Application;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Application.DataAdapters;
 
 namespace Infrastructure;
 
@@ -82,7 +83,7 @@ public class EventRepository : IEventRepository
         var today = DateTime.Today;
         return await _context.Events
             .Include(e => e.Shifts)
-            .Where(e => e.StartDate >= today && e.Status != EventStatus.Cancelled)
+            .Where(e => e.StartDate >= today && e.Status != Entities.EventStatus.Cancelled)
             .OrderBy(e => e.StartDate)
             .ToListAsync();
     }

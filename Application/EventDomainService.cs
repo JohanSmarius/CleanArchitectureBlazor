@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Application.DataAdapters;
 using Entities;
 
 namespace Application
@@ -44,14 +45,14 @@ namespace Application
             bool canContact = !string.IsNullOrWhiteSpace(existing.ContactEmail);
 
             bool shouldSendPlanned =
-                originalStatus != EventStatus.Planned &&
-                updated.Status == EventStatus.Planned &&
+                originalStatus != Entities.EventStatus.Planned &&
+                updated.Status == Entities.EventStatus.Planned &&
                 !originalNotificationSent &&
                 canContact;
 
             bool shouldSendInvoice =
-                originalStatus != EventStatus.SendInvoice &&
-                updated.Status == EventStatus.SendInvoice &&
+                originalStatus != Entities.EventStatus.SendInvoice &&
+                updated.Status == Entities.EventStatus.SendInvoice &&
                 canContact;
 
             return new EventStatusChangeDecision(
