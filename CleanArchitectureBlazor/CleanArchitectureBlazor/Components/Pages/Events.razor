@@ -5,6 +5,8 @@
 @inject IEventRepository EventService
 @inject IShiftRepository ShiftService
 @inject NavigationManager Navigation
+@inject ICreateEventUseCase CreateEventUseCase
+
 @rendermode InteractiveServer
 
 <PageTitle>Events - Medical First Aid Manager</PageTitle>
@@ -694,7 +696,7 @@
     private List<Event> events = new();
     private List<Event> filteredEvents = new();
     private Event? eventToDelete;
-    private Event newEvent = new();
+    private EventDTO newEvent = new();
     private Event editEvent = new();
     private Shift newShift = new();
     private Event? selectedEventForShift;
@@ -919,7 +921,7 @@
     private void OpenCreateEventDialog()
     {
         CloseDropdown(); // Close any open dropdown
-        newEvent = new Event
+        newEvent = new EventDTO
         {
             StartDate = DateTime.Today.AddHours(9), // Default to 9 AM today
             EndDate = DateTime.Today.AddHours(17)   // Default to 5 PM today
@@ -931,7 +933,7 @@
     private void CloseCreateEventDialog()
     {
         showCreateDialog = false;
-        newEvent = new Event();
+        newEvent = new EventDTO();
         StateHasChanged();
     }
 
@@ -1015,11 +1017,7 @@
         isCreating = true;
         try
         {
-            // Create the event with "Requested" status (already set as default in the model)
-            var createdEvent = await EventService.CreateEventAsync(newEvent);
-            
-            // Create a shift covering the entire event duration
-            await CreateDefaultShift(createdEvent);
+            var createdEvent = await CreateEventUseCase.CreateEventAsync(newEvent);
             
             // Refresh the events list
             await LoadEventsWithErrorHandling();

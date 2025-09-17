@@ -34,6 +34,7 @@ namespace Application
             }
 
             var entity = newEvent.ToEntity();
+            entity.Status = EventStatus.Requested;
             entity.CreatedAt = DateTime.UtcNow;
             entity.UpdatedAt = DateTime.UtcNow;
             
@@ -43,8 +44,11 @@ namespace Application
                 Name = "Default Shift",
                 StartTime = newEvent.StartDate,
                 EndTime = newEvent.EndDate,
+                RequiredStaff = 1,
+                Description = "Default shift covering the entire event duration",
+                Status = ShiftStatus.Open,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
             });
 
             var createdEvent = await repository.CreateEventAsync(entity);
