@@ -19,6 +19,41 @@ public class EventService : IEventService
         _logger = logger;
     }
 
+    public async Task<Event> CreateEventAsync(Event newEvent)
+    {
+        // Validate dates
+        if (newEvent.StartDate >= newEvent.EndDate)
+        {
+            throw new DomainException("End date must be after start date.");
+        }
+
+        if (newEvent.StartDate < DateTime.UtcNow)
+        {
+            throw new DomainException("Start date cannot be in the past.");
+        }
+
+        newEvent.Status = EventStatus.Requested;
+        newEvent.NotificationSent = false;
+        newEvent.CreatedAt = DateTime.UtcNow;
+        newEvent.UpdatedAt = DateTime.UtcNow;
+
+        // add a shift covering the entire event duration if none exist
+        newEvent.Shifts.Add(new Shift
+        {
+            Name = "Full Event duration",
+            StartTime = newEvent.StartDate,
+            EndTime = newEvent.EndDate,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Description = "Auto-generated shift covering the entire event duration",
+            RequiredStaff = 1
+        });
+
+        var created = await _repository.CreateEventAsync(newEvent);
+
+        return created;
+    }
+
     public async Task<Event> UpdateEventAsync(Event updated)
     {
         // Validate dates

@@ -1,6 +1,7 @@
 @page "/events"
 @using Domain
-@inject IEventRepository EventService
+@inject IEventRepository EventRepository
+@inject IEventService EventService
 @inject IShiftRepository ShiftService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
@@ -751,7 +752,7 @@
 
     private async Task LoadEvents()
     {
-        events = await EventService.GetAllEventsAsync();
+        events = await EventRepository.GetAllEventsAsync();
     }
 
     private void OnSearchChanged(ChangeEventArgs e)
@@ -880,7 +881,7 @@
         isDeleting = true;
         try
         {
-            await EventService.DeleteEventAsync(eventToDelete.Id);
+            await EventRepository.DeleteEventAsync(eventToDelete.Id);
             events.Remove(eventToDelete);
             ApplyFiltersAndSort();
             eventToDelete = null;
@@ -940,7 +941,7 @@
         try
         {
             // Get the full event with all related data
-            var fullEvent = await EventService.GetEventByIdAsync(eventItem.Id);
+            var fullEvent = await EventRepository.GetEventByIdAsync(eventItem.Id);
             if (fullEvent != null)
             {
                 editEvent = new Event
@@ -983,7 +984,7 @@
         isUpdating = true;
         try
         {
-            await EventService.UpdateEventAsync(editEvent);
+            await EventRepository.UpdateEventAsync(editEvent);
             
             // Update the local events list
             var eventIndex = events.FindIndex(e => e.Id == editEvent.Id);
@@ -1015,9 +1016,6 @@
         {
             // Create the event with "Requested" status (already set as default in the model)
             var createdEvent = await EventService.CreateEventAsync(newEvent);
-            
-            // Create a shift covering the entire event duration
-            await CreateDefaultShift(createdEvent);
             
             // Refresh the events list
             await LoadEventsWithErrorHandling();
@@ -1068,7 +1066,7 @@
         try
         {
             // Get the full event with all related data to see existing shifts
-            var fullEvent = await EventService.GetEventByIdAsync(eventItem.Id);
+            var fullEvent = await EventRepository.GetEventByIdAsync(eventItem.Id);
             if (fullEvent != null)
             {
                 selectedEventForShift = fullEvent;
