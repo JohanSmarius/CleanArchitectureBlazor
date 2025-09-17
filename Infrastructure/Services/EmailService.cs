@@ -1,6 +1,7 @@
 using CleanArchitectureBlazor.Configuration;
 using CleanArchitectureBlazor.Data;
 using Entities;
+using Application;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net;

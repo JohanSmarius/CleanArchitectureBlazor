@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Mail;
 using System.Text;
 using Entities;
+using Application;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 

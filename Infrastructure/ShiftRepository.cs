@@ -1,4 +1,5 @@
 using Entities;
+using Application;
 using CleanArchitectureBlazor.Data;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,4 +1,6 @@
-namespace Entities;
+using Entities;
+
+namespace Application;
 
 /// <summary>
 /// Service for managing staff assignments

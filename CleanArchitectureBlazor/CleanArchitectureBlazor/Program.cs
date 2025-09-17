@@ -3,6 +3,7 @@ using CleanArchitectureBlazor.Components;
 using CleanArchitectureBlazor.Components.Account;
 using CleanArchitectureBlazor.Configuration;
 using CleanArchitectureBlazor.Data;
+using Application;
 using Entities;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;

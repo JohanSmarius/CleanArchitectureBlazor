@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 
-namespace Entities;
+using Entities;
+
+namespace Application;
 
 public class EventService : IEventService
 {

@@ -1,5 +1,6 @@
 using CleanArchitectureBlazor.Data;
 using Entities;
+using Application;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
