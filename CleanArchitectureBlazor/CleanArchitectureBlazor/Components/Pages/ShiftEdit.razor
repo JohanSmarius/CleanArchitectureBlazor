@@ -1,5 +1,5 @@
 @page "/shifts/edit/{ShiftId:int}"
-@using Domain
+@using Entities
 @inject IShiftRepository ShiftService
 @inject IStaffRepository StaffService
 @inject IStaffAssignmentRepository StaffAssignmentService
@@ -419,12 +419,12 @@ else
     private bool isRemovingStaff = false;
     private bool showAddStaffDialog = false;
 
-    private Domain.Shift? shift;
-    private Domain.Shift editShift = new();
-    private List<Domain.StaffAssignment> currentAssignments = new();
-    private List<Domain.Staff> availableStaff = new();
-    private List<Domain.Staff> filteredAvailableStaff = new();
-    private Domain.StaffAssignment? staffToRemove;
+    private Entities.Shift? shift;
+    private Entities.Shift editShift = new();
+    private List<Entities.StaffAssignment> currentAssignments = new();
+    private List<Entities.Staff> availableStaff = new();
+    private List<Entities.Staff> filteredAvailableStaff = new();
+    private Entities.StaffAssignment? staffToRemove;
 
     private string staffSearchTerm = string.Empty;
     private string staffRoleFilter = string.Empty;
@@ -457,7 +457,7 @@ else
         if (shift != null)
         {
             // Create a copy for editing - exclude navigation properties to avoid tracking conflicts
-            editShift = new Domain.Shift
+            editShift = new Entities.Shift
             {
                 Id = shift.Id,
                 EventId = shift.EventId,
@@ -487,7 +487,7 @@ else
             var assignedStaffIds = currentAssignments.Select(a => a.StaffId).ToHashSet();
             
             // Filter out already assigned staff and check availability
-            var availableStaffList = new List<Domain.Staff>();
+            var availableStaffList = new List<Entities.Staff>();
             
             foreach (var staffMember in allStaff)
             {
@@ -575,11 +575,11 @@ else
         StateHasChanged();
     }
 
-    private async Task AddStaffToShift(Domain.Staff staffMember)
+    private async Task AddStaffToShift(Entities.Staff staffMember)
     {
         try
         {
-            var assignment = new Domain.StaffAssignment
+            var assignment = new Entities.StaffAssignment
             {
                 ShiftId = ShiftId,
                 StaffId = staffMember.Id,

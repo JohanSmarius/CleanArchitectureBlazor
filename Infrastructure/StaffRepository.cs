@@ -1,5 +1,5 @@
 using CleanArchitectureBlazor.Data;
-using Domain;
+using Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure;
@@ -13,7 +13,7 @@ public class StaffRepository : IStaffRepository
         _context = context;
     }
 
-    public async Task<List<Domain.Staff>> GetAllStaffAsync()
+    public async Task<List<Entities.Staff>> GetAllStaffAsync()
     {
         return await _context.Staff
             .OrderBy(s => s.LastName)
@@ -21,7 +21,7 @@ public class StaffRepository : IStaffRepository
             .ToListAsync();
     }
 
-    public async Task<Domain.Staff?> GetStaffByIdAsync(int id)
+    public async Task<Entities.Staff?> GetStaffByIdAsync(int id)
     {
         return await _context.Staff
             .Include(s => s.StaffAssignments)
@@ -30,7 +30,7 @@ public class StaffRepository : IStaffRepository
             .FirstOrDefaultAsync(s => s.Id == id);
     }
 
-    public async Task<Domain.Staff> CreateStaffAsync(Staff staff)
+    public async Task<Entities.Staff> CreateStaffAsync(Staff staff)
     {
         staff.CreatedAt = DateTime.UtcNow;
         _context.Staff.Add(staff);
@@ -38,7 +38,7 @@ public class StaffRepository : IStaffRepository
         return staff;
     }
 
-    public async Task<Domain.Staff> UpdateStaffAsync(Staff staff)
+    public async Task<Entities.Staff> UpdateStaffAsync(Staff staff)
     {
         staff.UpdatedAt = DateTime.UtcNow;
         _context.Staff.Update(staff);
@@ -59,7 +59,7 @@ public class StaffRepository : IStaffRepository
         }
     }
 
-    public async Task<List<Domain.Staff>> GetActiveStaffAsync()
+    public async Task<List<Entities.Staff>> GetActiveStaffAsync()
     {
         return await _context.Staff
             .Where(s => s.IsActive)

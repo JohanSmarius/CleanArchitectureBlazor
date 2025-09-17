@@ -1,5 +1,5 @@
 @page "/staff/details/{StaffId:int}"
-@using Domain
+@using Entities
 @inject IStaffRepository StaffService
 @inject IStaffAssignmentRepository StaffAssignmentService
 @inject NavigationManager Navigation
@@ -512,8 +512,8 @@ else
     private bool isDeactivating = false;
     private bool showEditDialog = false;
     private bool showDeactivateConfirm = false;
-    private Domain.Staff? staffDetail;
-    private Domain.Staff staffForm = new();
+    private Entities.Staff? staffDetail;
+    private Entities.Staff staffForm = new();
     private string emailError = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -568,7 +568,7 @@ else
     {
         if (staffDetail == null) return;
 
-        staffForm = new Domain.Staff
+        staffForm = new Entities.Staff
         {
             Id = staffDetail.Id,
             FirstName = staffDetail.FirstName,
@@ -590,7 +590,7 @@ else
     private void CloseEditDialog()
     {
         showEditDialog = false;
-        staffForm = new Domain.Staff();
+        staffForm = new Entities.Staff();
         emailError = string.Empty;
         StateHasChanged();
     }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Domain
+namespace Entities
 {
     /// <summary>
     /// Pure domain service that contains business rules for Events.

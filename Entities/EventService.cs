@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace Domain;
+namespace Entities;
 
 public class EventService : IEventService
 {

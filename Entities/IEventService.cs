@@ -1,4 +1,4 @@
-namespace Domain;
+namespace Entities;
 
 public interface IEventService
 {

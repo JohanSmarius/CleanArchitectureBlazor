@@ -1,4 +1,4 @@
-using Domain;
+using Entities;
 using CleanArchitectureBlazor.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

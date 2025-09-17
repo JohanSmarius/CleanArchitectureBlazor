@@ -340,10 +340,10 @@
     private bool isDeactivating = false;
     private bool showStaffDialog = false;
     private bool isEditMode = false;
-    private List<Domain.Staff> staff = new();
-    private List<Domain.Staff> filteredStaff = new();
-    private Domain.Staff? staffToDeactivate;
-    private Domain.Staff staffForm = new();
+    private List<Entities.Staff> staff = new();
+    private List<Entities.Staff> filteredStaff = new();
+    private Entities.Staff? staffToDeactivate;
+    private Entities.Staff staffForm = new();
     private int? openDropdownId = null;
     
     private string searchTerm = string.Empty;
@@ -433,17 +433,17 @@
     {
         CloseDropdown();
         isEditMode = false;
-        staffForm = new Domain.Staff { IsActive = true };
+        staffForm = new Entities.Staff { IsActive = true };
         emailError = string.Empty;
         showStaffDialog = true;
         StateHasChanged();
     }
 
-    private void OpenEditStaffDialog(Domain.Staff staffMember)
+    private void OpenEditStaffDialog(Entities.Staff staffMember)
     {
         CloseDropdown();
         isEditMode = true;
-        staffForm = new Domain.Staff
+        staffForm = new Entities.Staff
         {
             Id = staffMember.Id,
             FirstName = staffMember.FirstName,
@@ -465,7 +465,7 @@
     private void CloseStaffDialog()
     {
         showStaffDialog = false;
-        staffForm = new Domain.Staff();
+        staffForm = new Entities.Staff();
         emailError = string.Empty;
         StateHasChanged();
     }
@@ -516,7 +516,7 @@
         }
     }
 
-    private void ConfirmDeactivateStaff(Domain.Staff staffMember)
+    private void ConfirmDeactivateStaff(Entities.Staff staffMember)
     {
         staffToDeactivate = staffMember;
         CloseDropdown();
@@ -560,7 +560,7 @@
         }
     }
 
-    private async Task ReactivateStaff(Domain.Staff staffMember)
+    private async Task ReactivateStaff(Entities.Staff staffMember)
     {
         CloseDropdown();
         try

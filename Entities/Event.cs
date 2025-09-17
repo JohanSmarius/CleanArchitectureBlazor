@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Domain;
+namespace Entities;
 
 /// <summary>
 /// Represents a medical first aid event

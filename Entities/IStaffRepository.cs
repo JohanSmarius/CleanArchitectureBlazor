@@ -1,4 +1,4 @@
-namespace Domain;
+namespace Entities;
 
 /// <summary>
 /// Service for managing staff

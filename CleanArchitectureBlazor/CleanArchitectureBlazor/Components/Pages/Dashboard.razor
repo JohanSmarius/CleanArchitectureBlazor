@@ -1,5 +1,5 @@
 @page "/dashboard"
-@using Domain
+@using Entities
 @inject IEventRepository EventService
 @inject IShiftRepository ShiftService
 @inject IStaffRepository StaffService
@@ -219,11 +219,11 @@
 
 @code {
     private bool isLoading = true;
-    private List<Domain.Event> upcomingEvents = new();
-    private List<Domain.Shift> activeShifts = new();
-    private List<Domain.Shift> todaysShifts = new();
-    private List<Domain.Staff> activeStaff = new();
-    private List<Domain.StaffAssignment> staffOnDuty = new();
+    private List<Entities.Event> upcomingEvents = new();
+    private List<Entities.Shift> activeShifts = new();
+    private List<Entities.Shift> todaysShifts = new();
+    private List<Entities.Staff> activeStaff = new();
+    private List<Entities.StaffAssignment> staffOnDuty = new();
 
     protected override async Task OnInitializedAsync()
     {
