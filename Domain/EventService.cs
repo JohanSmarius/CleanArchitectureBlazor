@@ -21,6 +21,25 @@ public class EventService : IEventService
 
     public async Task<Event> UpdateEventAsync(Event updated)
     {
+        // Validate dates
+        if (updated.StartDate >= updated.EndDate)
+        {
+            throw new DomainException("End date must be after start date.");
+        }
+
+        // Check if date changes affect existing shifts
+        if (updated.Shifts.Any() &&
+            (updated.StartDate != updated.StartDate || updated.EndDate != updated.EndDate))
+        {
+            var conflictingShifts = updated.Shifts.Where(s =>
+                s.StartTime < updated.StartDate || s.EndTime > updated.EndDate).ToList();
+
+            if (conflictingShifts.Any())
+            {
+                throw new DomainException($"Cannot change event dates. {conflictingShifts.Count} shift(s) would fall outside the new event timeframe.");
+            }
+        }
+
         // Load current state
         var existing = await _repository.GetEventByIdAsync(updated.Id) ??
             throw new InvalidOperationException($"Event {updated.Id} not found");
