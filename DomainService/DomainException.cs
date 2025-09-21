@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace Domain
+namespace DomainService
 {
     public class DomainException : Exception
     {

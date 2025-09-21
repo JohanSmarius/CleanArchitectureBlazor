@@ -3,5 +3,6 @@
   <Project Path="CleanArchitectureBlazor/CleanArchitectureBlazor.Client/CleanArchitectureBlazor.Client.csproj" />
   <Project Path="CleanArchitectureBlazor/CleanArchitectureBlazor/CleanArchitectureBlazor.csproj" />
   <Project Path="Domain/Domain.csproj" Id="106faf23-a126-40ad-89d2-75da539bc478" />
+  <Project Path="DomainService/DomainService.csproj" Id="201d7551-f674-403b-b983-9c5005f2466a" />
   <Project Path="Infrastructure/Infrastructure.csproj" Id="1e94f0b9-bc9d-4e85-80e3-cfe759c18a21" />
 </Solution>

@@ -1,4 +1,4 @@
-namespace Domain;
+namespace DomainService;
 
 public interface IEventService
 {

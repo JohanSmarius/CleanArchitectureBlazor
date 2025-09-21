@@ -1,4 +1,5 @@
 using Domain;
+using DomainService;
 using CleanArchitectureBlazor.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
