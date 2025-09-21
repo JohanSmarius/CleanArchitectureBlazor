@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Application
 {
-    public class UpdateEventUseCase
+    public class UpdateEventUseCase : IUpdateEventUseCase
     {
         private readonly IEventRepository _repository;
         private readonly IEmailService _emailService;
@@ -24,7 +24,7 @@ namespace Application
             _logger = logger;
         }
 
-        public async Task<Event> UpdateEventAsync(Event updated)
+        public async Task<Event> Execute(Event updated)
         {
             // Validate dates
             if (updated.StartDate >= updated.EndDate)

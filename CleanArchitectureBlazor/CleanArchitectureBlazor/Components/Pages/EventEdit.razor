@@ -6,6 +6,7 @@
 @inject IShiftRepository ShiftService
 @inject IEventService EventService
 @inject NavigationManager Navigation
+@inject IUpdateEventUseCase UpdateEventUseCase
 @rendermode InteractiveServer
 
 <PageTitle>Edit Event - Medical First Aid Manager</PageTitle>
@@ -469,7 +470,7 @@ else
         
         try
         {
-            await EventService.UpdateEventAsync(editForm);
+            await UpdateEventUseCase.Execute(editForm);
             
             // Navigate back to event details
             Navigation.NavigateTo($"/events/details/{EventId}");

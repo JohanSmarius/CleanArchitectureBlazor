@@ -20,7 +20,7 @@ namespace Application
             this.logger = logger;
         }
 
-        public async Task<EventDTO> CreateEventAsync(EventDTO newEvent)
+        public async Task<EventDTO> Execute(EventDTO newEvent)
         {
             // Validate dates
             if (newEvent.StartDate >= newEvent.EndDate)

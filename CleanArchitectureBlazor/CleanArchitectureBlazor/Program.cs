@@ -53,6 +53,7 @@ builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<ICreateEventUseCase, CreateEventUseCase>();
+builder.Services.AddScoped<IUpdateEventUseCase, UpdateEventUseCase>();
 
 builder.Services.Configure<EmailOptions>(
     builder.Configuration.GetSection(EmailOptions.SectionName)

@@ -7,6 +7,6 @@ namespace Application
 {
     public interface ICreateEventUseCase
     {
-        Task<EventDTO> CreateEventAsync(EventDTO newEvent);
+        Task<EventDTO> Execute(EventDTO newEvent);
     }
 }

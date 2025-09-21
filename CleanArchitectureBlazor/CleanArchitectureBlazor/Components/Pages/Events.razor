@@ -6,6 +6,7 @@
 @inject IShiftRepository ShiftService
 @inject NavigationManager Navigation
 @inject ICreateEventUseCase CreateEventUseCase
+@inject IUpdateEventUseCase UpdateEventUseCase
 
 @rendermode InteractiveServer
 
@@ -987,7 +988,7 @@
         isUpdating = true;
         try
         {
-            await EventService.UpdateEventAsync(editEvent);
+            await UpdateEventUseCase.Execute(editEvent);
             
             // Update the local events list
             var eventIndex = events.FindIndex(e => e.Id == editEvent.Id);
@@ -1017,7 +1018,7 @@
         isCreating = true;
         try
         {
-            var createdEvent = await CreateEventUseCase.CreateEventAsync(newEvent);
+            var createdEvent = await CreateEventUseCase.Execute(newEvent);
             
             // Refresh the events list
             await LoadEventsWithErrorHandling();
