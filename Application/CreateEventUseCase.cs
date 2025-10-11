@@ -9,7 +9,7 @@ namespace Application
 {
     public class CreateEventUseCase : ICreateEventUseCase
     {
-        private readonly IEventRepository repository;
+        private IEventRepository repository;
         private readonly ILogger<EventService> logger;
 
         public CreateEventUseCase(
@@ -37,7 +37,7 @@ namespace Application
             entity.Status = EventStatus.Requested;
             entity.CreatedAt = DateTime.UtcNow;
             entity.UpdatedAt = DateTime.UtcNow;
-            
+
             // Create a shift to cover the entire event duration by default
             entity.Shifts.Add(new Shift
             {
