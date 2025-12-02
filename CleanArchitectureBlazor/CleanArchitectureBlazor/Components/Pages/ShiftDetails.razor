@@ -1,8 +1,9 @@
 @page "/shifts/details/{ShiftId:int}"
-@using CleanArchitectureBlazor.Models
-@using CleanArchitectureBlazor.Services
-@inject IShiftService ShiftService
-@inject IStaffAssignmentService StaffAssignmentService
+@using Application
+@using Application.DataAdapters
+@using Entities
+@inject IShiftRepository ShiftService
+@inject IStaffAssignmentRepository StaffAssignmentService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 

@@ -1,8 +1,9 @@
 @page "/events/details/{EventId:int}"
-@using CleanArchitectureBlazor.Models
-@using CleanArchitectureBlazor.Services
-@inject IEventService EventService
-@inject IShiftService ShiftService
+@using Application
+@using Application.DataAdapters
+@using Entities
+@inject IEventRepository EventService
+@inject IShiftRepository ShiftService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 
