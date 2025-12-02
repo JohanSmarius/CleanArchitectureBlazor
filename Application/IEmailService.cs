@@ -1,6 +1,7 @@
-using CleanArchitectureBlazor.Models;
+using Application.DataAdapters;
+using Entities;
 
-namespace CleanArchitectureBlazor.Services;
+namespace Application;
 
 /// <summary>
 /// Service for sending emails

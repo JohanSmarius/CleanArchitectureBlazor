@@ -1,9 +1,10 @@
 @page "/shifts/edit/{ShiftId:int}"
-@using CleanArchitectureBlazor.Models
-@using CleanArchitectureBlazor.Services
-@inject IShiftService ShiftService
-@inject IStaffService StaffService
-@inject IStaffAssignmentService StaffAssignmentService
+@using Application
+@using Application.DataAdapters
+@using Entities
+@inject IShiftRepository ShiftService
+@inject IStaffRepository StaffService
+@inject IStaffAssignmentRepository StaffAssignmentService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 
@@ -420,12 +421,12 @@ else
     private bool isRemovingStaff = false;
     private bool showAddStaffDialog = false;
 
-    private Shift? shift;
-    private Shift editShift = new();
-    private List<StaffAssignment> currentAssignments = new();
-    private List<CleanArchitectureBlazor.Models.Staff> availableStaff = new();
-    private List<CleanArchitectureBlazor.Models.Staff> filteredAvailableStaff = new();
-    private StaffAssignment? staffToRemove;
+    private Entities.Shift? shift;
+    private Entities.Shift editShift = new();
+    private List<Entities.StaffAssignment> currentAssignments = new();
+    private List<Entities.Staff> availableStaff = new();
+    private List<Entities.Staff> filteredAvailableStaff = new();
+    private Entities.StaffAssignment? staffToRemove;
 
     private string staffSearchTerm = string.Empty;
     private string staffRoleFilter = string.Empty;
@@ -458,7 +459,7 @@ else
         if (shift != null)
         {
             // Create a copy for editing - exclude navigation properties to avoid tracking conflicts
-            editShift = new Shift
+            editShift = new Entities.Shift
             {
                 Id = shift.Id,
                 EventId = shift.EventId,
@@ -488,7 +489,7 @@ else
             var assignedStaffIds = currentAssignments.Select(a => a.StaffId).ToHashSet();
             
             // Filter out already assigned staff and check availability
-            var availableStaffList = new List<CleanArchitectureBlazor.Models.Staff>();
+            var availableStaffList = new List<Entities.Staff>();
             
             foreach (var staffMember in allStaff)
             {
@@ -576,11 +577,11 @@ else
         StateHasChanged();
     }
 
-    private async Task AddStaffToShift(CleanArchitectureBlazor.Models.Staff staffMember)
+    private async Task AddStaffToShift(Entities.Staff staffMember)
     {
         try
         {
-            var assignment = new StaffAssignment
+            var assignment = new Entities.StaffAssignment
             {
                 ShiftId = ShiftId,
                 StaffId = staffMember.Id,

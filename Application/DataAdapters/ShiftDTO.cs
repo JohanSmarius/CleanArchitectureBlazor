@@ -1,11 +1,12 @@
+using Entities;
 using System.ComponentModel.DataAnnotations;
 
-namespace CleanArchitectureBlazor.Models;
+namespace Application.DataAdapters;
 
 /// <summary>
 /// Represents a shift within an event
 /// </summary>
-public class Shift
+public class ShiftDTO
 {
     public int Id { get; set; }
 
@@ -28,7 +29,7 @@ public class Shift
     [StringLength(300)]
     public string? Description { get; set; }
 
-    public ShiftStatus Status { get; set; } = ShiftStatus.Open;
+    public ShiftStatusDTO Status { get; set; } = ShiftStatusDTO.Open;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -42,7 +43,7 @@ public class Shift
 /// <summary>
 /// Status of a shift
 /// </summary>
-public enum ShiftStatus
+public enum ShiftStatusDTO
 {
     Open,
     Full,

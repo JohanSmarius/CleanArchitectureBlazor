@@ -1,9 +1,13 @@
 @page "/events"
-@using CleanArchitectureBlazor.Models
-@using CleanArchitectureBlazor.Services
-@inject IEventService EventService
-@inject IShiftService ShiftService
+@using Application
+@using Application.DataAdapters
+@using Entities
+@inject IEventRepository EventService
+@inject IShiftRepository ShiftService
 @inject NavigationManager Navigation
+@inject ICreateEventUseCase CreateEventUseCase
+@inject IUpdateEventUseCase UpdateEventUseCase
+
 @rendermode InteractiveServer
 
 <PageTitle>Events - Medical First Aid Manager</PageTitle>
@@ -179,6 +183,9 @@
                                         <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
                                             View Details
                                         </button>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="@((e) => ConfirmDelete(eventItem))" @onclick:stopPropagation="true">
+                                            <i class="fas fa-trash me-1"></i>Delete
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -295,9 +302,14 @@
                                             </div>
                                         </td>
                                         <td class="text-center">
-                                            <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
-                                                <i class="fas fa-edit me-1"></i>Details
-                                            </button>
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
+                                                    <i class="fas fa-edit me-1"></i>Details
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" @onclick="@((e) => ConfirmDelete(eventItem))" @onclick:stopPropagation="true">
+                                                    <i class="fas fa-trash me-1"></i>Delete
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 }
@@ -693,7 +705,7 @@
     private List<Event> events = new();
     private List<Event> filteredEvents = new();
     private Event? eventToDelete;
-    private Event newEvent = new();
+    private EventDTO newEvent = new();
     private Event editEvent = new();
     private Shift newShift = new();
     private Event? selectedEventForShift;
@@ -918,7 +930,7 @@
     private void OpenCreateEventDialog()
     {
         CloseDropdown(); // Close any open dropdown
-        newEvent = new Event
+        newEvent = new EventDTO
         {
             StartDate = DateTime.Today.AddHours(9), // Default to 9 AM today
             EndDate = DateTime.Today.AddHours(17)   // Default to 5 PM today
@@ -930,7 +942,7 @@
     private void CloseCreateEventDialog()
     {
         showCreateDialog = false;
-        newEvent = new Event();
+        newEvent = new EventDTO();
         StateHasChanged();
     }
 
@@ -984,7 +996,7 @@
         isUpdating = true;
         try
         {
-            await EventService.UpdateEventAsync(editEvent);
+            await UpdateEventUseCase.Execute(editEvent);
             
             // Update the local events list
             var eventIndex = events.FindIndex(e => e.Id == editEvent.Id);
@@ -1014,11 +1026,7 @@
         isCreating = true;
         try
         {
-            // Create the event with "Requested" status (already set as default in the model)
-            var createdEvent = await EventService.CreateEventAsync(newEvent);
-            
-            // Create a shift covering the entire event duration
-            await CreateDefaultShift(createdEvent);
+            var createdEvent = await CreateEventUseCase.Execute(newEvent);
             
             // Refresh the events list
             await LoadEventsWithErrorHandling();

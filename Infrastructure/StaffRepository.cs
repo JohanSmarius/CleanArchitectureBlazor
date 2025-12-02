@@ -1,34 +1,20 @@
-using CleanArchitectureBlazor.Models;
 using CleanArchitectureBlazor.Data;
+using Entities;
+using Application;
 using Microsoft.EntityFrameworkCore;
 
-namespace CleanArchitectureBlazor.Services;
+namespace Infrastructure;
 
-/// <summary>
-/// Service for managing staff
-/// </summary>
-public interface IStaffService
-{
-    Task<List<Staff>> GetAllStaffAsync();
-    Task<Staff?> GetStaffByIdAsync(int id);
-    Task<Staff> CreateStaffAsync(Staff staff);
-    Task<Staff> UpdateStaffAsync(Staff staff);
-    Task DeleteStaffAsync(int id);
-    Task<List<Staff>> GetActiveStaffAsync();
-    Task<List<Staff>> GetStaffByRoleAsync(StaffRole role);
-    Task<bool> IsEmailUniqueAsync(string email, int? excludeId = null);
-}
-
-public class StaffService : IStaffService
+public class StaffRepository : IStaffRepository
 {
     private readonly ApplicationDbContext _context;
 
-    public StaffService(ApplicationDbContext context)
+    public StaffRepository(ApplicationDbContext context)
     {
         _context = context;
     }
 
-    public async Task<List<Staff>> GetAllStaffAsync()
+    public async Task<List<Entities.Staff>> GetAllStaffAsync()
     {
         return await _context.Staff
             .OrderBy(s => s.LastName)
@@ -36,7 +22,7 @@ public class StaffService : IStaffService
             .ToListAsync();
     }
 
-    public async Task<Staff?> GetStaffByIdAsync(int id)
+    public async Task<Entities.Staff?> GetStaffByIdAsync(int id)
     {
         return await _context.Staff
             .Include(s => s.StaffAssignments)
@@ -45,7 +31,7 @@ public class StaffService : IStaffService
             .FirstOrDefaultAsync(s => s.Id == id);
     }
 
-    public async Task<Staff> CreateStaffAsync(Staff staff)
+    public async Task<Entities.Staff> CreateStaffAsync(Staff staff)
     {
         staff.CreatedAt = DateTime.UtcNow;
         _context.Staff.Add(staff);
@@ -53,7 +39,7 @@ public class StaffService : IStaffService
         return staff;
     }
 
-    public async Task<Staff> UpdateStaffAsync(Staff staff)
+    public async Task<Entities.Staff> UpdateStaffAsync(Staff staff)
     {
         staff.UpdatedAt = DateTime.UtcNow;
         _context.Staff.Update(staff);
@@ -74,7 +60,7 @@ public class StaffService : IStaffService
         }
     }
 
-    public async Task<List<Staff>> GetActiveStaffAsync()
+    public async Task<List<Entities.Staff>> GetActiveStaffAsync()
     {
         return await _context.Staff
             .Where(s => s.IsActive)

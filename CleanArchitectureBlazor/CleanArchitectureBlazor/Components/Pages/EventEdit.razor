@@ -1,9 +1,12 @@
 @page "/events/edit/{EventId:int}"
-@using CleanArchitectureBlazor.Models
-@using CleanArchitectureBlazor.Services
+@using Application
+@using Application.DataAdapters
+@using Entities
+@inject IEventRepository EventRepository
+@inject IShiftRepository ShiftService
 @inject IEventService EventService
-@inject IShiftService ShiftService
 @inject NavigationManager Navigation
+@inject IUpdateEventUseCase UpdateEventUseCase
 @rendermode InteractiveServer
 
 <PageTitle>Edit Event - Medical First Aid Manager</PageTitle>
@@ -436,7 +439,7 @@ else
 
     private async Task LoadEventDetails()
     {
-        eventToEdit = await EventService.GetEventByIdAsync(EventId);
+        eventToEdit = await EventRepository.GetEventByIdAsync(EventId);
         if (eventToEdit != null)
         {
             // Create a copy for editing
@@ -467,31 +470,14 @@ else
         
         try
         {
-            // Validate dates
-            if (editForm.StartDate >= editForm.EndDate)
-            {
-                validationError = "End date must be after start date.";
-                return;
-            }
-
-            // Check if date changes affect existing shifts
-            if (eventToEdit.Shifts.Any() && 
-                (editForm.StartDate != eventToEdit.StartDate || editForm.EndDate != eventToEdit.EndDate))
-            {
-                var conflictingShifts = eventToEdit.Shifts.Where(s => 
-                    s.StartTime < editForm.StartDate || s.EndTime > editForm.EndDate).ToList();
-                
-                if (conflictingShifts.Any())
-                {
-                    validationError = $"Cannot change event dates. {conflictingShifts.Count} shift(s) would fall outside the new event timeframe.";
-                    return;
-                }
-            }
-
-            await EventService.UpdateEventAsync(editForm);
+            await UpdateEventUseCase.Execute(editForm);
             
             // Navigate back to event details
             Navigation.NavigateTo($"/events/details/{EventId}");
+        }
+        catch (ÀpplicationException ex)
+        {
+            validationError = ex.Message;
         }
         catch (Exception ex)
         {
@@ -540,7 +526,7 @@ else
         try
         {
             editForm.Status = EventStatus.Cancelled;
-            await EventService.UpdateEventAsync(editForm);
+            await EventRepository.UpdateEventAsync(editForm);
             
             // Reload to get updated data
             await LoadEventDetails();
