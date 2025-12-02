@@ -1,9 +1,8 @@
-using CleanArchitectureBlazor.Data;
-using Entities;
 using Application;
+using Entities;
+using CleanArchitectureBlazor.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Application.DataAdapters;
 
 namespace Infrastructure;
 
@@ -51,7 +50,6 @@ public class EventRepository : IEventRepository
             throw new InvalidOperationException($"Event with ID {eventModel.Id} not found.");
         }
 
-        // Map incoming values (business rules applied earlier in service layer)
         existingEvent.Name = eventModel.Name;
         existingEvent.StartDate = eventModel.StartDate;
         existingEvent.EndDate = eventModel.EndDate;
@@ -70,10 +68,30 @@ public class EventRepository : IEventRepository
 
     public async Task DeleteEventAsync(int id)
     {
-        var eventToDelete = await _context.Events.FindAsync(id);
+        // Load event with related shifts and assignments
+        var eventToDelete = await _context.Events
+            .Include(e => e.Shifts)
+            .ThenInclude(s => s.StaffAssignments)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
         if (eventToDelete != null)
         {
+            // Delete all staff assignments for shifts (do not delete Staff entities)
+            var allAssignments = eventToDelete.Shifts.SelectMany(s => s.StaffAssignments).ToList();
+            if (allAssignments.Any())
+            {
+                _context.StaffAssignments.RemoveRange(allAssignments);
+            }
+
+            // Delete all shifts for the event
+            if (eventToDelete.Shifts.Any())
+            {
+                _context.Shifts.RemoveRange(eventToDelete.Shifts);
+            }
+
+            // Finally remove the event itself
             _context.Events.Remove(eventToDelete);
+
             await _context.SaveChangesAsync();
         }
     }
@@ -83,7 +101,7 @@ public class EventRepository : IEventRepository
         var today = DateTime.Today;
         return await _context.Events
             .Include(e => e.Shifts)
-            .Where(e => e.StartDate >= today && e.Status != Entities.EventStatus.Cancelled)
+            .Where(e => e.StartDate >= today && e.Status != EventStatus.Cancelled)
             .OrderBy(e => e.StartDate)
             .ToListAsync();
     }

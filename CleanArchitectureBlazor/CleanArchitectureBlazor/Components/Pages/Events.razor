@@ -183,6 +183,9 @@
                                         <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
                                             View Details
                                         </button>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="@((e) => ConfirmDelete(eventItem))" @onclick:stopPropagation="true">
+                                            <i class="fas fa-trash me-1"></i>Delete
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -299,9 +302,14 @@
                                             </div>
                                         </td>
                                         <td class="text-center">
-                                            <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
-                                                <i class="fas fa-edit me-1"></i>Details
-                                            </button>
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-sm btn-outline-primary" @onclick="@((e) => NavigateToDetails(eventItem.Id))" @onclick:stopPropagation="true">
+                                                    <i class="fas fa-edit me-1"></i>Details
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" @onclick="@((e) => ConfirmDelete(eventItem))" @onclick:stopPropagation="true">
+                                                    <i class="fas fa-trash me-1"></i>Delete
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 }
