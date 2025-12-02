@@ -475,7 +475,7 @@ else
             // Navigate back to event details
             Navigation.NavigateTo($"/events/details/{EventId}");
         }
-        catch (ÀpplicationException ex)
+        catch (ApplicationLayerException ex)
         {
             validationError = ex.Message;
         }
