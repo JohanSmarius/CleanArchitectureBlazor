@@ -1033,6 +1033,9 @@
             
             // Close the dialog
             CloseCreateEventDialog();
+
+            // Navigate to the event details page
+            Navigation.NavigateTo($"/events/details/{createdEvent.Id}", forceLoad: true);
         }
         catch (Exception ex)
         {
