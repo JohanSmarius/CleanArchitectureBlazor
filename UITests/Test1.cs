@@ -1,48 +1,46 @@
-﻿namespace UITests
+﻿namespace UITests;
+
+[TestClass]
+public class EventFlowTests : PageTest
 {
-    [TestClass]
-    public class Test1 : PageTest
+    [TestMethod]
+    public async Task CanCreateAndEditEventAndSeeItInEventsList()
     {
-        [TestMethod]
-        public async Task HomepageHasPlaywrightInTitleAndGetStartedLinkLinkingToTheIntroPage()
-        {
-            await Page.GotoAsync("https://playwright.dev");
+        var baseUrl = Environment.GetEnvironmentVariable("E2E_BASE_URL") ?? "https://localhost:7096";
+        var uniqueSuffix = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var createdEventName = $"Playwright Event {uniqueSuffix}";
+        var updatedEventName = $"{createdEventName} Updated";
 
-            // Expect a title "to contain" a substring.
-            await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
+        var tomorrow = DateTime.Today.AddDays(1);
+        var startDate = tomorrow.AddHours(9);
+        var endDate = tomorrow.AddHours(17);
 
-            // create a locator
-            var getStarted = Page.Locator("text=Get Started");
+        await Page.GotoAsync(baseUrl);
+        await Page.GetByRole(Microsoft.Playwright.AriaRole.Link, new() { Name = "Events" }).First.ClickAsync();
+        await Expect(Page).ToHaveURLAsync(new Regex(".*/events$"));
 
-            // Expect an attribute "to be strictly equal" to the value.
-            await Expect(getStarted).ToHaveAttributeAsync("href", "/docs/intro");
+        await Page.GetByRole(Microsoft.Playwright.AriaRole.Button, new() { Name = "Create Event" }).ClickAsync();
+        await Expect(Page.GetByRole(Microsoft.Playwright.AriaRole.Heading, new() { Name = "Create New Event" })).ToBeVisibleAsync();
 
-            // Click the get started link.
-            await getStarted.ClickAsync();
+        await Page.GetByPlaceholder("Enter event name").FillAsync(createdEventName);
+        await Page.GetByPlaceholder("Enter event location").FillAsync("Main medical station");
+        await Page.Locator("input[type='datetime-local']").Nth(0).FillAsync(startDate.ToString("yyyy-MM-ddTHH:mm"));
+        await Page.Locator("input[type='datetime-local']").Nth(1).FillAsync(endDate.ToString("yyyy-MM-ddTHH:mm"));
+        await Page.GetByRole(Microsoft.Playwright.AriaRole.Button, new() { Name = "Create Event" }).Nth(1).ClickAsync();
 
-            // Expects the URL to contain intro.
-            await Expect(Page).ToHaveURLAsync(new Regex(".*intro"));
-        }
+        await Expect(Page).ToHaveURLAsync(new Regex(".*/events/details/\\d+$"));
+        await Expect(Page.GetByRole(Microsoft.Playwright.AriaRole.Heading, new() { Name = createdEventName })).ToBeVisibleAsync();
 
-        [TestMethod]
-        public async Task HomepageHasTitleAndButtonToViewDashboard()
-        {
-            await Page.GotoAsync("https://localhost:7096");
+        await Page.GetByRole(Microsoft.Playwright.AriaRole.Button, new() { Name = "Edit Event" }).ClickAsync();
+        await Expect(Page).ToHaveURLAsync(new Regex(".*/events/edit/\\d+$"));
 
-            // Expect a title "to contain" a substring.
-            await Expect(Page).ToHaveTitleAsync(new Regex("Medical First Aid Manager"));
+        await Page.GetByPlaceholder("Enter event name").FillAsync(updatedEventName);
+        await Page.GetByRole(Microsoft.Playwright.AriaRole.Button, new() { Name = "Save Changes" }).ClickAsync();
+        await Expect(Page).ToHaveURLAsync(new Regex(".*/events/details/\\d+$"));
+        await Expect(Page.GetByRole(Microsoft.Playwright.AriaRole.Heading, new() { Name = updatedEventName })).ToBeVisibleAsync();
 
-            // create a locator
-            var viewDashboard = Page.Locator("text=View Dashboard");
-
-            // Expect an attribute "to be strictly equal" to the value.
-            await Expect(viewDashboard).ToHaveAttributeAsync("href", "/dashboard");
-
-            // Click the get started link.
-            await viewDashboard.ClickAsync();
-
-            // Expects the URL to contain intro.
-            await Expect(Page).ToHaveURLAsync(new Regex(".*dashboard"));
-        }
+        await Page.GetByRole(Microsoft.Playwright.AriaRole.Link, new() { Name = "Events" }).First.ClickAsync();
+        await Expect(Page).ToHaveURLAsync(new Regex(".*/events$"));
+        await Expect(Page.GetByText(updatedEventName)).ToBeVisibleAsync();
     }
 }
