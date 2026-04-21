@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="CleanArchitectureBlazor/CleanArchitectureBlazor.Client/CleanArchitectureBlazor.Client.csproj" />
   <Project Path="CleanArchitectureBlazor/CleanArchitectureBlazor/CleanArchitectureBlazor.csproj" />
+  <Project Path="E2ETests/E2ETests.csproj" Id="b09073f5-4244-460e-9a71-50d8ca7e2d8e" />
 </Solution>
