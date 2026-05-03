@@ -4,4 +4,5 @@
   <Project Path="CleanArchitectureBlazor/CleanArchitectureBlazor/CleanArchitectureBlazor.csproj" />
   <Project Path="Entities/Entities.csproj" Id="106faf23-a126-40ad-89d2-75da539bc478" />
   <Project Path="Infrastructure/Infrastructure.csproj" Id="1e94f0b9-bc9d-4e85-80e3-cfe759c18a21" />
+  <Project Path="Tests/Tests.csproj" Id="a1b2c3d4-e5f6-7890-abcd-ef1234567890" />
 </Solution>
