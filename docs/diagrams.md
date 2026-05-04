@@ -118,6 +118,8 @@ erDiagram
 
 Key classes, interfaces, and their relationships in the Application layer.
 
+> **Note on design inconsistency:** `CreateEventUseCase` correctly uses `EventDTO` as its input/output contract, which keeps domain entities out of the presentation layer. `UpdateEventUseCase` and `EventService` currently use the `Event` domain entity directly — this is a known deviation from the Clean Architecture ideal that should be addressed in a future refactor by introducing an `UpdateEventDTO`.
+
 ```mermaid
 classDiagram
     class ICreateEventUseCase {
@@ -127,10 +129,12 @@ classDiagram
     class IUpdateEventUseCase {
         <<interface>>
         +Execute(Event) Task~Event~
+        %% TODO: should accept/return UpdateEventDTO
     }
     class IEventService {
         <<interface>>
         +UpdateEventAsync(Event) Task~Event~
+        %% TODO: should accept/return UpdateEventDTO
     }
     class IEventRepository {
         <<interface>>
@@ -312,6 +316,8 @@ sequenceDiagram
 ---
 
 ## 7. Update Event — Sequence Diagram (with notification side-effects)
+
+> **Note:** The current implementation passes the `Event` domain entity from the page directly to `UpdateEventUseCase`. Ideally, an `UpdateEventDTO` should be used here (consistent with `CreateEventUseCase`) to preserve layer separation. This is a known technical debt item.
 
 ```mermaid
 sequenceDiagram
