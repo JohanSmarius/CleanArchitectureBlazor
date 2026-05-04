@@ -10,76 +10,76 @@ public class ShiftTests
     [Fact]
     public void GivenNewShift_WhenCreated_ThenStatusIsOpen()
     {
-        // Given & When
+        // Arrange & Act
         var shift = new Shift();
 
-        // Then
+        // Assert
         Assert.Equal(ShiftStatus.Open, shift.Status);
     }
 
     [Fact]
     public void GivenNewShift_WhenCreated_ThenRequiredStaffIsOne()
     {
-        // Given & When
+        // Arrange & Act
         var shift = new Shift();
 
-        // Then
+        // Assert
         Assert.Equal(1, shift.RequiredStaff);
     }
 
     [Fact]
     public void GivenNewShift_WhenCreated_ThenStaffAssignmentsIsEmpty()
     {
-        // Given & When
+        // Arrange & Act
         var shift = new Shift();
 
-        // Then
+        // Assert
         Assert.Empty(shift.StaffAssignments);
     }
 
     [Fact]
     public void GivenNewShift_WhenCreated_ThenNameIsEmpty()
     {
-        // Given & When
+        // Arrange & Act
         var shift = new Shift();
 
-        // Then
+        // Assert
         Assert.Equal(string.Empty, shift.Name);
     }
 
     [Fact]
     public void GivenNewShift_WhenNameIsSet_ThenNameIsUpdated()
     {
-        // Given
+        // Arrange
         var shift = new Shift();
 
-        // When
+        // Act
         shift.Name = "Evening Shift";
 
-        // Then
+        // Assert
         Assert.Equal("Evening Shift", shift.Name);
     }
 
     [Fact]
     public void GivenNewShift_WhenCreated_ThenCreatedAtIsSet()
     {
-        // Given
+        // Arrange
         var before = DateTime.UtcNow.AddSeconds(-1);
 
-        // When
+        // Act
         var shift = new Shift();
 
-        // Then
+        // Assert
         Assert.True(shift.CreatedAt >= before);
     }
 
     [Fact]
     public void GivenNewShift_WhenCreated_ThenUpdatedAtIsNull()
     {
-        // Given & When
+        // Arrange & Act
         var shift = new Shift();
 
-        // Then
+        // Assert
         Assert.Null(shift.UpdatedAt);
     }
 }

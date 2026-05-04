@@ -10,100 +10,100 @@ public class EventTests
     [Fact]
     public void GivenNewEvent_WhenCreated_ThenStatusIsRequested()
     {
-        // Given & When
+        // Arrange & Act
         var @event = new Event();
 
-        // Then
+        // Assert
         Assert.Equal(EventStatus.Requested, @event.Status);
     }
 
     [Fact]
     public void GivenNewEvent_WhenCreated_ThenNotificationSentIsFalse()
     {
-        // Given & When
+        // Arrange & Act
         var @event = new Event();
 
-        // Then
+        // Assert
         Assert.False(@event.NotificationSent);
     }
 
     [Fact]
     public void GivenNewEvent_WhenCreated_ThenShiftsIsEmpty()
     {
-        // Given & When
+        // Arrange & Act
         var @event = new Event();
 
-        // Then
+        // Assert
         Assert.Empty(@event.Shifts);
     }
 
     [Fact]
     public void GivenNewEvent_WhenCreated_ThenNameIsEmpty()
     {
-        // Given & When
+        // Arrange & Act
         var @event = new Event();
 
-        // Then
+        // Assert
         Assert.Equal(string.Empty, @event.Name);
     }
 
     [Fact]
     public void GivenNewEvent_WhenCreated_ThenLocationIsEmpty()
     {
-        // Given & When
+        // Arrange & Act
         var @event = new Event();
 
-        // Then
+        // Assert
         Assert.Equal(string.Empty, @event.Location);
     }
 
     [Fact]
     public void GivenNewEvent_WhenNameIsSet_ThenNameIsUpdated()
     {
-        // Given
+        // Arrange
         var @event = new Event();
 
-        // When
+        // Act
         @event.Name = "Marathon Medical Cover";
 
-        // Then
+        // Assert
         Assert.Equal("Marathon Medical Cover", @event.Name);
     }
 
     [Fact]
     public void GivenNewEvent_WhenShiftAdded_ThenShiftsContainsOneShift()
     {
-        // Given
+        // Arrange
         var @event = new Event();
         var shift = new Shift { Name = "Morning", StartTime = DateTime.UtcNow.AddDays(1), EndTime = DateTime.UtcNow.AddDays(1).AddHours(4) };
 
-        // When
+        // Act
         @event.Shifts.Add(shift);
 
-        // Then
+        // Assert
         Assert.Single(@event.Shifts);
     }
 
     [Fact]
     public void GivenNewEvent_WhenCreated_ThenCreatedAtIsSet()
     {
-        // Given
+        // Arrange
         var before = DateTime.UtcNow.AddSeconds(-1);
 
-        // When
+        // Act
         var @event = new Event();
 
-        // Then
+        // Assert
         Assert.True(@event.CreatedAt >= before);
     }
 
     [Fact]
     public void GivenNewEvent_WhenCreated_ThenUpdatedAtIsNull()
     {
-        // Given & When
+        // Arrange & Act
         var @event = new Event();
 
-        // Then
+        // Assert
         Assert.Null(@event.UpdatedAt);
     }
 }

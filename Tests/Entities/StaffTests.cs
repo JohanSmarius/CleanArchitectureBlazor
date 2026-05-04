@@ -10,99 +10,99 @@ public class StaffTests
     [Fact]
     public void GivenStaffWithFirstAndLastName_WhenFullNameAccessed_ThenReturnsCombinedName()
     {
-        // Given
+        // Arrange
         var staff = new Staff { FirstName = "Jane", LastName = "Doe" };
 
-        // When
+        // Act
         var fullName = staff.FullName;
 
-        // Then
+        // Assert
         Assert.Equal("Jane Doe", fullName);
     }
 
     [Fact]
     public void GivenNewStaff_WhenCreated_ThenIsActiveIsTrue()
     {
-        // Given & When
+        // Arrange & Act
         var staff = new Staff();
 
-        // Then
+        // Assert
         Assert.True(staff.IsActive);
     }
 
     [Fact]
     public void GivenNewStaff_WhenCreated_ThenStaffAssignmentsIsEmpty()
     {
-        // Given & When
+        // Arrange & Act
         var staff = new Staff();
 
-        // Then
+        // Assert
         Assert.Empty(staff.StaffAssignments);
     }
 
     [Fact]
     public void GivenNewStaff_WhenCreated_ThenFirstNameIsEmpty()
     {
-        // Given & When
+        // Arrange & Act
         var staff = new Staff();
 
-        // Then
+        // Assert
         Assert.Equal(string.Empty, staff.FirstName);
     }
 
     [Fact]
     public void GivenNewStaff_WhenCreated_ThenLastNameIsEmpty()
     {
-        // Given & When
+        // Arrange & Act
         var staff = new Staff();
 
-        // Then
+        // Assert
         Assert.Equal(string.Empty, staff.LastName);
     }
 
     [Fact]
     public void GivenNewStaff_WhenCreated_ThenEmailIsEmpty()
     {
-        // Given & When
+        // Arrange & Act
         var staff = new Staff();
 
-        // Then
+        // Assert
         Assert.Equal(string.Empty, staff.Email);
     }
 
     [Fact]
     public void GivenNewStaff_WhenRoleIsSet_ThenRoleIsUpdated()
     {
-        // Given
+        // Arrange
         var staff = new Staff();
 
-        // When
+        // Act
         staff.Role = StaffRole.Paramedic;
 
-        // Then
+        // Assert
         Assert.Equal(StaffRole.Paramedic, staff.Role);
     }
 
     [Fact]
     public void GivenNewStaff_WhenCreated_ThenCreatedAtIsSet()
     {
-        // Given
+        // Arrange
         var before = DateTime.UtcNow.AddSeconds(-1);
 
-        // When
+        // Act
         var staff = new Staff();
 
-        // Then
+        // Assert
         Assert.True(staff.CreatedAt >= before);
     }
 
     [Fact]
     public void GivenNewStaff_WhenCreated_ThenUpdatedAtIsNull()
     {
-        // Given & When
+        // Arrange & Act
         var staff = new Staff();
 
-        // Then
+        // Assert
         Assert.Null(staff.UpdatedAt);
     }
 }
