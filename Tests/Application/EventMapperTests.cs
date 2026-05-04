@@ -43,216 +43,216 @@ public class EventMapperTests
     // ── ToDTO ──────────────────────────────────────────────────────────────
 
     [Fact]
-    public void ToDTO_MapsId()
+    public void GivenEventEntity_WhenToDTOCalled_ThenIdIsMapped()
     {
-        // Arrange
+        // Given
         var entity = CreateEventEntity();
 
-        // Act
+        // When
         var dto = entity.ToDTO();
 
-        // Assert
+        // Then
         Assert.Equal(5, dto.Id);
     }
 
     [Fact]
-    public void ToDTO_MapsName()
+    public void GivenEventEntity_WhenToDTOCalled_ThenNameIsMapped()
     {
-        // Arrange
+        // Given
         var entity = CreateEventEntity();
 
-        // Act
+        // When
         var dto = entity.ToDTO();
 
-        // Assert
+        // Then
         Assert.Equal("Charity Run", dto.Name);
     }
 
     [Fact]
-    public void ToDTO_MapsStatus()
+    public void GivenEventEntity_WhenToDTOCalled_ThenStatusIsMapped()
     {
-        // Arrange
+        // Given
         var entity = CreateEventEntity();
 
-        // Act
+        // When
         var dto = entity.ToDTO();
 
-        // Assert
+        // Then
         Assert.Equal(EventStatusDTO.Confirmed, dto.Status);
     }
 
     [Fact]
-    public void ToDTO_MapsContactEmail()
+    public void GivenEventEntity_WhenToDTOCalled_ThenContactEmailIsMapped()
     {
-        // Arrange
+        // Given
         var entity = CreateEventEntity();
 
-        // Act
+        // When
         var dto = entity.ToDTO();
 
-        // Assert
+        // Then
         Assert.Equal("alice@example.com", dto.ContactEmail);
     }
 
     [Fact]
-    public void ToDTO_MapsNotificationSent()
+    public void GivenEventEntity_WhenToDTOCalled_ThenNotificationSentIsMapped()
     {
-        // Arrange
+        // Given
         var entity = CreateEventEntity();
 
-        // Act
+        // When
         var dto = entity.ToDTO();
 
-        // Assert
+        // Then
         Assert.True(dto.NotificationSent);
     }
 
     [Fact]
-    public void ToDTO_NullShifts_ReturnsEmptyShiftsList()
+    public void GivenEventEntityWithNullShifts_WhenToDTOCalled_ThenShiftsIsEmpty()
     {
-        // Arrange
+        // Given
         var entity = CreateEventEntity();
         entity.Shifts = null!;
 
-        // Act
+        // When
         var dto = entity.ToDTO();
 
-        // Assert
+        // Then
         Assert.Empty(dto.Shifts);
     }
 
     // ── ToEntity ───────────────────────────────────────────────────────────
 
     [Fact]
-    public void ToEntity_MapsId()
+    public void GivenEventDTO_WhenToEntityCalled_ThenIdIsMapped()
     {
-        // Arrange
+        // Given
         var dto = CreateEventDTO();
 
-        // Act
+        // When
         var entity = dto.ToEntity();
 
-        // Assert
+        // Then
         Assert.Equal(5, entity.Id);
     }
 
     [Fact]
-    public void ToEntity_MapsName()
+    public void GivenEventDTO_WhenToEntityCalled_ThenNameIsMapped()
     {
-        // Arrange
+        // Given
         var dto = CreateEventDTO();
 
-        // Act
+        // When
         var entity = dto.ToEntity();
 
-        // Assert
+        // Then
         Assert.Equal("Charity Run", entity.Name);
     }
 
     [Fact]
-    public void ToEntity_MapsStatus()
+    public void GivenEventDTO_WhenToEntityCalled_ThenStatusIsMapped()
     {
-        // Arrange
+        // Given
         var dto = CreateEventDTO();
 
-        // Act
+        // When
         var entity = dto.ToEntity();
 
-        // Assert
+        // Then
         Assert.Equal(EventStatus.Confirmed, entity.Status);
     }
 
     [Fact]
-    public void ToEntity_MapsLocation()
+    public void GivenEventDTO_WhenToEntityCalled_ThenLocationIsMapped()
     {
-        // Arrange
+        // Given
         var dto = CreateEventDTO();
 
-        // Act
+        // When
         var entity = dto.ToEntity();
 
-        // Assert
+        // Then
         Assert.Equal("City Park", entity.Location);
     }
 
     [Fact]
-    public void ToEntity_NullShifts_ReturnsEmptyShiftsList()
+    public void GivenEventDTOWithNullShifts_WhenToEntityCalled_ThenShiftsIsEmpty()
     {
-        // Arrange
+        // Given
         var dto = CreateEventDTO();
         dto.Shifts = null!;
 
-        // Act
+        // When
         var entity = dto.ToEntity();
 
-        // Assert
+        // Then
         Assert.Empty(entity.Shifts);
     }
 
     // ── ShiftMapper ────────────────────────────────────────────────────────
 
     [Fact]
-    public void ShiftToDTO_MapsId()
+    public void GivenShiftEntity_WhenToDTOCalled_ThenIdIsMapped()
     {
-        // Arrange
+        // Given
         var shift = new Shift { Id = 3, Name = "Morning", StartTime = DateTime.UtcNow, EndTime = DateTime.UtcNow.AddHours(4) };
 
-        // Act
+        // When
         var dto = shift.ToDTO();
 
-        // Assert
+        // Then
         Assert.Equal(3, dto.Id);
     }
 
     [Fact]
-    public void ShiftToDTO_MapsName()
+    public void GivenShiftEntity_WhenToDTOCalled_ThenNameIsMapped()
     {
-        // Arrange
+        // Given
         var shift = new Shift { Name = "Morning", StartTime = DateTime.UtcNow, EndTime = DateTime.UtcNow.AddHours(4) };
 
-        // Act
+        // When
         var dto = shift.ToDTO();
 
-        // Assert
+        // Then
         Assert.Equal("Morning", dto.Name);
     }
 
     [Fact]
-    public void ShiftToDTO_MapsStatus()
+    public void GivenShiftEntity_WhenToDTOCalled_ThenStatusIsMapped()
     {
-        // Arrange
+        // Given
         var shift = new Shift { Name = "Morning", StartTime = DateTime.UtcNow, EndTime = DateTime.UtcNow.AddHours(4), Status = ShiftStatus.Full };
 
-        // Act
+        // When
         var dto = shift.ToDTO();
 
-        // Assert
+        // Then
         Assert.Equal(ShiftStatusDTO.Full, dto.Status);
     }
 
     [Fact]
-    public void ShiftToEntity_MapsId()
+    public void GivenShiftDTO_WhenToEntityCalled_ThenIdIsMapped()
     {
-        // Arrange
+        // Given
         var dto = new ShiftDTO { Id = 7, Name = "Evening", StartTime = DateTime.UtcNow, EndTime = DateTime.UtcNow.AddHours(4) };
 
-        // Act
+        // When
         var entity = dto.ToEntity();
 
-        // Assert
+        // Then
         Assert.Equal(7, entity.Id);
     }
 
     [Fact]
-    public void ShiftToEntity_MapsRequiredStaff()
+    public void GivenShiftDTO_WhenToEntityCalled_ThenRequiredStaffIsMapped()
     {
-        // Arrange
+        // Given
         var dto = new ShiftDTO { Name = "Evening", StartTime = DateTime.UtcNow, EndTime = DateTime.UtcNow.AddHours(4), RequiredStaff = 5 };
 
-        // Act
+        // When
         var entity = dto.ToEntity();
 
-        // Assert
+        // Then
         Assert.Equal(5, entity.RequiredStaff);
     }
 }

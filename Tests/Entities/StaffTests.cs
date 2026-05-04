@@ -8,101 +8,101 @@ namespace Tests.Entities;
 public class StaffTests
 {
     [Fact]
-    public void Staff_FullName_CombinesFirstAndLastName()
+    public void GivenStaffWithFirstAndLastName_WhenFullNameAccessed_ThenReturnsCombinedName()
     {
-        // Arrange
+        // Given
         var staff = new Staff { FirstName = "Jane", LastName = "Doe" };
 
-        // Act
+        // When
         var fullName = staff.FullName;
 
-        // Assert
+        // Then
         Assert.Equal("Jane Doe", fullName);
     }
 
     [Fact]
-    public void Staff_DefaultIsActive_IsTrue()
+    public void GivenNewStaff_WhenCreated_ThenIsActiveIsTrue()
     {
-        // Arrange & Act
+        // Given & When
         var staff = new Staff();
 
-        // Assert
+        // Then
         Assert.True(staff.IsActive);
     }
 
     [Fact]
-    public void Staff_DefaultStaffAssignments_IsEmptyList()
+    public void GivenNewStaff_WhenCreated_ThenStaffAssignmentsIsEmpty()
     {
-        // Arrange & Act
+        // Given & When
         var staff = new Staff();
 
-        // Assert
+        // Then
         Assert.Empty(staff.StaffAssignments);
     }
 
     [Fact]
-    public void Staff_DefaultFirstName_IsEmptyString()
+    public void GivenNewStaff_WhenCreated_ThenFirstNameIsEmpty()
     {
-        // Arrange & Act
+        // Given & When
         var staff = new Staff();
 
-        // Assert
+        // Then
         Assert.Equal(string.Empty, staff.FirstName);
     }
 
     [Fact]
-    public void Staff_DefaultLastName_IsEmptyString()
+    public void GivenNewStaff_WhenCreated_ThenLastNameIsEmpty()
     {
-        // Arrange & Act
+        // Given & When
         var staff = new Staff();
 
-        // Assert
+        // Then
         Assert.Equal(string.Empty, staff.LastName);
     }
 
     [Fact]
-    public void Staff_DefaultEmail_IsEmptyString()
+    public void GivenNewStaff_WhenCreated_ThenEmailIsEmpty()
     {
-        // Arrange & Act
+        // Given & When
         var staff = new Staff();
 
-        // Assert
+        // Then
         Assert.Equal(string.Empty, staff.Email);
     }
 
     [Fact]
-    public void Staff_CanSetRole()
+    public void GivenNewStaff_WhenRoleIsSet_ThenRoleIsUpdated()
     {
-        // Arrange
+        // Given
         var staff = new Staff();
 
-        // Act
+        // When
         staff.Role = StaffRole.Paramedic;
 
-        // Assert
+        // Then
         Assert.Equal(StaffRole.Paramedic, staff.Role);
     }
 
     [Fact]
-    public void Staff_CreatedAt_IsSetOnConstruction()
+    public void GivenNewStaff_WhenCreated_ThenCreatedAtIsSet()
     {
-        // Arrange
+        // Given
         var before = DateTime.UtcNow.AddSeconds(-1);
 
-        // Act
+        // When
         var staff = new Staff();
 
-        // Assert
+        // Then
         Assert.True(staff.CreatedAt >= before);
     }
 
     [Fact]
-    public void Staff_UpdatedAt_DefaultIsNull()
+    public void GivenNewStaff_WhenCreated_ThenUpdatedAtIsNull()
     {
-        // Arrange & Act
+        // Given & When
         var staff = new Staff();
 
-        // Assert
+        // Then
         Assert.Null(staff.UpdatedAt);
     }
 }

@@ -8,102 +8,102 @@ namespace Tests.Entities;
 public class EventTests
 {
     [Fact]
-    public void Event_DefaultStatus_IsRequested()
+    public void GivenNewEvent_WhenCreated_ThenStatusIsRequested()
     {
-        // Arrange & Act
+        // Given & When
         var @event = new Event();
 
-        // Assert
+        // Then
         Assert.Equal(EventStatus.Requested, @event.Status);
     }
 
     [Fact]
-    public void Event_DefaultNotificationSent_IsFalse()
+    public void GivenNewEvent_WhenCreated_ThenNotificationSentIsFalse()
     {
-        // Arrange & Act
+        // Given & When
         var @event = new Event();
 
-        // Assert
+        // Then
         Assert.False(@event.NotificationSent);
     }
 
     [Fact]
-    public void Event_DefaultShifts_IsEmptyList()
+    public void GivenNewEvent_WhenCreated_ThenShiftsIsEmpty()
     {
-        // Arrange & Act
+        // Given & When
         var @event = new Event();
 
-        // Assert
+        // Then
         Assert.Empty(@event.Shifts);
     }
 
     [Fact]
-    public void Event_DefaultName_IsEmptyString()
+    public void GivenNewEvent_WhenCreated_ThenNameIsEmpty()
     {
-        // Arrange & Act
+        // Given & When
         var @event = new Event();
 
-        // Assert
+        // Then
         Assert.Equal(string.Empty, @event.Name);
     }
 
     [Fact]
-    public void Event_DefaultLocation_IsEmptyString()
+    public void GivenNewEvent_WhenCreated_ThenLocationIsEmpty()
     {
-        // Arrange & Act
+        // Given & When
         var @event = new Event();
 
-        // Assert
+        // Then
         Assert.Equal(string.Empty, @event.Location);
     }
 
     [Fact]
-    public void Event_CanSetAndGetName()
+    public void GivenNewEvent_WhenNameIsSet_ThenNameIsUpdated()
     {
-        // Arrange
+        // Given
         var @event = new Event();
 
-        // Act
+        // When
         @event.Name = "Marathon Medical Cover";
 
-        // Assert
+        // Then
         Assert.Equal("Marathon Medical Cover", @event.Name);
     }
 
     [Fact]
-    public void Event_CanAddShiftToShifts()
+    public void GivenNewEvent_WhenShiftAdded_ThenShiftsContainsOneShift()
     {
-        // Arrange
+        // Given
         var @event = new Event();
         var shift = new Shift { Name = "Morning", StartTime = DateTime.UtcNow.AddDays(1), EndTime = DateTime.UtcNow.AddDays(1).AddHours(4) };
 
-        // Act
+        // When
         @event.Shifts.Add(shift);
 
-        // Assert
+        // Then
         Assert.Single(@event.Shifts);
     }
 
     [Fact]
-    public void Event_CreatedAt_IsSetOnConstruction()
+    public void GivenNewEvent_WhenCreated_ThenCreatedAtIsSet()
     {
-        // Arrange
+        // Given
         var before = DateTime.UtcNow.AddSeconds(-1);
 
-        // Act
+        // When
         var @event = new Event();
 
-        // Assert
+        // Then
         Assert.True(@event.CreatedAt >= before);
     }
 
     [Fact]
-    public void Event_UpdatedAt_DefaultIsNull()
+    public void GivenNewEvent_WhenCreated_ThenUpdatedAtIsNull()
     {
-        // Arrange & Act
+        // Given & When
         var @event = new Event();
 
-        // Assert
+        // Then
         Assert.Null(@event.UpdatedAt);
     }
 }
