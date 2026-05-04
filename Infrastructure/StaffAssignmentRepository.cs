@@ -1,33 +1,18 @@
-using CleanArchitectureBlazor.Models;
+using Entities;
+using Application;
 using CleanArchitectureBlazor.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-namespace CleanArchitectureBlazor.Services;
+namespace Infrastructure;
 
-/// <summary>
-/// Service for managing staff assignments
-/// </summary>
-public interface IStaffAssignmentService
-{
-    Task<List<StaffAssignment>> GetAllAssignmentsAsync();
-    Task<StaffAssignment?> GetAssignmentByIdAsync(int id);
-    Task<List<StaffAssignment>> GetAssignmentsByShiftIdAsync(int shiftId);
-    Task<List<StaffAssignment>> GetAssignmentsByStaffIdAsync(int staffId);
-    Task<StaffAssignment> CreateAssignmentAsync(StaffAssignment assignment);
-    Task<StaffAssignment> UpdateAssignmentAsync(StaffAssignment assignment);
-    Task DeleteAssignmentAsync(int id);
-    Task<StaffAssignment?> CheckInStaffAsync(int assignmentId);
-    Task<StaffAssignment?> CheckOutStaffAsync(int assignmentId);
-    Task<bool> IsStaffAvailableAsync(int staffId, DateTime startTime, DateTime endTime, int? excludeAssignmentId = null);
-}
-
-public class StaffAssignmentService : IStaffAssignmentService
+public class StaffAssignmentRepository : IStaffAssignmentRepository
 {
     private readonly ApplicationDbContext _context;
     private readonly IEmailService _emailService;
-    private readonly ILogger<StaffAssignmentService> _logger;
+    private readonly ILogger<StaffAssignmentRepository> _logger;
 
-    public StaffAssignmentService(ApplicationDbContext context, IEmailService emailService, ILogger<StaffAssignmentService> logger)
+    public StaffAssignmentRepository(ApplicationDbContext context, IEmailService emailService, ILogger<StaffAssignmentRepository> logger)
     {
         _context = context;
         _emailService = emailService;

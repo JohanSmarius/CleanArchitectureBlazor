@@ -1,29 +1,16 @@
-using CleanArchitectureBlazor.Models;
+using Entities;
+using Application;
 using CleanArchitectureBlazor.Data;
 using Microsoft.EntityFrameworkCore;
+using Application.DataAdapters;
 
-namespace CleanArchitectureBlazor.Services;
+namespace Infrastructure;
 
-/// <summary>
-/// Service for managing shifts
-/// </summary>
-public interface IShiftService
-{
-    Task<List<Shift>> GetAllShiftsAsync();
-    Task<Shift?> GetShiftByIdAsync(int id);
-    Task<List<Shift>> GetShiftsByEventIdAsync(int eventId);
-    Task<Shift> CreateShiftAsync(Shift shift);
-    Task<Shift> UpdateShiftAsync(Shift shift);
-    Task DeleteShiftAsync(int id);
-    Task<List<Shift>> GetUpcomingShiftsAsync();
-    Task<List<Shift>> GetShiftsByDateAsync(DateTime date);
-}
-
-public class ShiftService : IShiftService
+public class ShiftRepository : IShiftRepository
 {
     private readonly ApplicationDbContext _context;
 
-    public ShiftService(ApplicationDbContext context)
+    public ShiftRepository(ApplicationDbContext context)
     {
         _context = context;
     }
@@ -100,7 +87,7 @@ public class ShiftService : IShiftService
             .Include(s => s.Event)
             .Include(s => s.StaffAssignments)
             .ThenInclude(sa => sa.Staff)
-            .Where(s => s.StartTime >= now && s.Status != ShiftStatus.Cancelled)
+            .Where(s => s.StartTime >= now && s.Status != Entities.ShiftStatus.Cancelled)
             .OrderBy(s => s.StartTime)
             .ToListAsync();
     }

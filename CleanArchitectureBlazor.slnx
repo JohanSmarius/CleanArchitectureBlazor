@@ -1,4 +1,8 @@
 <Solution>
+  <Project Path="Application/Application.csproj" Id="e8e970e2-179b-41de-a622-a61e7c869264" />
   <Project Path="CleanArchitectureBlazor/CleanArchitectureBlazor.Client/CleanArchitectureBlazor.Client.csproj" />
   <Project Path="CleanArchitectureBlazor/CleanArchitectureBlazor/CleanArchitectureBlazor.csproj" />
+  <Project Path="Entities/Entities.csproj" Id="106faf23-a126-40ad-89d2-75da539bc478" />
+  <Project Path="Infrastructure/Infrastructure.csproj" Id="1e94f0b9-bc9d-4e85-80e3-cfe759c18a21" />
+  <Project Path="UITests/UITests.csproj" Id="6a40d907-52bd-41b1-a8b7-164a3bf9269e" />
 </Solution>

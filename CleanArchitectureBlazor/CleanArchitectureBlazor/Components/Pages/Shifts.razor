@@ -1,8 +1,9 @@
 @page "/shifts"
-@using CleanArchitectureBlazor.Models
-@using CleanArchitectureBlazor.Services
-@inject IShiftService ShiftService
-@inject IEventService EventService
+@using Application
+@using Application.DataAdapters
+@using Entities
+@inject IShiftRepository ShiftService
+@inject IEventRepository EventService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 

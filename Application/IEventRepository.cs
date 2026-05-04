@@ -1,0 +1,17 @@
+using Entities;
+
+namespace Application;
+
+/// <summary>
+/// Service for managing events
+/// </summary>
+public interface IEventRepository
+{
+    Task<List<Event>> GetAllEventsAsync();
+    Task<Event?> GetEventByIdAsync(int id);
+    Task<Event> CreateEventAsync(Event eventModel);
+    Task<Event> UpdateEventAsync(Event eventModel);
+    Task DeleteEventAsync(int id);
+    Task<List<Event>> GetUpcomingEventsAsync();
+    Task<List<Event>> GetEventsByDateRangeAsync(DateTime startDate, DateTime endDate);
+}

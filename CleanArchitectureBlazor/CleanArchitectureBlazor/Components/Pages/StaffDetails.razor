@@ -1,8 +1,8 @@
 @page "/staff/details/{StaffId:int}"
-@using CleanArchitectureBlazor.Models
-@using CleanArchitectureBlazor.Services
-@inject IStaffService StaffService
-@inject IStaffAssignmentService StaffAssignmentService
+@using Application
+@using Entities
+@inject IStaffRepository StaffService
+@inject IStaffAssignmentRepository StaffAssignmentService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 
@@ -513,8 +513,8 @@ else
     private bool isDeactivating = false;
     private bool showEditDialog = false;
     private bool showDeactivateConfirm = false;
-    private CleanArchitectureBlazor.Models.Staff? staffDetail;
-    private CleanArchitectureBlazor.Models.Staff staffForm = new();
+    private Entities.Staff? staffDetail;
+    private Entities.Staff staffForm = new();
     private string emailError = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -569,7 +569,7 @@ else
     {
         if (staffDetail == null) return;
 
-        staffForm = new CleanArchitectureBlazor.Models.Staff
+        staffForm = new Entities.Staff
         {
             Id = staffDetail.Id,
             FirstName = staffDetail.FirstName,
@@ -591,7 +591,7 @@ else
     private void CloseEditDialog()
     {
         showEditDialog = false;
-        staffForm = new CleanArchitectureBlazor.Models.Staff();
+        staffForm = new Entities.Staff();
         emailError = string.Empty;
         StateHasChanged();
     }

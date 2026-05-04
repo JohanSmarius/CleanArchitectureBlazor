@@ -1,10 +1,11 @@
 @page "/dashboard"
-@using CleanArchitectureBlazor.Models
-@using CleanArchitectureBlazor.Services
-@inject IEventService EventService
-@inject IShiftService ShiftService
-@inject IStaffService StaffService
-@inject IStaffAssignmentService StaffAssignmentService
+@using Application
+@using Application.DataAdapters
+@using Entities
+@inject IEventRepository EventService
+@inject IShiftRepository ShiftService
+@inject IStaffRepository StaffService
+@inject IStaffAssignmentRepository StaffAssignmentService
 @rendermode InteractiveServer
 
 <PageTitle>Dashboard - Medical First Aid Manager</PageTitle>
@@ -220,11 +221,11 @@
 
 @code {
     private bool isLoading = true;
-    private List<Event> upcomingEvents = new();
-    private List<Shift> activeShifts = new();
-    private List<Shift> todaysShifts = new();
-    private List<Models.Staff> activeStaff = new();
-    private List<StaffAssignment> staffOnDuty = new();
+    private List<Entities.Event> upcomingEvents = new();
+    private List<Entities.Shift> activeShifts = new();
+    private List<Entities.Shift> todaysShifts = new();
+    private List<Entities.Staff> activeStaff = new();
+    private List<Entities.StaffAssignment> staffOnDuty = new();
 
     protected override async Task OnInitializedAsync()
     {
