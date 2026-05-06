@@ -10,7 +10,6 @@ public class EventService : IEventService
     private readonly IEventRepository _repository;
     private readonly IEmailService _emailService;
     private readonly ILogger<EventService> _logger;
-    private readonly EventDomainService _domainService = new();
         
     public EventService(
         IEventRepository repository,
@@ -22,45 +21,72 @@ public class EventService : IEventService
         _logger = logger;
     }
 
-    public async Task<Event> UpdateEventAsync(Event updated)
+    public async Task<EventDTO> UpdateEventAsync(EventDTO updated)
     {
         // Validate dates
         if (updated.StartDate >= updated.EndDate)
         {
-            throw new ApplicationException("End date must be after start date.");
-        }
-
-        // Check if date changes affect existing shifts
-        if (updated.Shifts.Any() &&
-            (updated.StartDate != updated.StartDate || updated.EndDate != updated.EndDate))
-        {
-            var conflictingShifts = updated.Shifts.Where(s =>
-                s.StartTime < updated.StartDate || s.EndTime > updated.EndDate).ToList();
-
-            if (conflictingShifts.Any())
-            {
-                throw new ApplicationException($"Cannot change event dates. {conflictingShifts.Count} shift(s) would fall outside the new event timeframe.");
-            }
+            throw new ÀpplicationException("End date must be after start date.");
         }
 
         // Load current state
         var existing = await _repository.GetEventByIdAsync(updated.Id) ??
             throw new InvalidOperationException($"Event {updated.Id} not found");
 
-        // Apply domain logic
-        var decision = _domainService.ApplyChanges(existing, updated);
+        if (existing.Id != updated.Id)
+            throw new InvalidOperationException("Mismatched Event ids.");
 
-        // Perform side-effects (email notifications) based on decision
-        if (decision.ShouldSendPlannedNotification)
+        // Check if date changes affect existing shifts
+        if (updated.Shifts.Any() &&
+            (updated.StartDate != existing.StartDate || updated.EndDate != existing.EndDate))
+        {
+            var conflictingShifts = updated.Shifts.Where(s =>
+                s.StartTime < updated.StartDate || s.EndTime > updated.EndDate).ToList();
+
+            if (conflictingShifts.Any())
+            {
+                throw new ÀpplicationException($"Cannot change event dates. {conflictingShifts.Count} shift(s) would fall outside the new event timeframe.");
+            }
+        }
+
+        // Capture original values needed for rules
+        var originalStatus = existing.Status;
+        var originalNotificationSent = existing.NotificationSent;
+
+        // Copy over mutable fields (avoid overwriting identity / audit)
+        existing.Name = updated.Name;
+        existing.StartDate = updated.StartDate;
+        existing.EndDate = updated.EndDate;
+        existing.Location = updated.Location;
+        existing.Description = updated.Description;
+        existing.Status = (EventStatus)updated.Status; // may be further changed after notification
+        existing.ContactPerson = updated.ContactPerson;
+        existing.ContactPhone = updated.ContactPhone;
+        existing.ContactEmail = updated.ContactEmail;
+        existing.UpdatedAt = DateTime.UtcNow;
+
+        bool canContact = !string.IsNullOrWhiteSpace(existing.ContactEmail);
+
+        bool shouldSendPlanned =
+            originalStatus != Entities.EventStatus.Planned &&
+            existing.Status == Entities.EventStatus.Planned &&
+            !originalNotificationSent &&
+            canContact;
+
+        bool shouldSendInvoice =
+            originalStatus != Entities.EventStatus.SendInvoice &&
+            existing.Status == Entities.EventStatus.SendInvoice &&
+            canContact;
+
+        // Perform side-effects (email notifications)
+        if (shouldSendPlanned)
         {
             try
             {
                 await _emailService.SendEventPlannedNotificationAsync(existing);
-                if (decision.PromoteToConfirmedAfterPlanned)
-                {
-                    existing.Status = Entities.EventStatus.Confirmed;
-                    existing.NotificationSent = true;
-                }
+                // business rule: auto confirm after planned email
+                existing.Status = Entities.EventStatus.Confirmed;
+                existing.NotificationSent = true;
                 _logger.LogInformation("Planned notification sent for Event {EventId}", existing.Id);
             }
             catch (Exception ex)
@@ -69,7 +95,7 @@ public class EventService : IEventService
             }
         }
 
-        if (decision.ShouldSendInvoiceNotification)
+        if (shouldSendInvoice)
         {
             try
             {
@@ -85,6 +111,6 @@ public class EventService : IEventService
 
         // Persist final state
         await _repository.UpdateEventAsync(existing);
-        return existing;
+        return existing.ToDTO();
     }
 }

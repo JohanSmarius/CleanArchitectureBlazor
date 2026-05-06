@@ -39,6 +39,10 @@ public class EventDTO
     public string? ContactEmail { get; set; }
 
     public bool NotificationSent { get; set; } = false;
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public DateTime? UpdatedAt { get; set; }
         
     // Navigation properties
     public List<ShiftDTO> Shifts { get; set; } = new();

@@ -422,7 +422,7 @@ else
     private bool isCancelling = false;
     private bool showCancelConfirm = false;
     private Event? eventToEdit;
-    private Event editForm = new();
+    private EventDTO editForm = new();
     private string validationError = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -443,21 +443,7 @@ else
         if (eventToEdit != null)
         {
             // Create a copy for editing
-            editForm = new Event
-            {
-                Id = eventToEdit.Id,
-                Name = eventToEdit.Name,
-                StartDate = eventToEdit.StartDate,
-                EndDate = eventToEdit.EndDate,
-                Location = eventToEdit.Location,
-                Description = eventToEdit.Description,
-                Status = eventToEdit.Status,
-                ContactPerson = eventToEdit.ContactPerson,
-                ContactPhone = eventToEdit.ContactPhone,
-                ContactEmail = eventToEdit.ContactEmail,
-                CreatedAt = eventToEdit.CreatedAt,
-                UpdatedAt = eventToEdit.UpdatedAt
-            };
+            editForm = eventToEdit.ToDTO();
         }
     }
 
@@ -525,8 +511,8 @@ else
         isCancelling = true;
         try
         {
-            editForm.Status = EventStatus.Cancelled;
-            await EventRepository.UpdateEventAsync(editForm);
+            editForm.Status = EventStatusDTO.Cancelled;
+            await EventRepository.UpdateEventAsync(editForm.ToEntity());
             
             // Reload to get updated data
             await LoadEventDetails();

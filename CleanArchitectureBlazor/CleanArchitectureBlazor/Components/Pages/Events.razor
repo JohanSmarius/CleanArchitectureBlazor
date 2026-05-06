@@ -498,13 +498,13 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Status *</label>
                                 <InputSelect @bind-Value="editEvent.Status" class="form-select">
-                                    <option value="@EventStatus.Requested">Requested</option>
-                                    <option value="@EventStatus.Planned">Planned</option>
-                                    <option value="@EventStatus.Confirmed">Confirmed</option>
-                                    <option value="@EventStatus.Active">Active</option>
-                                    <option value="@EventStatus.Completed">Completed</option>
-                                    <option value="@EventStatus.SendInvoice">Send Invoice</option>
-                                    <option value="@EventStatus.Cancelled">Cancelled</option>
+                                    <option value="@EventStatusDTO.Requested">Requested</option>
+                                    <option value="@EventStatusDTO.Planned">Planned</option>
+                                    <option value="@EventStatusDTO.Confirmed">Confirmed</option>
+                                    <option value="@EventStatusDTO.Active">Active</option>
+                                    <option value="@EventStatusDTO.Completed">Completed</option>
+                                    <option value="@EventStatusDTO.SendInvoice">Send Invoice</option>
+                                    <option value="@EventStatusDTO.Cancelled">Cancelled</option>
                                 </InputSelect>
                                 <ValidationMessage For="() => editEvent.Status" class="text-danger" />
                             </div>
@@ -698,7 +698,7 @@
     private List<Event> filteredEvents = new();
     private Event? eventToDelete;
     private EventDTO newEvent = new();
-    private Event editEvent = new();
+    private EventDTO editEvent = new();
     private Shift newShift = new();
     private Event? selectedEventForShift;
     private int? openDropdownId = null;
@@ -948,22 +948,7 @@
             var fullEvent = await EventService.GetEventByIdAsync(eventItem.Id);
             if (fullEvent != null)
             {
-                editEvent = new Event
-                {
-                    Id = fullEvent.Id,
-                    Name = fullEvent.Name,
-                    StartDate = fullEvent.StartDate,
-                    EndDate = fullEvent.EndDate,
-                    Location = fullEvent.Location,
-                    Description = fullEvent.Description,
-                    Status = fullEvent.Status,
-                    ContactPerson = fullEvent.ContactPerson,
-                    ContactPhone = fullEvent.ContactPhone,
-                    ContactEmail = fullEvent.ContactEmail,
-                    CreatedAt = fullEvent.CreatedAt,
-                    UpdatedAt = fullEvent.UpdatedAt,
-                    Shifts = fullEvent.Shifts ?? new List<Shift>()
-                };
+                editEvent = fullEvent.ToDTO();
                 showEditDialog = true;
                 StateHasChanged();
             }
@@ -979,7 +964,7 @@
     private void CloseEditEventDialog()
     {
         showEditDialog = false;
-        editEvent = new Event();
+        editEvent = new EventDTO();
         StateHasChanged();
     }
 
@@ -994,7 +979,7 @@
             var eventIndex = events.FindIndex(e => e.Id == editEvent.Id);
             if (eventIndex >= 0)
             {
-                events[eventIndex] = editEvent;
+                events[eventIndex] = editEvent.ToEntity();
             }
             
             ApplyFiltersAndSort();

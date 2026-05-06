@@ -1,8 +1,9 @@
 using Entities;
+using Application.DataAdapters;
 
 namespace Application;
 
 public interface IEventService
 {
-    Task<Event> UpdateEventAsync(Event e);
+    Task<EventDTO> UpdateEventAsync(EventDTO e);
 }

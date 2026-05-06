@@ -1,4 +1,5 @@
 using Application;
+using Application.DataAdapters;
 using Entities;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -54,7 +55,7 @@ public class UpdateEventUseCaseTests
     {
         // Arrange
         var (useCase, _, _) = BuildUseCase();
-        var updated = CreateEvent();
+        var updated = CreateEvent().ToDTO();
         updated.EndDate = updated.StartDate;
 
         // Act & Assert
@@ -66,7 +67,7 @@ public class UpdateEventUseCaseTests
     {
         // Arrange
         var (useCase, _, _) = BuildUseCase();
-        var updated = CreateEvent();
+        var updated = CreateEvent().ToDTO();
         updated.EndDate = updated.StartDate.AddHours(-1);
 
         // Act & Assert
@@ -86,7 +87,7 @@ public class UpdateEventUseCaseTests
             .ReturnsAsync((Event?)null);
 
         var useCase = new UpdateEventUseCase(repoMock.Object, emailMock.Object, loggerMock.Object);
-        var updated = CreateEvent();
+        var updated = CreateEvent().ToDTO();
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() => useCase.Execute(updated));
@@ -97,7 +98,7 @@ public class UpdateEventUseCaseTests
     {
         // Arrange
         var (useCase, repoMock, _) = BuildUseCase();
-        var updated = CreateEvent();
+        var updated = CreateEvent().ToDTO();
 
         // Act
         await useCase.Execute(updated);
@@ -112,7 +113,7 @@ public class UpdateEventUseCaseTests
         // Arrange
         var existing = CreateEvent(status: EventStatus.Requested, email: "contact@example.com");
         var (useCase, _, emailMock) = BuildUseCase(existing);
-        var updated = CreateEvent(status: EventStatus.Planned, email: "contact@example.com");
+        var updated = CreateEvent(status: EventStatus.Planned, email: "contact@example.com").ToDTO();
 
         // Act
         await useCase.Execute(updated);
@@ -127,7 +128,7 @@ public class UpdateEventUseCaseTests
         // Arrange
         var existing = CreateEvent(status: EventStatus.Requested, email: null);
         var (useCase, _, emailMock) = BuildUseCase(existing);
-        var updated = CreateEvent(status: EventStatus.Planned, email: null);
+        var updated = CreateEvent(status: EventStatus.Planned, email: null).ToDTO();
 
         // Act
         await useCase.Execute(updated);
@@ -142,7 +143,7 @@ public class UpdateEventUseCaseTests
         // Arrange
         var existing = CreateEvent(status: EventStatus.Completed, email: "contact@example.com");
         var (useCase, _, emailMock) = BuildUseCase(existing);
-        var updated = CreateEvent(status: EventStatus.SendInvoice, email: "contact@example.com");
+        var updated = CreateEvent(status: EventStatus.SendInvoice, email: "contact@example.com").ToDTO();
 
         // Act
         await useCase.Execute(updated);
@@ -157,7 +158,7 @@ public class UpdateEventUseCaseTests
         // Arrange
         var existing = CreateEvent(status: EventStatus.Completed, email: null);
         var (useCase, _, emailMock) = BuildUseCase(existing);
-        var updated = CreateEvent(status: EventStatus.SendInvoice, email: null);
+        var updated = CreateEvent(status: EventStatus.SendInvoice, email: null).ToDTO();
 
         // Act
         await useCase.Execute(updated);
@@ -167,12 +168,113 @@ public class UpdateEventUseCaseTests
     }
 
     [Fact]
+    public async Task Execute_MismatchedIds_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var existing = CreateEvent(id: 1);
+        var (useCase, _, _) = BuildUseCase(existing);
+        var updated = CreateEvent(id: 2).ToDTO();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() => useCase.Execute(updated));
+    }
+
+    [Fact]
+    public async Task Execute_UpdatesFields()
+    {
+        // Arrange
+        var existing = CreateEvent();
+        var (useCase, _, _) = BuildUseCase(existing);
+        var updated = CreateEvent().ToDTO();
+        updated.Name = "Updated Name";
+        updated.Location = "New Location";
+        updated.Description = "New Description";
+        updated.ContactPerson = "New Person";
+        updated.ContactPhone = "123456";
+        updated.ContactEmail = "new@example.com";
+
+        // Act
+        var result = await useCase.Execute(updated);
+
+        // Assert
+        Assert.Equal("Updated Name", result.Name);
+        Assert.Equal("New Location", result.Location);
+        Assert.Equal("New Description", result.Description);
+        Assert.Equal("New Person", result.ContactPerson);
+        Assert.Equal("123456", result.ContactPhone);
+        Assert.Equal("new@example.com", result.ContactEmail);
+    }
+
+    [Fact]
+    public async Task Execute_SetsUpdatedAt()
+    {
+        // Arrange
+        var before = DateTime.UtcNow.AddSeconds(-1);
+        var existing = CreateEvent();
+        var (useCase, _, _) = BuildUseCase(existing);
+        var updated = CreateEvent().ToDTO();
+
+        // Act
+        var result = await useCase.Execute(updated);
+
+        // Assert
+        Assert.True(result.UpdatedAt >= before);
+    }
+
+    [Fact]
+    public async Task Execute_TransitionToPlanned_PromotesToConfirmed()
+    {
+        // Arrange
+        var existing = CreateEvent(status: EventStatus.Requested, email: "contact@example.com");
+        var (useCase, _, _) = BuildUseCase(existing);
+        var updated = CreateEvent(status: EventStatus.Planned, email: "contact@example.com").ToDTO();
+
+        // Act
+        var result = await useCase.Execute(updated);
+
+        // Assert
+        Assert.Equal(EventStatusDTO.Confirmed, result.Status);
+        Assert.True(result.NotificationSent);
+    }
+
+    [Fact]
+    public async Task Execute_TransitionToPlanned_WhenAlreadyNotified_DoesNotSendNotification()
+    {
+        // Arrange
+        var existing = CreateEvent(status: EventStatus.Requested, email: "contact@example.com");
+        existing.NotificationSent = true;
+        var (useCase, _, emailMock) = BuildUseCase(existing);
+        var updated = CreateEvent(status: EventStatus.Planned, email: "contact@example.com").ToDTO();
+
+        // Act
+        await useCase.Execute(updated);
+
+        // Assert
+        emailMock.Verify(e => e.SendEventPlannedNotificationAsync(It.IsAny<Event>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Execute_TransitionToSendInvoice_SetsNotificationSent()
+    {
+        // Arrange
+        var existing = CreateEvent(status: EventStatus.Completed, email: "contact@example.com");
+        var (useCase, _, _) = BuildUseCase(existing);
+        var updated = CreateEvent(status: EventStatus.SendInvoice, email: "contact@example.com").ToDTO();
+
+        // Act
+        var result = await useCase.Execute(updated);
+
+        // Assert
+        Assert.True(result.NotificationSent);
+    }
+
+    [Fact]
     public async Task Execute_ValidUpdate_ReturnsUpdatedEvent()
     {
         // Arrange
         var existing = CreateEvent();
         var (useCase, _, _) = BuildUseCase(existing);
-        var updated = CreateEvent();
+        var updated = CreateEvent().ToDTO();
         updated.Name = "New Name";
 
         // Act
