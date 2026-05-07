@@ -32,10 +32,10 @@ builder.Services.AddAuthentication(options =>
     .AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var useSqlite = connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    if (connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase) ||
-        connectionString.Contains(".db", StringComparison.OrdinalIgnoreCase))
+    if (useSqlite)
         options.UseSqlite(connectionString);
     else
         options.UseSqlServer(connectionString);
@@ -89,7 +89,7 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    if (db.Database.IsSqlite())
+    if (useSqlite)
         db.Database.EnsureCreated();
     else
         db.Database.Migrate();
