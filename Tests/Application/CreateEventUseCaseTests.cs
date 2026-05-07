@@ -10,7 +10,7 @@ namespace Tests.Application;
 /// <summary>
 /// Unit tests for <see cref="CreateEventCommandHandler"/>.
 /// </summary>
-public class CreateEventUseCaseTests
+public class CreateEventCommandHandlerTests
 {
     private static CreateEventCommand BuildValidCommand() => new()
     {

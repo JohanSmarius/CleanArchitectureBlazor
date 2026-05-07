@@ -7,7 +7,7 @@
 @inject IGetAllEventsQueryHandler GetAllEventsHandler
 @inject IGetEventByIdQueryHandler GetEventByIdHandler
 @inject IDeleteEventCommandHandler DeleteEventHandler
-@inject ICreateEventCommandHandler CreateEventCommandHandler
+@inject ICreateEventUseCase CreateEventUseCase
 @inject IUpdateEventUseCase UpdateEventUseCase
 @inject IShiftRepository ShiftService
 @inject NavigationManager Navigation
@@ -1007,7 +1007,7 @@
         isCreating = true;
         try
         {
-            var createdEvent = await CreateEventCommandHandler.Handle(newEvent.ToCreateCommand());
+            var createdEvent = await CreateEventUseCase.Execute(newEvent);
             
             // Refresh the events list
             await LoadEventsWithErrorHandling();
