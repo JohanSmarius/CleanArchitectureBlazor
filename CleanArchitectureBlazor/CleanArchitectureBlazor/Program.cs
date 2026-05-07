@@ -4,6 +4,7 @@ using CleanArchitectureBlazor.Components.Account;
 using CleanArchitectureBlazor.Configuration;
 using CleanArchitectureBlazor.Data;
 using Application;
+using Application.Commands;
 using Entities;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -48,11 +49,13 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 // Register our application services
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IEventCommandRepository>(sp => sp.GetRequiredService<IEventRepository>());
+builder.Services.AddScoped<IEventQueryRepository>(sp => sp.GetRequiredService<IEventRepository>());
 builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
 builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
-builder.Services.AddScoped<ICreateEventUseCase, CreateEventUseCase>();
+builder.Services.AddScoped<ICreateEventCommandHandler, CreateEventCommandHandler>();
 builder.Services.AddScoped<IUpdateEventUseCase, UpdateEventUseCase>();
 
 builder.Services.Configure<EmailOptions>(

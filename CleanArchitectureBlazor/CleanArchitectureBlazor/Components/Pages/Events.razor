@@ -1,11 +1,12 @@
 @page "/events"
 @using Application
+@using Application.Commands
 @using Application.DataAdapters
 @using Entities
 @inject IEventRepository EventService
 @inject IShiftRepository ShiftService
 @inject NavigationManager Navigation
-@inject ICreateEventUseCase CreateEventUseCase
+@inject ICreateEventCommandHandler CreateEventCommandHandler
 @inject IUpdateEventUseCase UpdateEventUseCase
 
 @rendermode InteractiveServer
@@ -1003,7 +1004,17 @@
         isCreating = true;
         try
         {
-            var createdEvent = await CreateEventUseCase.Execute(newEvent);
+            var createdEvent = await CreateEventCommandHandler.Handle(new CreateEventCommand
+            {
+                Name = newEvent.Name,
+                StartDate = newEvent.StartDate,
+                EndDate = newEvent.EndDate,
+                Location = newEvent.Location,
+                Description = newEvent.Description,
+                ContactPerson = newEvent.ContactPerson,
+                ContactPhone = newEvent.ContactPhone,
+                ContactEmail = newEvent.ContactEmail,
+            });
             
             // Refresh the events list
             await LoadEventsWithErrorHandling();
