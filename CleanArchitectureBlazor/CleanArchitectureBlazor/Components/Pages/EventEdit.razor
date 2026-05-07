@@ -5,7 +5,7 @@
 @using Application.DataAdapters
 @using Entities
 @inject IGetEventByIdQueryHandler GetEventByIdHandler
-@inject IUpdateEventCommandHandler UpdateEventHandler
+@inject IUpdateEventUseCase UpdateEventUseCase
 @inject IDeleteEventCommandHandler DeleteEventHandler
 @inject IShiftRepository ShiftService
 @inject NavigationManager Navigation
@@ -458,7 +458,7 @@ else
         
         try
         {
-            await UpdateEventHandler.Handle(editForm.ToUpdateCommand());
+            await UpdateEventUseCase.Execute(editForm);
             
             // Navigate back to event details
             Navigation.NavigateTo($"/events/details/{EventId}");
@@ -514,7 +514,7 @@ else
         try
         {
             editForm.Status = EventStatusDTO.Cancelled;
-            await UpdateEventHandler.Handle(editForm.ToUpdateCommand());
+            await UpdateEventUseCase.Execute(editForm);
             
             // Reload to get updated data
             await LoadEventDetails();

@@ -10,7 +10,7 @@ namespace Tests.Application;
 /// <summary>
 /// Unit tests for <see cref="UpdateEventCommandHandler"/>.
 /// </summary>
-public class UpdateEventUseCaseTests
+public class UpdateEventCommandHandlerTests
 {
     private static Event CreateEvent(int id = 1, EventStatus status = EventStatus.Requested, string? email = "contact@example.com") => new()
     {

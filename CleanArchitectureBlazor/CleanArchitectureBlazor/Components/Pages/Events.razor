@@ -8,7 +8,7 @@
 @inject IGetEventByIdQueryHandler GetEventByIdHandler
 @inject IDeleteEventCommandHandler DeleteEventHandler
 @inject ICreateEventCommandHandler CreateEventCommandHandler
-@inject IUpdateEventCommandHandler UpdateEventHandler
+@inject IUpdateEventUseCase UpdateEventUseCase
 @inject IShiftRepository ShiftService
 @inject NavigationManager Navigation
 
@@ -977,7 +977,7 @@
         isUpdating = true;
         try
         {
-            await UpdateEventHandler.Handle(editEvent.ToUpdateCommand());
+            await UpdateEventUseCase.Execute(editEvent);
             
             // Update the local events list
             var eventIndex = events.FindIndex(e => e.Id == editEvent.Id);
