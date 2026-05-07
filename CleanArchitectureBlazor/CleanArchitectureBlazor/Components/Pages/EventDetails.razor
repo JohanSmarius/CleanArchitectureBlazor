@@ -1,8 +1,9 @@
 @page "/events/details/{EventId:int}"
 @using Application
+@using Application.Queries
 @using Application.DataAdapters
 @using Entities
-@inject IEventRepository EventService
+@inject IGetEventByIdQueryHandler GetEventByIdHandler
 @inject IShiftRepository ShiftService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
@@ -476,7 +477,7 @@ else
 
     private async Task LoadEventDetails()
     {
-        eventDetail = await EventService.GetEventByIdAsync(EventId);
+        eventDetail = await GetEventByIdHandler.Handle(new GetEventByIdQuery { Id = EventId });
     }
 
     private string GetEventStatusColor(EventStatus status)

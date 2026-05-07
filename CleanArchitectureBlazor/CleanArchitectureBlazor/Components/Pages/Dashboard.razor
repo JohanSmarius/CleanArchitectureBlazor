@@ -1,8 +1,9 @@
 @page "/dashboard"
 @using Application
+@using Application.Queries
 @using Application.DataAdapters
 @using Entities
-@inject IEventRepository EventService
+@inject IGetUpcomingEventsQueryHandler GetUpcomingEventsHandler
 @inject IShiftRepository ShiftService
 @inject IStaffRepository StaffService
 @inject IStaffAssignmentRepository StaffAssignmentService
@@ -255,7 +256,7 @@
 
     private async Task LoadUpcomingEventsAsync()
     {
-        upcomingEvents = await EventService.GetUpcomingEventsAsync();
+        upcomingEvents = await GetUpcomingEventsHandler.Handle(new GetUpcomingEventsQuery());
     }
 
     private async Task LoadActiveShiftsAsync()
