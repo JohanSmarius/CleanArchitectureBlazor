@@ -13,6 +13,7 @@ public class CreateEventUseCaseAdapterTests
     [Fact]
     public async Task Execute_DelegatesToCreateEventCommandHandler()
     {
+        // Arrange
         var handlerMock = new Mock<ICreateEventCommandHandler>();
         var useCase = new CreateEventUseCase(handlerMock.Object);
         var dto = new EventDTO
@@ -27,8 +28,10 @@ public class CreateEventUseCaseAdapterTests
             .Setup(h => h.Handle(It.IsAny<CreateEventCommand>()))
             .ReturnsAsync(dto);
 
+        // Act
         var result = await useCase.Execute(dto);
 
+        // Assert
         Assert.Equal(dto.Name, result.Name);
         handlerMock.Verify(h => h.Handle(It.Is<CreateEventCommand>(c =>
             c.Name == dto.Name &&
