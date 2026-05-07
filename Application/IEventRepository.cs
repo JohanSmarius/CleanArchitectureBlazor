@@ -3,15 +3,10 @@ using Entities;
 namespace Application;
 
 /// <summary>
-/// Service for managing events
+/// Combined event repository interface that exposes both the query side and the command side.
+/// Use <see cref="IEventQueryRepository"/> or <see cref="IEventCommandRepository"/> directly
+/// when only one side is required.
 /// </summary>
-public interface IEventRepository
+public interface IEventRepository : IEventQueryRepository, IEventCommandRepository
 {
-    Task<List<Event>> GetAllEventsAsync();
-    Task<Event?> GetEventByIdAsync(int id);
-    Task<Event> CreateEventAsync(Event eventModel);
-    Task<Event> UpdateEventAsync(Event eventModel);
-    Task DeleteEventAsync(int id);
-    Task<List<Event>> GetUpcomingEventsAsync();
-    Task<List<Event>> GetEventsByDateRangeAsync(DateTime startDate, DateTime endDate);
 }

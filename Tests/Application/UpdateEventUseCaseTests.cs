@@ -1,4 +1,5 @@
 using Application;
+using Application.Commands;
 using Application.DataAdapters;
 using Entities;
 using Microsoft.Extensions.Logging;
@@ -7,9 +8,9 @@ using Moq;
 namespace Tests.Application;
 
 /// <summary>
-/// Unit tests for <see cref="UpdateEventUseCase"/>.
+/// Unit tests for <see cref="UpdateEventCommandHandler"/>.
 /// </summary>
-public class UpdateEventUseCaseTests
+public class UpdateEventCommandHandlerTests
 {
     private static Event CreateEvent(int id = 1, EventStatus status = EventStatus.Requested, string? email = "contact@example.com") => new()
     {
@@ -24,18 +25,34 @@ public class UpdateEventUseCaseTests
         Shifts = new List<Shift>()
     };
 
-    private static (UpdateEventUseCase useCase, Mock<IEventRepository> repoMock, Mock<IEmailService> emailMock)
-        BuildUseCase(Event? existingEvent = null)
+    private static UpdateEventCommand CreateCommand(Event source) => new()
     {
-        var repoMock = new Mock<IEventRepository>();
-        var emailMock = new Mock<IEmailService>();
-        var loggerMock = new Mock<ILogger<EventService>>();
+        Id = source.Id,
+        Name = source.Name,
+        StartDate = source.StartDate,
+        EndDate = source.EndDate,
+        Location = source.Location,
+        Description = source.Description,
+        Status = (EventStatusDTO)source.Status,
+        ContactPerson = source.ContactPerson,
+        ContactPhone = source.ContactPhone,
+        ContactEmail = source.ContactEmail,
+        Shifts = new List<ShiftDTO>()
+    };
 
-        repoMock
+    private static (UpdateEventCommandHandler handler, Mock<IEventQueryRepository> queryMock, Mock<IEventCommandRepository> commandMock, Mock<IEmailService> emailMock)
+        BuildHandler(Event? existingEvent = null)
+    {
+        var queryMock = new Mock<IEventQueryRepository>();
+        var commandMock = new Mock<IEventCommandRepository>();
+        var emailMock = new Mock<IEmailService>();
+        var loggerMock = new Mock<ILogger<UpdateEventCommandHandler>>();
+
+        queryMock
             .Setup(r => r.GetEventByIdAsync(It.IsAny<int>()))
             .ReturnsAsync(existingEvent ?? CreateEvent());
 
-        repoMock
+        commandMock
             .Setup(r => r.UpdateEventAsync(It.IsAny<Event>()))
             .ReturnsAsync((Event e) => e);
 
@@ -47,154 +64,156 @@ public class UpdateEventUseCaseTests
             .Setup(e => e.SendEventInvoiceNotificationAsync(It.IsAny<Event>()))
             .Returns(Task.CompletedTask);
 
-        return (new UpdateEventUseCase(repoMock.Object, emailMock.Object, loggerMock.Object), repoMock, emailMock);
+        return (new UpdateEventCommandHandler(queryMock.Object, commandMock.Object, emailMock.Object, loggerMock.Object),
+                queryMock, commandMock, emailMock);
     }
 
     [Fact]
-    public async Task Execute_StartDateEqualToEndDate_ThrowsApplicationException()
+    public async Task Handle_StartDateEqualToEndDate_ThrowsApplicationException()
     {
         // Arrange
-        var (useCase, _, _) = BuildUseCase();
-        var updated = CreateEvent().ToDTO();
-        updated.EndDate = updated.StartDate;
+        var (handler, _, _, _) = BuildHandler();
+        var command = CreateCommand(CreateEvent());
+        command.EndDate = command.StartDate;
 
         // Act & Assert
-        await Assert.ThrowsAsync<global::Entities.ÀpplicationException>(() => useCase.Execute(updated));
+        await Assert.ThrowsAsync<global::Entities.ÀpplicationException>(() => handler.Handle(command));
     }
 
     [Fact]
-    public async Task Execute_StartDateAfterEndDate_ThrowsApplicationException()
+    public async Task Handle_StartDateAfterEndDate_ThrowsApplicationException()
     {
         // Arrange
-        var (useCase, _, _) = BuildUseCase();
-        var updated = CreateEvent().ToDTO();
-        updated.EndDate = updated.StartDate.AddHours(-1);
+        var (handler, _, _, _) = BuildHandler();
+        var command = CreateCommand(CreateEvent());
+        command.EndDate = command.StartDate.AddHours(-1);
 
         // Act & Assert
-        await Assert.ThrowsAsync<global::Entities.ÀpplicationException>(() => useCase.Execute(updated));
+        await Assert.ThrowsAsync<global::Entities.ÀpplicationException>(() => handler.Handle(command));
     }
 
     [Fact]
-    public async Task Execute_EventNotFound_ThrowsInvalidOperationException()
+    public async Task Handle_EventNotFound_ThrowsInvalidOperationException()
     {
         // Arrange
-        var repoMock = new Mock<IEventRepository>();
+        var queryMock = new Mock<IEventQueryRepository>();
+        var commandMock = new Mock<IEventCommandRepository>();
         var emailMock = new Mock<IEmailService>();
-        var loggerMock = new Mock<ILogger<EventService>>();
+        var loggerMock = new Mock<ILogger<UpdateEventCommandHandler>>();
 
-        repoMock
+        queryMock
             .Setup(r => r.GetEventByIdAsync(It.IsAny<int>()))
             .ReturnsAsync((Event?)null);
 
-        var useCase = new UpdateEventUseCase(repoMock.Object, emailMock.Object, loggerMock.Object);
-        var updated = CreateEvent().ToDTO();
+        var handler = new UpdateEventCommandHandler(queryMock.Object, commandMock.Object, emailMock.Object, loggerMock.Object);
+        var command = CreateCommand(CreateEvent());
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => useCase.Execute(updated));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.Handle(command));
     }
 
     [Fact]
-    public async Task Execute_ValidUpdate_CallsRepositoryUpdateOnce()
+    public async Task Handle_ValidUpdate_CallsRepositoryUpdateOnce()
     {
         // Arrange
-        var (useCase, repoMock, _) = BuildUseCase();
-        var updated = CreateEvent().ToDTO();
+        var (handler, _, commandMock, _) = BuildHandler();
+        var command = CreateCommand(CreateEvent());
 
         // Act
-        await useCase.Execute(updated);
+        await handler.Handle(command);
 
         // Assert
-        repoMock.Verify(r => r.UpdateEventAsync(It.IsAny<Event>()), Times.Once);
+        commandMock.Verify(r => r.UpdateEventAsync(It.IsAny<Event>()), Times.Once);
     }
 
     [Fact]
-    public async Task Execute_TransitionToPlanned_WithContactEmail_SendsPlannedNotification()
+    public async Task Handle_TransitionToPlanned_WithContactEmail_SendsPlannedNotification()
     {
         // Arrange
         var existing = CreateEvent(status: EventStatus.Requested, email: "contact@example.com");
-        var (useCase, _, emailMock) = BuildUseCase(existing);
-        var updated = CreateEvent(status: EventStatus.Planned, email: "contact@example.com").ToDTO();
+        var (handler, _, _, emailMock) = BuildHandler(existing);
+        var command = CreateCommand(CreateEvent(status: EventStatus.Planned, email: "contact@example.com"));
 
         // Act
-        await useCase.Execute(updated);
+        await handler.Handle(command);
 
         // Assert
         emailMock.Verify(e => e.SendEventPlannedNotificationAsync(It.IsAny<Event>()), Times.Once);
     }
 
     [Fact]
-    public async Task Execute_TransitionToPlanned_WithoutContactEmail_DoesNotSendPlannedNotification()
+    public async Task Handle_TransitionToPlanned_WithoutContactEmail_DoesNotSendPlannedNotification()
     {
         // Arrange
         var existing = CreateEvent(status: EventStatus.Requested, email: null);
-        var (useCase, _, emailMock) = BuildUseCase(existing);
-        var updated = CreateEvent(status: EventStatus.Planned, email: null).ToDTO();
+        var (handler, _, _, emailMock) = BuildHandler(existing);
+        var command = CreateCommand(CreateEvent(status: EventStatus.Planned, email: null));
 
         // Act
-        await useCase.Execute(updated);
+        await handler.Handle(command);
 
         // Assert
         emailMock.Verify(e => e.SendEventPlannedNotificationAsync(It.IsAny<Event>()), Times.Never);
     }
 
     [Fact]
-    public async Task Execute_TransitionToSendInvoice_WithContactEmail_SendsInvoiceNotification()
+    public async Task Handle_TransitionToSendInvoice_WithContactEmail_SendsInvoiceNotification()
     {
         // Arrange
         var existing = CreateEvent(status: EventStatus.Completed, email: "contact@example.com");
-        var (useCase, _, emailMock) = BuildUseCase(existing);
-        var updated = CreateEvent(status: EventStatus.SendInvoice, email: "contact@example.com").ToDTO();
+        var (handler, _, _, emailMock) = BuildHandler(existing);
+        var command = CreateCommand(CreateEvent(status: EventStatus.SendInvoice, email: "contact@example.com"));
 
         // Act
-        await useCase.Execute(updated);
+        await handler.Handle(command);
 
         // Assert
         emailMock.Verify(e => e.SendEventInvoiceNotificationAsync(It.IsAny<Event>()), Times.Once);
     }
 
     [Fact]
-    public async Task Execute_TransitionToSendInvoice_WithoutContactEmail_DoesNotSendInvoiceNotification()
+    public async Task Handle_TransitionToSendInvoice_WithoutContactEmail_DoesNotSendInvoiceNotification()
     {
         // Arrange
         var existing = CreateEvent(status: EventStatus.Completed, email: null);
-        var (useCase, _, emailMock) = BuildUseCase(existing);
-        var updated = CreateEvent(status: EventStatus.SendInvoice, email: null).ToDTO();
+        var (handler, _, _, emailMock) = BuildHandler(existing);
+        var command = CreateCommand(CreateEvent(status: EventStatus.SendInvoice, email: null));
 
         // Act
-        await useCase.Execute(updated);
+        await handler.Handle(command);
 
         // Assert
         emailMock.Verify(e => e.SendEventInvoiceNotificationAsync(It.IsAny<Event>()), Times.Never);
     }
 
     [Fact]
-    public async Task Execute_MismatchedIds_ThrowsInvalidOperationException()
+    public async Task Handle_MismatchedIds_ThrowsInvalidOperationException()
     {
         // Arrange
         var existing = CreateEvent(id: 1);
-        var (useCase, _, _) = BuildUseCase(existing);
-        var updated = CreateEvent(id: 2).ToDTO();
+        var (handler, _, _, _) = BuildHandler(existing);
+        var command = CreateCommand(CreateEvent(id: 2));
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => useCase.Execute(updated));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.Handle(command));
     }
 
     [Fact]
-    public async Task Execute_UpdatesFields()
+    public async Task Handle_UpdatesFields()
     {
         // Arrange
         var existing = CreateEvent();
-        var (useCase, _, _) = BuildUseCase(existing);
-        var updated = CreateEvent().ToDTO();
-        updated.Name = "Updated Name";
-        updated.Location = "New Location";
-        updated.Description = "New Description";
-        updated.ContactPerson = "New Person";
-        updated.ContactPhone = "123456";
-        updated.ContactEmail = "new@example.com";
+        var (handler, _, _, _) = BuildHandler(existing);
+        var command = CreateCommand(CreateEvent());
+        command.Name = "Updated Name";
+        command.Location = "New Location";
+        command.Description = "New Description";
+        command.ContactPerson = "New Person";
+        command.ContactPhone = "123456";
+        command.ContactEmail = "new@example.com";
 
         // Act
-        var result = await useCase.Execute(updated);
+        var result = await handler.Handle(command);
 
         // Assert
         Assert.Equal("Updated Name", result.Name);
@@ -206,31 +225,31 @@ public class UpdateEventUseCaseTests
     }
 
     [Fact]
-    public async Task Execute_SetsUpdatedAt()
+    public async Task Handle_SetsUpdatedAt()
     {
         // Arrange
         var before = DateTime.UtcNow.AddSeconds(-1);
         var existing = CreateEvent();
-        var (useCase, _, _) = BuildUseCase(existing);
-        var updated = CreateEvent().ToDTO();
+        var (handler, _, _, _) = BuildHandler(existing);
+        var command = CreateCommand(CreateEvent());
 
         // Act
-        var result = await useCase.Execute(updated);
+        var result = await handler.Handle(command);
 
         // Assert
         Assert.True(result.UpdatedAt >= before);
     }
 
     [Fact]
-    public async Task Execute_TransitionToPlanned_PromotesToConfirmed()
+    public async Task Handle_TransitionToPlanned_PromotesToConfirmed()
     {
         // Arrange
         var existing = CreateEvent(status: EventStatus.Requested, email: "contact@example.com");
-        var (useCase, _, _) = BuildUseCase(existing);
-        var updated = CreateEvent(status: EventStatus.Planned, email: "contact@example.com").ToDTO();
+        var (handler, _, _, _) = BuildHandler(existing);
+        var command = CreateCommand(CreateEvent(status: EventStatus.Planned, email: "contact@example.com"));
 
         // Act
-        var result = await useCase.Execute(updated);
+        var result = await handler.Handle(command);
 
         // Assert
         Assert.Equal(EventStatusDTO.Confirmed, result.Status);
@@ -238,47 +257,47 @@ public class UpdateEventUseCaseTests
     }
 
     [Fact]
-    public async Task Execute_TransitionToPlanned_WhenAlreadyNotified_DoesNotSendNotification()
+    public async Task Handle_TransitionToPlanned_WhenAlreadyNotified_DoesNotSendNotification()
     {
         // Arrange
         var existing = CreateEvent(status: EventStatus.Requested, email: "contact@example.com");
         existing.NotificationSent = true;
-        var (useCase, _, emailMock) = BuildUseCase(existing);
-        var updated = CreateEvent(status: EventStatus.Planned, email: "contact@example.com").ToDTO();
+        var (handler, _, _, emailMock) = BuildHandler(existing);
+        var command = CreateCommand(CreateEvent(status: EventStatus.Planned, email: "contact@example.com"));
 
         // Act
-        await useCase.Execute(updated);
+        await handler.Handle(command);
 
         // Assert
         emailMock.Verify(e => e.SendEventPlannedNotificationAsync(It.IsAny<Event>()), Times.Never);
     }
 
     [Fact]
-    public async Task Execute_TransitionToSendInvoice_SetsNotificationSent()
+    public async Task Handle_TransitionToSendInvoice_SetsNotificationSent()
     {
         // Arrange
         var existing = CreateEvent(status: EventStatus.Completed, email: "contact@example.com");
-        var (useCase, _, _) = BuildUseCase(existing);
-        var updated = CreateEvent(status: EventStatus.SendInvoice, email: "contact@example.com").ToDTO();
+        var (handler, _, _, _) = BuildHandler(existing);
+        var command = CreateCommand(CreateEvent(status: EventStatus.SendInvoice, email: "contact@example.com"));
 
         // Act
-        var result = await useCase.Execute(updated);
+        var result = await handler.Handle(command);
 
         // Assert
         Assert.True(result.NotificationSent);
     }
 
     [Fact]
-    public async Task Execute_ValidUpdate_ReturnsUpdatedEvent()
+    public async Task Handle_ValidUpdate_ReturnsUpdatedEvent()
     {
         // Arrange
         var existing = CreateEvent();
-        var (useCase, _, _) = BuildUseCase(existing);
-        var updated = CreateEvent().ToDTO();
-        updated.Name = "New Name";
+        var (handler, _, _, _) = BuildHandler(existing);
+        var command = CreateCommand(CreateEvent());
+        command.Name = "New Name";
 
         // Act
-        var result = await useCase.Execute(updated);
+        var result = await handler.Handle(command);
 
         // Assert
         Assert.NotNull(result);

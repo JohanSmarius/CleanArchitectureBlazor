@@ -1,12 +1,16 @@
 @page "/events"
 @using Application
+@using Application.Commands
+@using Application.Queries
 @using Application.DataAdapters
 @using Entities
-@inject IEventRepository EventService
-@inject IShiftRepository ShiftService
-@inject NavigationManager Navigation
+@inject IGetAllEventsQueryHandler GetAllEventsHandler
+@inject IGetEventByIdQueryHandler GetEventByIdHandler
+@inject IDeleteEventCommandHandler DeleteEventHandler
 @inject ICreateEventUseCase CreateEventUseCase
 @inject IUpdateEventUseCase UpdateEventUseCase
+@inject IShiftRepository ShiftService
+@inject NavigationManager Navigation
 
 @rendermode InteractiveServer
 
@@ -756,7 +760,7 @@
 
     private async Task LoadEvents()
     {
-        events = await EventService.GetAllEventsAsync();
+        events = await GetAllEventsHandler.Handle(new GetAllEventsQuery());
     }
 
     private void OnSearchChanged(ChangeEventArgs e)
@@ -885,7 +889,7 @@
         isDeleting = true;
         try
         {
-            await EventService.DeleteEventAsync(eventToDelete.Id);
+            await DeleteEventHandler.Handle(new DeleteEventCommand { Id = eventToDelete.Id });
             events.Remove(eventToDelete);
             ApplyFiltersAndSort();
             eventToDelete = null;
@@ -945,7 +949,7 @@
         try
         {
             // Get the full event with all related data
-            var fullEvent = await EventService.GetEventByIdAsync(eventItem.Id);
+            var fullEvent = await GetEventByIdHandler.Handle(new GetEventByIdQuery { Id = eventItem.Id });
             if (fullEvent != null)
             {
                 editEvent = fullEvent.ToDTO();
@@ -1054,7 +1058,7 @@
         try
         {
             // Get the full event with all related data to see existing shifts
-            var fullEvent = await EventService.GetEventByIdAsync(eventItem.Id);
+            var fullEvent = await GetEventByIdHandler.Handle(new GetEventByIdQuery { Id = eventItem.Id });
             if (fullEvent != null)
             {
                 selectedEventForShift = fullEvent;

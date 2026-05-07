@@ -1,12 +1,14 @@
 @page "/events/edit/{EventId:int}"
 @using Application
+@using Application.Commands
+@using Application.Queries
 @using Application.DataAdapters
 @using Entities
-@inject IEventRepository EventRepository
-@inject IShiftRepository ShiftService
-@inject IEventService EventService
-@inject NavigationManager Navigation
+@inject IGetEventByIdQueryHandler GetEventByIdHandler
 @inject IUpdateEventUseCase UpdateEventUseCase
+@inject IDeleteEventCommandHandler DeleteEventHandler
+@inject IShiftRepository ShiftService
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>Edit Event - Medical First Aid Manager</PageTitle>
@@ -439,7 +441,7 @@ else
 
     private async Task LoadEventDetails()
     {
-        eventToEdit = await EventRepository.GetEventByIdAsync(EventId);
+        eventToEdit = await GetEventByIdHandler.Handle(new GetEventByIdQuery { Id = EventId });
         if (eventToEdit != null)
         {
             // Create a copy for editing
@@ -512,7 +514,7 @@ else
         try
         {
             editForm.Status = EventStatusDTO.Cancelled;
-            await EventRepository.UpdateEventAsync(editForm.ToEntity());
+            await UpdateEventUseCase.Execute(editForm);
             
             // Reload to get updated data
             await LoadEventDetails();

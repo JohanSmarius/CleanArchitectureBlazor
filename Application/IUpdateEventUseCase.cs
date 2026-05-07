@@ -1,11 +1,14 @@
-﻿using Entities;
 using Application.DataAdapters;
-using Microsoft.Extensions.Logging;
 
-namespace Application
+namespace Application;
+
+/// <summary>
+/// Use-case abstraction for updating an existing event.
+/// </summary>
+public interface IUpdateEventUseCase
 {
-    public interface IUpdateEventUseCase
-    {
-        Task<EventDTO> Execute(EventDTO updated);
-    }
+    /// <summary>
+    /// Executes the update flow for the supplied event DTO.
+    /// </summary>
+    Task<EventDTO> Execute(EventDTO updated);
 }

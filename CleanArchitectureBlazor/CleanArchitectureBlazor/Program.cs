@@ -4,6 +4,8 @@ using CleanArchitectureBlazor.Components.Account;
 using CleanArchitectureBlazor.Configuration;
 using CleanArchitectureBlazor.Data;
 using Application;
+using Application.Commands;
+using Application.Queries;
 using Entities;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -30,8 +32,14 @@ builder.Services.AddAuthentication(options =>
     .AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var useSqlite = connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+{
+    if (useSqlite)
+        options.UseSqlite(connectionString);
+    else
+        options.UseSqlServer(connectionString);
+});
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
@@ -48,12 +56,24 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 // Register our application services
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IEventCommandRepository>(sp => sp.GetRequiredService<IEventRepository>());
+builder.Services.AddScoped<IEventQueryRepository>(sp => sp.GetRequiredService<IEventRepository>());
 builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
 builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
-builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<ICreateEventUseCase, CreateEventUseCase>();
 builder.Services.AddScoped<IUpdateEventUseCase, UpdateEventUseCase>();
+
+// CQRS command handlers
+builder.Services.AddScoped<ICreateEventCommandHandler, CreateEventCommandHandler>();
+builder.Services.AddScoped<IUpdateEventCommandHandler, UpdateEventCommandHandler>();
+builder.Services.AddScoped<IDeleteEventCommandHandler, DeleteEventCommandHandler>();
+
+// CQRS query handlers
+builder.Services.AddScoped<IGetAllEventsQueryHandler, GetAllEventsQueryHandler>();
+builder.Services.AddScoped<IGetEventByIdQueryHandler, GetEventByIdQueryHandler>();
+builder.Services.AddScoped<IGetUpcomingEventsQueryHandler, GetUpcomingEventsQueryHandler>();
+builder.Services.AddScoped<IGetEventsByDateRangeQueryHandler, GetEventsByDateRangeQueryHandler>();
 
 builder.Services.Configure<EmailOptions>(
     builder.Configuration.GetSection(EmailOptions.SectionName)
@@ -63,6 +83,18 @@ builder.Services.Configure<EmailOptions>(
 builder.Services.AddOptions<EmailOptions>().Bind(builder.Configuration.GetSection(EmailOptions.SectionName));
 
 var app = builder.Build();
+
+// In development, ensure the SQLite schema is created automatically so the app
+// can be run without running `dotnet-ef database update` manually.
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    if (useSqlite)
+        db.Database.EnsureCreated();
+    else
+        db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
