@@ -82,9 +82,11 @@ builder.Services.AddOptions<EmailOptions>().Bind(builder.Configuration.GetSectio
 
 var app = builder.Build();
 
-// Auto-migrate the database on startup (useful for SQLite dev/test)
-using (var scope = app.Services.CreateScope())
+// In development, ensure the SQLite schema is created automatically so the app
+// can be run without running `dotnet-ef database update` manually.
+if (app.Environment.IsDevelopment())
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.EnsureCreated();
 }

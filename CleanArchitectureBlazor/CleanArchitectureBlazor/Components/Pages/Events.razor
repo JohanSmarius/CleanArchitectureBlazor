@@ -977,20 +977,7 @@
         isUpdating = true;
         try
         {
-            await UpdateEventHandler.Handle(new UpdateEventCommand
-            {
-                Id = editEvent.Id,
-                Name = editEvent.Name,
-                StartDate = editEvent.StartDate,
-                EndDate = editEvent.EndDate,
-                Location = editEvent.Location,
-                Description = editEvent.Description,
-                Status = editEvent.Status,
-                ContactPerson = editEvent.ContactPerson,
-                ContactPhone = editEvent.ContactPhone,
-                ContactEmail = editEvent.ContactEmail,
-                Shifts = editEvent.Shifts,
-            });
+            await UpdateEventHandler.Handle(editEvent.ToUpdateCommand());
             
             // Update the local events list
             var eventIndex = events.FindIndex(e => e.Id == editEvent.Id);
@@ -1020,17 +1007,7 @@
         isCreating = true;
         try
         {
-            var createdEvent = await CreateEventCommandHandler.Handle(new CreateEventCommand
-            {
-                Name = newEvent.Name,
-                StartDate = newEvent.StartDate,
-                EndDate = newEvent.EndDate,
-                Location = newEvent.Location,
-                Description = newEvent.Description,
-                ContactPerson = newEvent.ContactPerson,
-                ContactPhone = newEvent.ContactPhone,
-                ContactEmail = newEvent.ContactEmail,
-            });
+            var createdEvent = await CreateEventCommandHandler.Handle(newEvent.ToCreateCommand());
             
             // Refresh the events list
             await LoadEventsWithErrorHandling();

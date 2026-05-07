@@ -458,20 +458,7 @@ else
         
         try
         {
-            await UpdateEventHandler.Handle(new UpdateEventCommand
-            {
-                Id = editForm.Id,
-                Name = editForm.Name,
-                StartDate = editForm.StartDate,
-                EndDate = editForm.EndDate,
-                Location = editForm.Location,
-                Description = editForm.Description,
-                Status = editForm.Status,
-                ContactPerson = editForm.ContactPerson,
-                ContactPhone = editForm.ContactPhone,
-                ContactEmail = editForm.ContactEmail,
-                Shifts = editForm.Shifts,
-            });
+            await UpdateEventHandler.Handle(editForm.ToUpdateCommand());
             
             // Navigate back to event details
             Navigation.NavigateTo($"/events/details/{EventId}");
@@ -527,20 +514,7 @@ else
         try
         {
             editForm.Status = EventStatusDTO.Cancelled;
-            await UpdateEventHandler.Handle(new UpdateEventCommand
-            {
-                Id = editForm.Id,
-                Name = editForm.Name,
-                StartDate = editForm.StartDate,
-                EndDate = editForm.EndDate,
-                Location = editForm.Location,
-                Description = editForm.Description,
-                Status = editForm.Status,
-                ContactPerson = editForm.ContactPerson,
-                ContactPhone = editForm.ContactPhone,
-                ContactEmail = editForm.ContactEmail,
-                Shifts = editForm.Shifts,
-            });
+            await UpdateEventHandler.Handle(editForm.ToUpdateCommand());
             
             // Reload to get updated data
             await LoadEventDetails();
