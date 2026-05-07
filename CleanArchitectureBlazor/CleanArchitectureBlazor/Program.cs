@@ -89,7 +89,10 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.EnsureCreated();
+    if (db.Database.IsSqlite())
+        db.Database.EnsureCreated();
+    else
+        db.Database.Migrate();
 }
 
 // Configure the HTTP request pipeline.
