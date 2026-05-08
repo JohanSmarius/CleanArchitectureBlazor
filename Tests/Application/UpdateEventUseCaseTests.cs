@@ -389,4 +389,167 @@ public class UpdateEventCommandHandlerTests
         // Assert
         Assert.Null(exception);
     }
+
+    [Fact]
+    public async Task Handle_TransitionToPlanned_PlannedEmailThrows_ExceptionIsSwallowed()
+    {
+        // Arrange – email service throws; the handler must catch and not re-throw
+        var existing = CreateEvent(status: EventStatus.Requested, email: "contact@example.com");
+
+        var queryMock = new Mock<IEventQueryRepository>();
+        var commandMock = new Mock<IEventCommandRepository>();
+        var emailMock = new Mock<IEmailService>();
+        var loggerMock = new Mock<ILogger<UpdateEventCommandHandler>>();
+
+        queryMock.Setup(r => r.GetEventByIdAsync(It.IsAny<int>())).ReturnsAsync(existing);
+        commandMock.Setup(r => r.UpdateEventAsync(It.IsAny<Event>())).ReturnsAsync((Event e) => e);
+        emailMock
+            .Setup(e => e.SendEventPlannedNotificationAsync(It.IsAny<Event>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP failure"));
+
+        var handler = new UpdateEventCommandHandler(queryMock.Object, commandMock.Object, emailMock.Object, loggerMock.Object);
+        var command = CreateCommand(CreateEvent(status: EventStatus.Planned, email: "contact@example.com"));
+
+        // Act
+        var exception = await Record.ExceptionAsync(() => handler.Handle(command));
+
+        // Assert – exception must not propagate
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task Handle_TransitionToPlanned_PlannedEmailThrows_UpdateIsStillCalled()
+    {
+        // Arrange
+        var existing = CreateEvent(status: EventStatus.Requested, email: "contact@example.com");
+
+        var queryMock = new Mock<IEventQueryRepository>();
+        var commandMock = new Mock<IEventCommandRepository>();
+        var emailMock = new Mock<IEmailService>();
+        var loggerMock = new Mock<ILogger<UpdateEventCommandHandler>>();
+
+        queryMock.Setup(r => r.GetEventByIdAsync(It.IsAny<int>())).ReturnsAsync(existing);
+        commandMock.Setup(r => r.UpdateEventAsync(It.IsAny<Event>())).ReturnsAsync((Event e) => e);
+        emailMock
+            .Setup(e => e.SendEventPlannedNotificationAsync(It.IsAny<Event>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP failure"));
+
+        var handler = new UpdateEventCommandHandler(queryMock.Object, commandMock.Object, emailMock.Object, loggerMock.Object);
+        var command = CreateCommand(CreateEvent(status: EventStatus.Planned, email: "contact@example.com"));
+
+        // Act
+        await handler.Handle(command);
+
+        // Assert – persistence must still happen
+        commandMock.Verify(r => r.UpdateEventAsync(It.IsAny<Event>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_TransitionToPlanned_PlannedEmailThrows_StatusRemainsPlanned()
+    {
+        // Arrange – when the email fails the auto-promotion to Confirmed must not happen
+        var existing = CreateEvent(status: EventStatus.Requested, email: "contact@example.com");
+
+        var queryMock = new Mock<IEventQueryRepository>();
+        var commandMock = new Mock<IEventCommandRepository>();
+        var emailMock = new Mock<IEmailService>();
+        var loggerMock = new Mock<ILogger<UpdateEventCommandHandler>>();
+
+        queryMock.Setup(r => r.GetEventByIdAsync(It.IsAny<int>())).ReturnsAsync(existing);
+        commandMock.Setup(r => r.UpdateEventAsync(It.IsAny<Event>())).ReturnsAsync((Event e) => e);
+        emailMock
+            .Setup(e => e.SendEventPlannedNotificationAsync(It.IsAny<Event>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP failure"));
+
+        var handler = new UpdateEventCommandHandler(queryMock.Object, commandMock.Object, emailMock.Object, loggerMock.Object);
+        var command = CreateCommand(CreateEvent(status: EventStatus.Planned, email: "contact@example.com"));
+
+        // Act
+        var result = await handler.Handle(command);
+
+        // Assert – status stays Planned; NotificationSent stays false
+        Assert.Equal(EventStatusDTO.Planned, result.Status);
+        Assert.False(result.NotificationSent);
+    }
+
+    [Fact]
+    public async Task Handle_TransitionToSendInvoice_InvoiceEmailThrows_ExceptionIsSwallowed()
+    {
+        // Arrange – email service throws; the handler must catch and not re-throw
+        var existing = CreateEvent(status: EventStatus.Completed, email: "contact@example.com");
+
+        var queryMock = new Mock<IEventQueryRepository>();
+        var commandMock = new Mock<IEventCommandRepository>();
+        var emailMock = new Mock<IEmailService>();
+        var loggerMock = new Mock<ILogger<UpdateEventCommandHandler>>();
+
+        queryMock.Setup(r => r.GetEventByIdAsync(It.IsAny<int>())).ReturnsAsync(existing);
+        commandMock.Setup(r => r.UpdateEventAsync(It.IsAny<Event>())).ReturnsAsync((Event e) => e);
+        emailMock
+            .Setup(e => e.SendEventInvoiceNotificationAsync(It.IsAny<Event>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP failure"));
+
+        var handler = new UpdateEventCommandHandler(queryMock.Object, commandMock.Object, emailMock.Object, loggerMock.Object);
+        var command = CreateCommand(CreateEvent(status: EventStatus.SendInvoice, email: "contact@example.com"));
+
+        // Act
+        var exception = await Record.ExceptionAsync(() => handler.Handle(command));
+
+        // Assert – exception must not propagate
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task Handle_TransitionToSendInvoice_InvoiceEmailThrows_UpdateIsStillCalled()
+    {
+        // Arrange
+        var existing = CreateEvent(status: EventStatus.Completed, email: "contact@example.com");
+
+        var queryMock = new Mock<IEventQueryRepository>();
+        var commandMock = new Mock<IEventCommandRepository>();
+        var emailMock = new Mock<IEmailService>();
+        var loggerMock = new Mock<ILogger<UpdateEventCommandHandler>>();
+
+        queryMock.Setup(r => r.GetEventByIdAsync(It.IsAny<int>())).ReturnsAsync(existing);
+        commandMock.Setup(r => r.UpdateEventAsync(It.IsAny<Event>())).ReturnsAsync((Event e) => e);
+        emailMock
+            .Setup(e => e.SendEventInvoiceNotificationAsync(It.IsAny<Event>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP failure"));
+
+        var handler = new UpdateEventCommandHandler(queryMock.Object, commandMock.Object, emailMock.Object, loggerMock.Object);
+        var command = CreateCommand(CreateEvent(status: EventStatus.SendInvoice, email: "contact@example.com"));
+
+        // Act
+        await handler.Handle(command);
+
+        // Assert – persistence must still happen
+        commandMock.Verify(r => r.UpdateEventAsync(It.IsAny<Event>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_TransitionToSendInvoice_InvoiceEmailThrows_NotificationSentRemainsfalse()
+    {
+        // Arrange – when the email fails NotificationSent must not be set to true
+        var existing = CreateEvent(status: EventStatus.Completed, email: "contact@example.com");
+
+        var queryMock = new Mock<IEventQueryRepository>();
+        var commandMock = new Mock<IEventCommandRepository>();
+        var emailMock = new Mock<IEmailService>();
+        var loggerMock = new Mock<ILogger<UpdateEventCommandHandler>>();
+
+        queryMock.Setup(r => r.GetEventByIdAsync(It.IsAny<int>())).ReturnsAsync(existing);
+        commandMock.Setup(r => r.UpdateEventAsync(It.IsAny<Event>())).ReturnsAsync((Event e) => e);
+        emailMock
+            .Setup(e => e.SendEventInvoiceNotificationAsync(It.IsAny<Event>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP failure"));
+
+        var handler = new UpdateEventCommandHandler(queryMock.Object, commandMock.Object, emailMock.Object, loggerMock.Object);
+        var command = CreateCommand(CreateEvent(status: EventStatus.SendInvoice, email: "contact@example.com"));
+
+        // Act
+        var result = await handler.Handle(command);
+
+        // Assert
+        Assert.False(result.NotificationSent);
+    }
 }
