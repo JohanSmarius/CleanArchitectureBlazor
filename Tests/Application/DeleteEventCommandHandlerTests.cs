@@ -60,9 +60,9 @@ public class DeleteEventCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_RepositoryThrows_ExceptionPropagates()
+    public async Task Handle_RepositoryThrows_ExceptionPropagatesUnwrapped()
     {
-        // Arrange
+        // Arrange – the handler does not catch or wrap repository exceptions
         var repoMock = new Mock<IEventCommandRepository>();
         var loggerMock = new Mock<ILogger<DeleteEventCommandHandler>>();
 
@@ -74,7 +74,8 @@ public class DeleteEventCommandHandlerTests
         var command = new DeleteEventCommand { Id = 1 };
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.Handle(command));
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => handler.Handle(command));
+        Assert.Equal("Event not found", ex.Message);
     }
 
     [Fact]

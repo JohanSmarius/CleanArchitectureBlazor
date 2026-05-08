@@ -376,7 +376,8 @@ public class UpdateEventCommandHandlerTests
         var existing = CreateEvent();
         var (handler, _, _, _) = BuildHandler(existing);
         var command = CreateCommand(existing);
-        // Keep same start/end dates but include shifts that would otherwise conflict
+        // The shift starts before the event window, but because the command dates are identical
+        // to the existing event dates the handler skips the conflict check entirely.
         command.Shifts = new List<ShiftDTO>
         {
             new() { StartTime = existing.StartDate.AddDays(-1), EndTime = existing.EndDate }
