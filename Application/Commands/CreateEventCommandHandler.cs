@@ -32,12 +32,12 @@ public class CreateEventCommandHandler : ICreateEventCommandHandler
         // Validate dates
         if (command.StartDate >= command.EndDate)
         {
-            throw new ÀpplicationException("End date must be after start date.");
+            throw new ApplicationException("End date must be after start date.");
         }
 
         if (command.StartDate <= DateTime.UtcNow)
         {
-            throw new ÀpplicationException("Start date must be in the future.");
+            throw new ApplicationException("Start date must be in the future.");
         }
 
         var entity = new Event

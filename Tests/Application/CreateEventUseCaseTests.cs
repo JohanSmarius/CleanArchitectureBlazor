@@ -41,7 +41,7 @@ public class CreateEventCommandHandlerTests
         command.EndDate = command.StartDate;
 
         // Act & Assert
-        await Assert.ThrowsAsync<global::Entities.ÀpplicationException>(() => handler.Handle(command));
+        await Assert.ThrowsAsync<global::Application.ApplicationException>(() => handler.Handle(command));
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public class CreateEventCommandHandlerTests
         command.EndDate = command.StartDate.AddHours(-1);
 
         // Act & Assert
-        await Assert.ThrowsAsync<global::Entities.ÀpplicationException>(() => handler.Handle(command));
+        await Assert.ThrowsAsync<global::Application.ApplicationException>(() => handler.Handle(command));
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class CreateEventCommandHandlerTests
         command.EndDate = DateTime.UtcNow.AddDays(1);
 
         // Act & Assert
-        await Assert.ThrowsAsync<global::Entities.ÀpplicationException>(() => handler.Handle(command));
+        await Assert.ThrowsAsync<global::Application.ApplicationException>(() => handler.Handle(command));
     }
 
     [Fact]

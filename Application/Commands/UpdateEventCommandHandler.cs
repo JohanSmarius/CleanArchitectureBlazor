@@ -35,7 +35,7 @@ public class UpdateEventCommandHandler : IUpdateEventCommandHandler
         // Validate dates
         if (command.StartDate >= command.EndDate)
         {
-            throw new ÀpplicationException("End date must be after start date.");
+            throw new ApplicationException("End date must be after start date.");
         }
 
         // Load current state
@@ -54,7 +54,7 @@ public class UpdateEventCommandHandler : IUpdateEventCommandHandler
 
             if (conflictingShifts.Any())
             {
-                throw new ÀpplicationException(
+                throw new DomainException(
                     $"Cannot change event dates. {conflictingShifts.Count} shift(s) would fall outside the new event timeframe.");
             }
         }
