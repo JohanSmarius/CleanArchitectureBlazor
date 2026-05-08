@@ -302,4 +302,90 @@ public class UpdateEventCommandHandlerTests
         // Assert
         Assert.NotNull(result);
     }
+
+    [Fact]
+    public async Task Handle_ShiftStartsBeforeNewEventStart_ThrowsDomainException()
+    {
+        // Arrange
+        var existing = CreateEvent();
+        var newStart = existing.StartDate.AddDays(1);
+        var newEnd = existing.EndDate.AddDays(1);
+
+        var (handler, _, _, _) = BuildHandler(existing);
+        var command = CreateCommand(existing);
+        command.StartDate = newStart;
+        command.EndDate = newEnd;
+        command.Shifts = new List<ShiftDTO>
+        {
+            new() { StartTime = existing.StartDate, EndTime = newEnd }   // starts before new window
+        };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<DomainException>(() => handler.Handle(command));
+    }
+
+    [Fact]
+    public async Task Handle_ShiftEndsAfterNewEventEnd_ThrowsDomainException()
+    {
+        // Arrange
+        var existing = CreateEvent();
+        var newStart = existing.StartDate;
+        var newEnd = existing.EndDate.AddDays(-1);   // shrink window
+
+        var (handler, _, _, _) = BuildHandler(existing);
+        var command = CreateCommand(existing);
+        command.StartDate = newStart;
+        command.EndDate = newEnd;
+        command.Shifts = new List<ShiftDTO>
+        {
+            new() { StartTime = newStart, EndTime = existing.EndDate }   // ends after new window
+        };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<DomainException>(() => handler.Handle(command));
+    }
+
+    [Fact]
+    public async Task Handle_ShiftsWithinNewDates_DoesNotThrow()
+    {
+        // Arrange
+        var existing = CreateEvent();
+        var newStart = existing.StartDate.AddHours(-2);
+        var newEnd = existing.EndDate.AddHours(2);
+
+        var (handler, _, _, _) = BuildHandler(existing);
+        var command = CreateCommand(existing);
+        command.StartDate = newStart;
+        command.EndDate = newEnd;
+        command.Shifts = new List<ShiftDTO>
+        {
+            new() { StartTime = existing.StartDate, EndTime = existing.EndDate }   // fits inside new window
+        };
+
+        // Act
+        var exception = await Record.ExceptionAsync(() => handler.Handle(command));
+
+        // Assert
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task Handle_ShiftsWithUnchangedDates_DoesNotThrow()
+    {
+        // Arrange
+        var existing = CreateEvent();
+        var (handler, _, _, _) = BuildHandler(existing);
+        var command = CreateCommand(existing);
+        // Keep same start/end dates but include shifts that would otherwise conflict
+        command.Shifts = new List<ShiftDTO>
+        {
+            new() { StartTime = existing.StartDate.AddDays(-1), EndTime = existing.EndDate }
+        };
+
+        // Act – no date change, so conflict check is skipped
+        var exception = await Record.ExceptionAsync(() => handler.Handle(command));
+
+        // Assert
+        Assert.Null(exception);
+    }
 }
