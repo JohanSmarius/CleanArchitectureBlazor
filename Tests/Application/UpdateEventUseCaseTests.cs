@@ -527,7 +527,7 @@ public class UpdateEventCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_TransitionToSendInvoice_InvoiceEmailThrows_NotificationSentRemainsfalse()
+    public async Task Handle_TransitionToSendInvoice_InvoiceEmailThrows_NotificationSentRemainsFalse()
     {
         // Arrange – when the email fails NotificationSent must not be set to true
         var existing = CreateEvent(status: EventStatus.Completed, email: "contact@example.com");
