@@ -1,9 +1,8 @@
 @page "/staff"
-@using CleanArchitectureBlazor.Models
-@using CleanArchitectureBlazor.Services
-@inject IStaffService StaffService
+@using CleanArchitectureBlazor.Client.Models
+@inject HttpClient Http
 @inject NavigationManager Navigation
-@rendermode InteractiveServer
+@rendermode InteractiveWebAssembly
 
 <PageTitle>Staff - Medical First Aid Manager</PageTitle>
 
@@ -342,10 +341,10 @@
     private bool isDeactivating = false;
     private bool showStaffDialog = false;
     private bool isEditMode = false;
-    private List<CleanArchitectureBlazor.Models.Staff> staff = new();
-    private List<CleanArchitectureBlazor.Models.Staff> filteredStaff = new();
-    private CleanArchitectureBlazor.Models.Staff? staffToDeactivate;
-    private CleanArchitectureBlazor.Models.Staff staffForm = new();
+    private List<Models.Staff> staff = new();
+    private List<Models.Staff> filteredStaff = new();
+    private Models.Staff? staffToDeactivate;
+    private Models.Staff staffForm = new();
     private int? openDropdownId = null;
     
     private string searchTerm = string.Empty;
@@ -362,7 +361,7 @@
 
     private async Task LoadStaff()
     {
-        staff = await StaffService.GetAllStaffAsync();
+        staff = await Http.GetFromJsonAsync<List<Models.Staff>>("api/staff") ?? new();
     }
 
     private void OnSearchChanged(ChangeEventArgs e)
@@ -435,17 +434,17 @@
     {
         CloseDropdown();
         isEditMode = false;
-        staffForm = new CleanArchitectureBlazor.Models.Staff { IsActive = true };
+        staffForm = new Models.Staff { IsActive = true };
         emailError = string.Empty;
         showStaffDialog = true;
         StateHasChanged();
     }
 
-    private void OpenEditStaffDialog(CleanArchitectureBlazor.Models.Staff staffMember)
+    private void OpenEditStaffDialog(Models.Staff staffMember)
     {
         CloseDropdown();
         isEditMode = true;
-        staffForm = new CleanArchitectureBlazor.Models.Staff
+        staffForm = new Models.Staff
         {
             Id = staffMember.Id,
             FirstName = staffMember.FirstName,
@@ -467,7 +466,7 @@
     private void CloseStaffDialog()
     {
         showStaffDialog = false;
-        staffForm = new CleanArchitectureBlazor.Models.Staff();
+        staffForm = new Models.Staff();
         emailError = string.Empty;
         StateHasChanged();
     }
@@ -479,17 +478,14 @@
         
         try
         {
-            // Check for email uniqueness
-            var isEmailUnique = await StaffService.IsEmailUniqueAsync(staffForm.Email, isEditMode ? staffForm.Id : null);
-            if (!isEmailUnique)
-            {
-                emailError = "This email address is already in use by another staff member.";
-                return;
-            }
-
             if (isEditMode)
             {
-                await StaffService.UpdateStaffAsync(staffForm);
+                var response = await Http.PutAsJsonAsync($"api/staff/{staffForm.Id}", staffForm);
+                if (!response.IsSuccessStatusCode)
+                {
+                    emailError = $"Error updating staff member: {response.ReasonPhrase}";
+                    return;
+                }
                 
                 // Update the local staff list
                 var staffIndex = staff.FindIndex(s => s.Id == staffForm.Id);
@@ -500,8 +496,17 @@
             }
             else
             {
-                var createdStaff = await StaffService.CreateStaffAsync(staffForm);
-                staff.Add(createdStaff);
+                var response = await Http.PostAsJsonAsync("api/staff", staffForm);
+                if (!response.IsSuccessStatusCode)
+                {
+                    emailError = $"Error creating staff member: {response.ReasonPhrase}";
+                    return;
+                }
+                var createdStaff = await response.Content.ReadFromJsonAsync<Models.Staff>();
+                if (createdStaff != null)
+                {
+                    staff.Add(createdStaff);
+                }
             }
             
             ApplyFiltersAndSort();
@@ -518,7 +523,7 @@
         }
     }
 
-    private void ConfirmDeactivateStaff(CleanArchitectureBlazor.Models.Staff staffMember)
+    private void ConfirmDeactivateStaff(Models.Staff staffMember)
     {
         staffToDeactivate = staffMember;
         CloseDropdown();
@@ -538,7 +543,15 @@
         isDeactivating = true;
         try
         {
-            await StaffService.DeleteStaffAsync(staffToDeactivate.Id);
+            // For now, "Deactivate" in UI seems to map to Delete in API based on original code calling DeleteStaffAsync
+            // Though usually Deactivate would just be a Put with IsActive = false.
+            // Let's stick to the original logic which calls DeleteStaffAsync.
+            var response = await Http.DeleteAsync($"api/staff/{staffToDeactivate.Id}");
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Error deactivating staff: {response.ReasonPhrase}");
+                return;
+            }
             
             // Update the local staff list
             var staffMember = staff.FirstOrDefault(s => s.Id == staffToDeactivate.Id);
@@ -562,13 +575,18 @@
         }
     }
 
-    private async Task ReactivateStaff(CleanArchitectureBlazor.Models.Staff staffMember)
+    private async Task ReactivateStaff(Models.Staff staffMember)
     {
         CloseDropdown();
         try
         {
             staffMember.IsActive = true;
-            await StaffService.UpdateStaffAsync(staffMember);
+            var response = await Http.PutAsJsonAsync($"api/staff/{staffMember.Id}", staffMember);
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Error reactivating staff: {response.ReasonPhrase}");
+                return;
+            }
             
             // Update the local staff list
             var localStaff = staff.FirstOrDefault(s => s.Id == staffMember.Id);
