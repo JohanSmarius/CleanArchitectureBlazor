@@ -1,6 +1,6 @@
 @page "/staff"
 @using CleanArchitectureBlazor.Client.Models
-@inject HttpClient Http
+@inject CleanArchitectureBlazor.Client.Services.StaffService StaffService
 @inject NavigationManager Navigation
 @rendermode InteractiveWebAssembly
 
@@ -213,15 +213,20 @@
                     <DataAnnotationsValidator />
                     <div class="modal-body">
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">First Name *</label>
                                 <InputText @bind-Value="staffForm.FirstName" class="form-control" placeholder="Enter first name" />
                                 <ValidationMessage For="() => staffForm.FirstName" class="text-danger" />
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">Last Name *</label>
                                 <InputText @bind-Value="staffForm.LastName" class="form-control" placeholder="Enter last name" />
                                 <ValidationMessage For="() => staffForm.LastName" class="text-danger" />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Date of Birth *</label>
+                                <input type="date" @bind="staffForm.DateOfBirth" class="form-control" />
+                                <ValidationMessage For="() => staffForm.DateOfBirth" class="text-danger" />
                             </div>
                         </div>
 
@@ -361,7 +366,7 @@
 
     private async Task LoadStaff()
     {
-        staff = await Http.GetFromJsonAsync<List<Models.Staff>>("api/staff") ?? new();
+        staff = await StaffService.GetStaffAsync() ?? new();
     }
 
     private void OnSearchChanged(ChangeEventArgs e)
@@ -475,18 +480,11 @@
     {
         isSaving = true;
         emailError = string.Empty;
-        
         try
         {
             if (isEditMode)
             {
-                var response = await Http.PutAsJsonAsync($"api/staff/{staffForm.Id}", staffForm);
-                if (!response.IsSuccessStatusCode)
-                {
-                    emailError = $"Error updating staff member: {response.ReasonPhrase}";
-                    return;
-                }
-                
+                await StaffService.UpdateStaffAsync(staffForm.Id, staffForm);
                 // Update the local staff list
                 var staffIndex = staff.FindIndex(s => s.Id == staffForm.Id);
                 if (staffIndex >= 0)
@@ -496,19 +494,12 @@
             }
             else
             {
-                var response = await Http.PostAsJsonAsync("api/staff", staffForm);
-                if (!response.IsSuccessStatusCode)
-                {
-                    emailError = $"Error creating staff member: {response.ReasonPhrase}";
-                    return;
-                }
-                var createdStaff = await response.Content.ReadFromJsonAsync<Models.Staff>();
+                var createdStaff = await StaffService.CreateStaffAsync(staffForm);
                 if (createdStaff != null)
                 {
                     staff.Add(createdStaff);
                 }
             }
-            
             ApplyFiltersAndSort();
             CloseStaffDialog();
         }
@@ -539,20 +530,10 @@
     private async Task DeactivateStaff()
     {
         if (staffToDeactivate is null) return;
-
         isDeactivating = true;
         try
         {
-            // For now, "Deactivate" in UI seems to map to Delete in API based on original code calling DeleteStaffAsync
-            // Though usually Deactivate would just be a Put with IsActive = false.
-            // Let's stick to the original logic which calls DeleteStaffAsync.
-            var response = await Http.DeleteAsync($"api/staff/{staffToDeactivate.Id}");
-            if (!response.IsSuccessStatusCode)
-            {
-                Console.WriteLine($"Error deactivating staff: {response.ReasonPhrase}");
-                return;
-            }
-            
+            await StaffService.DeleteStaffAsync(staffToDeactivate.Id);
             // Update the local staff list
             var staffMember = staff.FirstOrDefault(s => s.Id == staffToDeactivate.Id);
             if (staffMember != null)
@@ -560,7 +541,6 @@
                 staffMember.IsActive = false;
                 staffMember.UpdatedAt = DateTime.UtcNow;
             }
-            
             ApplyFiltersAndSort();
             staffToDeactivate = null;
         }
@@ -581,13 +561,7 @@
         try
         {
             staffMember.IsActive = true;
-            var response = await Http.PutAsJsonAsync($"api/staff/{staffMember.Id}", staffMember);
-            if (!response.IsSuccessStatusCode)
-            {
-                Console.WriteLine($"Error reactivating staff: {response.ReasonPhrase}");
-                return;
-            }
-            
+            await StaffService.UpdateStaffAsync(staffMember.Id, staffMember);
             // Update the local staff list
             var localStaff = staff.FirstOrDefault(s => s.Id == staffMember.Id);
             if (localStaff != null)
@@ -595,7 +569,6 @@
                 localStaff.IsActive = true;
                 localStaff.UpdatedAt = DateTime.UtcNow;
             }
-            
             ApplyFiltersAndSort();
         }
         catch (Exception ex)
