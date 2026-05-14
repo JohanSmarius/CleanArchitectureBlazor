@@ -1,10 +1,8 @@
 @page "/staff/details/{StaffId:int}"
-@using Domain
-@using DomainService
-@inject IStaffRepository StaffService
-@inject IStaffAssignmentRepository StaffAssignmentService
+@using CleanArchitectureBlazor.Client.Models
+@inject HttpClient Http
 @inject NavigationManager Navigation
-@rendermode InteractiveServer
+@rendermode InteractiveWebAssembly
 
 <PageTitle>Staff Details - Medical First Aid Manager</PageTitle>
 
@@ -513,8 +511,8 @@ else
     private bool isDeactivating = false;
     private bool showEditDialog = false;
     private bool showDeactivateConfirm = false;
-    private Domain.Staff? staffDetail;
-    private Domain.Staff staffForm = new();
+    private Models.Staff? staffDetail;
+    private Models.Staff staffForm = new();
     private string emailError = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -531,7 +529,7 @@ else
 
     private async Task LoadStaffDetails()
     {
-        staffDetail = await StaffService.GetStaffByIdAsync(StaffId);
+        staffDetail = await Http.GetFromJsonAsync<Models.Staff>($"api/staff/{StaffId}");
     }
 
     private int TotalAssignments => staffDetail?.StaffAssignments.Count ?? 0;
@@ -569,7 +567,7 @@ else
     {
         if (staffDetail == null) return;
 
-        staffForm = new Domain.Staff
+        staffForm = new Models.Staff
         {
             Id = staffDetail.Id,
             FirstName = staffDetail.FirstName,
@@ -591,7 +589,7 @@ else
     private void CloseEditDialog()
     {
         showEditDialog = false;
-        staffForm = new Domain.Staff();
+        staffForm = new Models.Staff();
         emailError = string.Empty;
         StateHasChanged();
     }
@@ -603,15 +601,12 @@ else
         
         try
         {
-            // Check for email uniqueness
-            var isEmailUnique = await StaffService.IsEmailUniqueAsync(staffForm.Email, staffForm.Id);
-            if (!isEmailUnique)
+            var response = await Http.PutAsJsonAsync($"api/staff/{staffForm.Id}", staffForm);
+            if (!response.IsSuccessStatusCode)
             {
-                emailError = "This email address is already in use by another staff member.";
+                emailError = $"Error updating staff member: {response.ReasonPhrase}";
                 return;
             }
-
-            await StaffService.UpdateStaffAsync(staffForm);
             
             // Reload staff details
             await LoadStaffDetails();
@@ -647,7 +642,12 @@ else
         isDeactivating = true;
         try
         {
-            await StaffService.DeleteStaffAsync(staffDetail.Id);
+            var response = await Http.DeleteAsync($"api/staff/{staffDetail.Id}");
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Error deactivating staff: {response.ReasonPhrase}");
+                return;
+            }
             
             // Reload staff details
             await LoadStaffDetails();
@@ -671,7 +671,12 @@ else
         try
         {
             staffDetail.IsActive = true;
-            await StaffService.UpdateStaffAsync(staffDetail);
+            var response = await Http.PutAsJsonAsync($"api/staff/{staffDetail.Id}", staffDetail);
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Error reactivating staff: {response.ReasonPhrase}");
+                return;
+            }
             
             // Reload staff details
             await LoadStaffDetails();
