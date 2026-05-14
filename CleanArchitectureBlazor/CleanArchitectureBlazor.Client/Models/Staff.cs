@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace CleanArchitectureBlazor.Client.Models;
 
 /// <summary>
-/// Represents a staff member
+/// Represents a staff member.
 /// </summary>
 public class Staff
 {
@@ -86,7 +86,7 @@ public class Event
 }
 
 /// <summary>
-/// Role of a staff member
+/// Role of a staff member.
 /// </summary>
 public enum StaffRole
 {

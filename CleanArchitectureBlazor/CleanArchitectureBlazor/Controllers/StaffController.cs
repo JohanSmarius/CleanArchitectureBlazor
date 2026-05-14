@@ -19,7 +19,7 @@ public class StaffController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Staff>>> GetStaff()
     {
-        return await _staffRepository.GetAllStaffAsync();
+        return Ok(await _staffRepository.GetAllStaffAsync());
     }
 
     // GET: api/Staff/5
@@ -42,7 +42,7 @@ public class StaffController : ControllerBase
     {
         if (id != staff.Id)
         {
-            return BadRequest();
+            return BadRequest("The route id must match the staff payload id.");
         }
 
         if (!await _staffRepository.IsEmailUniqueAsync(staff.Email, staff.Id))
