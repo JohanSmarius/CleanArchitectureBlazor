@@ -1,10 +1,8 @@
 @page "/staff/details/{StaffId:int}"
-@using Application
-@using Entities
-@inject IStaffRepository StaffService
-@inject IStaffAssignmentRepository StaffAssignmentService
+@using CleanArchitectureBlazor.Client.Models
+@inject HttpClient Http
 @inject NavigationManager Navigation
-@rendermode InteractiveServer
+@rendermode InteractiveWebAssembly
 
 <PageTitle>Staff Details - Medical First Aid Manager</PageTitle>
 
@@ -153,6 +151,17 @@ else
                                             }
                                         </small>
                                     }
+                                </div>
+                            </div>
+                        }
+
+                        @if (staffDetail.Birthday.HasValue)
+                        {
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">BIRTHDAY</label>
+                                <div class="fw-medium">
+                                    <i class="fas fa-birthday-cake text-muted me-2"></i>
+                                    @staffDetail.Birthday.Value.ToString("MMMM dd, yyyy")
                                 </div>
                             </div>
                         }
@@ -438,6 +447,14 @@ else
                                 <ValidationMessage For="() => staffForm.CertificationExpiry" class="text-danger" />
                             </div>
                             <div class="col-md-6 mb-3">
+                                <label class="form-label">Birthday</label>
+                                <input type="date" @bind="staffForm.Birthday" class="form-control" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                                <ValidationMessage For="() => staffForm.Birthday" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Status</label>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" @bind="staffForm.IsActive" id="staffActiveSwitch">
@@ -513,8 +530,8 @@ else
     private bool isDeactivating = false;
     private bool showEditDialog = false;
     private bool showDeactivateConfirm = false;
-    private Entities.Staff? staffDetail;
-    private Entities.Staff staffForm = new();
+    private Models.Staff? staffDetail;
+    private Models.Staff staffForm = new();
     private string emailError = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -531,7 +548,7 @@ else
 
     private async Task LoadStaffDetails()
     {
-        staffDetail = await StaffService.GetStaffByIdAsync(StaffId);
+        staffDetail = await Http.GetFromJsonAsync<Models.Staff>($"api/staff/{StaffId}");
     }
 
     private int TotalAssignments => staffDetail?.StaffAssignments.Count ?? 0;
@@ -569,7 +586,7 @@ else
     {
         if (staffDetail == null) return;
 
-        staffForm = new Entities.Staff
+        staffForm = new Models.Staff
         {
             Id = staffDetail.Id,
             FirstName = staffDetail.FirstName,
@@ -579,6 +596,7 @@ else
             Role = staffDetail.Role,
             CertificationLevel = staffDetail.CertificationLevel,
             CertificationExpiry = staffDetail.CertificationExpiry,
+            Birthday = staffDetail.Birthday,
             IsActive = staffDetail.IsActive,
             CreatedAt = staffDetail.CreatedAt,
             UpdatedAt = staffDetail.UpdatedAt
@@ -591,7 +609,7 @@ else
     private void CloseEditDialog()
     {
         showEditDialog = false;
-        staffForm = new Entities.Staff();
+        staffForm = new Models.Staff();
         emailError = string.Empty;
         StateHasChanged();
     }
@@ -603,15 +621,18 @@ else
         
         try
         {
-            // Check for email uniqueness
-            var isEmailUnique = await StaffService.IsEmailUniqueAsync(staffForm.Email, staffForm.Id);
-            if (!isEmailUnique)
+            if (staffForm.Birthday.HasValue && staffForm.Birthday.Value.Date > DateTime.Today)
             {
-                emailError = "This email address is already in use by another staff member.";
+                emailError = "Birthday cannot be in the future.";
                 return;
             }
 
-            await StaffService.UpdateStaffAsync(staffForm);
+            var response = await Http.PutAsJsonAsync($"api/staff/{staffForm.Id}", staffForm);
+            if (!response.IsSuccessStatusCode)
+            {
+                emailError = await GetErrorMessage(response, "Error updating staff member.");
+                return;
+            }
             
             // Reload staff details
             await LoadStaffDetails();
@@ -647,7 +668,12 @@ else
         isDeactivating = true;
         try
         {
-            await StaffService.DeleteStaffAsync(staffDetail.Id);
+            var response = await Http.DeleteAsync($"api/staff/{staffDetail.Id}");
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Error deactivating staff: {response.ReasonPhrase}");
+                return;
+            }
             
             // Reload staff details
             await LoadStaffDetails();
@@ -671,7 +697,12 @@ else
         try
         {
             staffDetail.IsActive = true;
-            await StaffService.UpdateStaffAsync(staffDetail);
+            var response = await Http.PutAsJsonAsync($"api/staff/{staffDetail.Id}", staffDetail);
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Error reactivating staff: {response.ReasonPhrase}");
+                return;
+            }
             
             // Reload staff details
             await LoadStaffDetails();
@@ -707,5 +738,18 @@ else
             AssignmentStatus.Cancelled => "dark",
             _ => "secondary"
         };
+    }
+
+    private static async Task<string> GetErrorMessage(HttpResponseMessage response, string fallbackMessage)
+    {
+        var errorMessage = await response.Content.ReadAsStringAsync();
+        if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            return errorMessage;
+        }
+
+        return response.ReasonPhrase is { Length: > 0 }
+            ? $"{fallbackMessage} {response.ReasonPhrase}"
+            : fallbackMessage;
     }
 }
