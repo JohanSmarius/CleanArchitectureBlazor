@@ -483,7 +483,7 @@
                 var response = await Http.PutAsJsonAsync($"api/staff/{staffForm.Id}", staffForm);
                 if (!response.IsSuccessStatusCode)
                 {
-                    emailError = $"Error updating staff member: {response.ReasonPhrase}";
+                    emailError = await GetErrorMessage(response, "Error updating staff member.");
                     return;
                 }
                 
@@ -499,7 +499,7 @@
                 var response = await Http.PostAsJsonAsync("api/staff", staffForm);
                 if (!response.IsSuccessStatusCode)
                 {
-                    emailError = $"Error creating staff member: {response.ReasonPhrase}";
+                    emailError = await GetErrorMessage(response, "Error creating staff member.");
                     return;
                 }
                 var createdStaff = await response.Content.ReadFromJsonAsync<Models.Staff>();
@@ -543,9 +543,6 @@
         isDeactivating = true;
         try
         {
-            // For now, "Deactivate" in UI seems to map to Delete in API based on original code calling DeleteStaffAsync
-            // Though usually Deactivate would just be a Put with IsActive = false.
-            // Let's stick to the original logic which calls DeleteStaffAsync.
             var response = await Http.DeleteAsync($"api/staff/{staffToDeactivate.Id}");
             if (!response.IsSuccessStatusCode)
             {
@@ -615,5 +612,18 @@
             StaffRole.Volunteer => "info",
             _ => "secondary"
         };
+    }
+
+    private static async Task<string> GetErrorMessage(HttpResponseMessage response, string fallbackMessage)
+    {
+        var errorMessage = await response.Content.ReadAsStringAsync();
+        if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            return errorMessage;
+        }
+
+        return response.ReasonPhrase is { Length: > 0 }
+            ? $"{fallbackMessage} {response.ReasonPhrase}"
+            : fallbackMessage;
     }
 }

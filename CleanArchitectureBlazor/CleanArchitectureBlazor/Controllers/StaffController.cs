@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using CleanArchitectureBlazor.Data;
 using Domain;
+using DomainService;
 
 namespace CleanArchitectureBlazor.Controllers;
 
@@ -9,29 +8,25 @@ namespace CleanArchitectureBlazor.Controllers;
 [ApiController]
 public class StaffController : ControllerBase
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IStaffRepository _staffRepository;
 
-    public StaffController(ApplicationDbContext context)
+    public StaffController(IStaffRepository staffRepository)
     {
-        _context = context;
+        _staffRepository = staffRepository;
     }
 
     // GET: api/Staff
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Staff>>> GetStaff()
     {
-        return await _context.Staff
-            .Include(s => s.StaffAssignments)
-            .ToListAsync();
+        return await _staffRepository.GetAllStaffAsync();
     }
 
     // GET: api/Staff/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<Staff>> GetStaff(int id)
+    public async Task<ActionResult<Staff>> GetStaffById(int id)
     {
-        var staff = await _context.Staff
-            .Include(s => s.StaffAssignments)
-            .FirstOrDefaultAsync(s => s.Id == id);
+        var staff = await _staffRepository.GetStaffByIdAsync(id);
 
         if (staff == null)
         {
@@ -50,24 +45,18 @@ public class StaffController : ControllerBase
             return BadRequest();
         }
 
-        staff.UpdatedAt = DateTime.UtcNow;
-        _context.Entry(staff).State = EntityState.Modified;
+        if (!await _staffRepository.IsEmailUniqueAsync(staff.Email, staff.Id))
+        {
+            return BadRequest("A staff member with this email address already exists.");
+        }
 
-        try
+        var existingStaff = await _staffRepository.GetStaffByIdAsync(id);
+        if (existingStaff == null)
         {
-            await _context.SaveChangesAsync();
+            return NotFound();
         }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!StaffExists(id))
-            {
-                return NotFound();
-            }
-            else
-            {
-                throw;
-            }
-        }
+
+        await _staffRepository.UpdateStaffAsync(staff);
 
         return NoContent();
     }
@@ -76,31 +65,28 @@ public class StaffController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Staff>> PostStaff(Staff staff)
     {
-        staff.CreatedAt = DateTime.UtcNow;
-        _context.Staff.Add(staff);
-        await _context.SaveChangesAsync();
+        if (!await _staffRepository.IsEmailUniqueAsync(staff.Email))
+        {
+            return BadRequest("A staff member with this email address already exists.");
+        }
 
-        return CreatedAtAction("GetStaff", new { id = staff.Id }, staff);
+        var createdStaff = await _staffRepository.CreateStaffAsync(staff);
+
+        return CreatedAtAction(nameof(GetStaffById), new { id = createdStaff.Id }, createdStaff);
     }
 
     // DELETE: api/Staff/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteStaff(int id)
     {
-        var staff = await _context.Staff.FindAsync(id);
+        var staff = await _staffRepository.GetStaffByIdAsync(id);
         if (staff == null)
         {
             return NotFound();
         }
 
-        _context.Staff.Remove(staff);
-        await _context.SaveChangesAsync();
+        await _staffRepository.DeleteStaffAsync(id);
 
         return NoContent();
-    }
-
-    private bool StaffExists(int id)
-    {
-        return _context.Staff.Any(e => e.Id == id);
     }
 }

@@ -604,7 +604,7 @@ else
             var response = await Http.PutAsJsonAsync($"api/staff/{staffForm.Id}", staffForm);
             if (!response.IsSuccessStatusCode)
             {
-                emailError = $"Error updating staff member: {response.ReasonPhrase}";
+                emailError = await GetErrorMessage(response, "Error updating staff member.");
                 return;
             }
             
@@ -712,5 +712,18 @@ else
             AssignmentStatus.Cancelled => "dark",
             _ => "secondary"
         };
+    }
+
+    private static async Task<string> GetErrorMessage(HttpResponseMessage response, string fallbackMessage)
+    {
+        var errorMessage = await response.Content.ReadAsStringAsync();
+        if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            return errorMessage;
+        }
+
+        return response.ReasonPhrase is { Length: > 0 }
+            ? $"{fallbackMessage} {response.ReasonPhrase}"
+            : fallbackMessage;
     }
 }
