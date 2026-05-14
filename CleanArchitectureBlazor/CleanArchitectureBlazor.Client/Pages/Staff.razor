@@ -1,8 +1,8 @@
 @page "/staff"
-@using Application
-@inject IStaffRepository StaffService
+@using CleanArchitectureBlazor.Client.Models
+@inject HttpClient Http
 @inject NavigationManager Navigation
-@rendermode InteractiveServer
+@rendermode InteractiveWebAssembly
 
 <PageTitle>Staff - Medical First Aid Manager</PageTitle>
 
@@ -161,6 +161,13 @@
                                     }
                                 </div>
                             }
+                            @if (staffMember.Birthday.HasValue)
+                            {
+                                <div class="mb-2">
+                                    <i class="fas fa-birthday-cake text-muted me-2"></i>
+                                    <span>@staffMember.Birthday.Value.ToString("MMM dd, yyyy")</span>
+                                </div>
+                            }
                             <div class="small text-muted">
                                 <i class="fas fa-calendar-plus me-1"></i>
                                 Joined: @staffMember.CreatedAt.ToString("MMM dd, yyyy")
@@ -264,6 +271,14 @@
                                 <input type="date" @bind="staffForm.CertificationExpiry" class="form-control" />
                                 <ValidationMessage For="() => staffForm.CertificationExpiry" class="text-danger" />
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Birthday</label>
+                                <input type="date" @bind="staffForm.Birthday" class="form-control" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                                <ValidationMessage For="() => staffForm.Birthday" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="row">
                             @if (isEditMode)
                             {
                                 <div class="col-md-6 mb-3">
@@ -341,10 +356,10 @@
     private bool isDeactivating = false;
     private bool showStaffDialog = false;
     private bool isEditMode = false;
-    private List<Entities.Staff> staff = new();
-    private List<Entities.Staff> filteredStaff = new();
-    private Entities.Staff? staffToDeactivate;
-    private Entities.Staff staffForm = new();
+    private List<Models.Staff> staff = new();
+    private List<Models.Staff> filteredStaff = new();
+    private Models.Staff? staffToDeactivate;
+    private Models.Staff staffForm = new();
     private int? openDropdownId = null;
     
     private string searchTerm = string.Empty;
@@ -361,7 +376,7 @@
 
     private async Task LoadStaff()
     {
-        staff = await StaffService.GetAllStaffAsync();
+        staff = await Http.GetFromJsonAsync<List<Models.Staff>>("api/staff") ?? new();
     }
 
     private void OnSearchChanged(ChangeEventArgs e)
@@ -434,17 +449,17 @@
     {
         CloseDropdown();
         isEditMode = false;
-        staffForm = new Entities.Staff { IsActive = true };
+        staffForm = new Models.Staff { IsActive = true };
         emailError = string.Empty;
         showStaffDialog = true;
         StateHasChanged();
     }
 
-    private void OpenEditStaffDialog(Entities.Staff staffMember)
+    private void OpenEditStaffDialog(Models.Staff staffMember)
     {
         CloseDropdown();
         isEditMode = true;
-        staffForm = new Entities.Staff
+        staffForm = new Models.Staff
         {
             Id = staffMember.Id,
             FirstName = staffMember.FirstName,
@@ -454,6 +469,7 @@
             Role = staffMember.Role,
             CertificationLevel = staffMember.CertificationLevel,
             CertificationExpiry = staffMember.CertificationExpiry,
+            Birthday = staffMember.Birthday,
             IsActive = staffMember.IsActive,
             CreatedAt = staffMember.CreatedAt,
             UpdatedAt = staffMember.UpdatedAt
@@ -466,7 +482,7 @@
     private void CloseStaffDialog()
     {
         showStaffDialog = false;
-        staffForm = new Entities.Staff();
+        staffForm = new Models.Staff();
         emailError = string.Empty;
         StateHasChanged();
     }
@@ -478,17 +494,20 @@
         
         try
         {
-            // Check for email uniqueness
-            var isEmailUnique = await StaffService.IsEmailUniqueAsync(staffForm.Email, isEditMode ? staffForm.Id : null);
-            if (!isEmailUnique)
+            if (staffForm.Birthday.HasValue && staffForm.Birthday.Value.Date > DateTime.Today)
             {
-                emailError = "This email address is already in use by another staff member.";
+                emailError = "Birthday cannot be in the future.";
                 return;
             }
 
             if (isEditMode)
             {
-                await StaffService.UpdateStaffAsync(staffForm);
+                var response = await Http.PutAsJsonAsync($"api/staff/{staffForm.Id}", staffForm);
+                if (!response.IsSuccessStatusCode)
+                {
+                    emailError = await GetErrorMessage(response, "Error updating staff member.");
+                    return;
+                }
                 
                 // Update the local staff list
                 var staffIndex = staff.FindIndex(s => s.Id == staffForm.Id);
@@ -499,8 +518,17 @@
             }
             else
             {
-                var createdStaff = await StaffService.CreateStaffAsync(staffForm);
-                staff.Add(createdStaff);
+                var response = await Http.PostAsJsonAsync("api/staff", staffForm);
+                if (!response.IsSuccessStatusCode)
+                {
+                    emailError = await GetErrorMessage(response, "Error creating staff member.");
+                    return;
+                }
+                var createdStaff = await response.Content.ReadFromJsonAsync<Models.Staff>();
+                if (createdStaff != null)
+                {
+                    staff.Add(createdStaff);
+                }
             }
             
             ApplyFiltersAndSort();
@@ -517,7 +545,7 @@
         }
     }
 
-    private void ConfirmDeactivateStaff(Entities.Staff staffMember)
+    private void ConfirmDeactivateStaff(Models.Staff staffMember)
     {
         staffToDeactivate = staffMember;
         CloseDropdown();
@@ -537,7 +565,12 @@
         isDeactivating = true;
         try
         {
-            await StaffService.DeleteStaffAsync(staffToDeactivate.Id);
+            var response = await Http.DeleteAsync($"api/staff/{staffToDeactivate.Id}");
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Error deactivating staff: {response.ReasonPhrase}");
+                return;
+            }
             
             // Update the local staff list
             var staffMember = staff.FirstOrDefault(s => s.Id == staffToDeactivate.Id);
@@ -561,13 +594,18 @@
         }
     }
 
-    private async Task ReactivateStaff(Entities.Staff staffMember)
+    private async Task ReactivateStaff(Models.Staff staffMember)
     {
         CloseDropdown();
         try
         {
             staffMember.IsActive = true;
-            await StaffService.UpdateStaffAsync(staffMember);
+            var response = await Http.PutAsJsonAsync($"api/staff/{staffMember.Id}", staffMember);
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Error reactivating staff: {response.ReasonPhrase}");
+                return;
+            }
             
             // Update the local staff list
             var localStaff = staff.FirstOrDefault(s => s.Id == staffMember.Id);
@@ -596,5 +634,18 @@
             StaffRole.Volunteer => "info",
             _ => "secondary"
         };
+    }
+
+    private static async Task<string> GetErrorMessage(HttpResponseMessage response, string fallbackMessage)
+    {
+        var errorMessage = await response.Content.ReadAsStringAsync();
+        if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            return errorMessage;
+        }
+
+        return response.ReasonPhrase is { Length: > 0 }
+            ? $"{fallbackMessage} {response.ReasonPhrase}"
+            : fallbackMessage;
     }
 }
