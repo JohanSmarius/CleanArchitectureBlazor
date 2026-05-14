@@ -4,19 +4,16 @@ using CleanArchitectureBlazor.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace CleanArchitectureBlazor.Migrations
+namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250824091524_AddMedicalFirstAidModels")]
-    partial class AddMedicalFirstAidModels
+    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,13 +88,17 @@ namespace CleanArchitectureBlazor.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("CleanArchitectureBlazor.Models.Event", b =>
+            modelBuilder.Entity("Domain.Event", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("ContactPerson")
                         .HasMaxLength(100)
@@ -127,6 +128,9 @@ namespace CleanArchitectureBlazor.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("NotificationSent")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
@@ -143,7 +147,7 @@ namespace CleanArchitectureBlazor.Migrations
                     b.ToTable("Events");
                 });
 
-            modelBuilder.Entity("CleanArchitectureBlazor.Models.Shift", b =>
+            modelBuilder.Entity("Domain.Shift", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -190,13 +194,16 @@ namespace CleanArchitectureBlazor.Migrations
                     b.ToTable("Shifts");
                 });
 
-            modelBuilder.Entity("CleanArchitectureBlazor.Models.Staff", b =>
+            modelBuilder.Entity("Domain.Staff", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("Birthday")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("CertificationExpiry")
                         .HasColumnType("datetime2");
@@ -244,7 +251,7 @@ namespace CleanArchitectureBlazor.Migrations
                     b.ToTable("Staff");
                 });
 
-            modelBuilder.Entity("CleanArchitectureBlazor.Models.StaffAssignment", b =>
+            modelBuilder.Entity("Domain.StaffAssignment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -440,9 +447,9 @@ namespace CleanArchitectureBlazor.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("CleanArchitectureBlazor.Models.Shift", b =>
+            modelBuilder.Entity("Domain.Shift", b =>
                 {
-                    b.HasOne("CleanArchitectureBlazor.Models.Event", "Event")
+                    b.HasOne("Domain.Event", "Event")
                         .WithMany("Shifts")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -451,15 +458,15 @@ namespace CleanArchitectureBlazor.Migrations
                     b.Navigation("Event");
                 });
 
-            modelBuilder.Entity("CleanArchitectureBlazor.Models.StaffAssignment", b =>
+            modelBuilder.Entity("Domain.StaffAssignment", b =>
                 {
-                    b.HasOne("CleanArchitectureBlazor.Models.Shift", "Shift")
+                    b.HasOne("Domain.Shift", "Shift")
                         .WithMany("StaffAssignments")
                         .HasForeignKey("ShiftId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CleanArchitectureBlazor.Models.Staff", "Staff")
+                    b.HasOne("Domain.Staff", "Staff")
                         .WithMany("StaffAssignments")
                         .HasForeignKey("StaffId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -581,17 +588,17 @@ namespace CleanArchitectureBlazor.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CleanArchitectureBlazor.Models.Event", b =>
+            modelBuilder.Entity("Domain.Event", b =>
                 {
                     b.Navigation("Shifts");
                 });
 
-            modelBuilder.Entity("CleanArchitectureBlazor.Models.Shift", b =>
+            modelBuilder.Entity("Domain.Shift", b =>
                 {
                     b.Navigation("StaffAssignments");
                 });
 
-            modelBuilder.Entity("CleanArchitectureBlazor.Models.Staff", b =>
+            modelBuilder.Entity("Domain.Staff", b =>
                 {
                     b.Navigation("StaffAssignments");
                 });

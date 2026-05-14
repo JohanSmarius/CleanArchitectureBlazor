@@ -50,11 +50,6 @@ public class StaffController : ControllerBase
             return BadRequest("A staff member with this email address already exists.");
         }
 
-        if (IsBirthdayInvalid(staff.Birthday))
-        {
-            return BadRequest("Birthday cannot be in the future.");
-        }
-
         var existingStaff = await _staffRepository.GetStaffByIdAsync(id);
         if (existingStaff == null)
         {
@@ -75,11 +70,6 @@ public class StaffController : ControllerBase
             return BadRequest("A staff member with this email address already exists.");
         }
 
-        if (IsBirthdayInvalid(staff.Birthday))
-        {
-            return BadRequest("Birthday cannot be in the future.");
-        }
-
         var createdStaff = await _staffRepository.CreateStaffAsync(staff);
 
         return CreatedAtAction(nameof(GetStaffById), new { id = createdStaff.Id }, createdStaff);
@@ -98,10 +88,5 @@ public class StaffController : ControllerBase
         await _staffRepository.DeleteStaffAsync(id);
 
         return NoContent();
-    }
-
-    private static bool IsBirthdayInvalid(DateTime? birthday)
-    {
-        return birthday.HasValue && birthday.Value.Date > DateTime.UtcNow.Date;
     }
 }
