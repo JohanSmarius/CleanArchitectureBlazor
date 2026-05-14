@@ -273,7 +273,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Birthday</label>
-                                <input type="date" @bind="staffForm.Birthday" class="form-control" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                                <input type="date" @bind="staffForm.Birthday" class="form-control" max="@DateTime.UtcNow.Date.ToString("yyyy-MM-dd")" />
                                 <ValidationMessage For="() => staffForm.Birthday" class="text-danger" />
                             </div>
                         </div>
@@ -494,7 +494,7 @@
         
         try
         {
-            if (staffForm.Birthday.HasValue && staffForm.Birthday.Value.Date > DateTime.Today)
+            if (staffForm.Birthday.HasValue && staffForm.Birthday.Value.Date > DateTime.UtcNow.Date)
             {
                 emailError = "Birthday cannot be in the future.";
                 return;
