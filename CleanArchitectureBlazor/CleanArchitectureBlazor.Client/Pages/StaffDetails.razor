@@ -478,40 +478,12 @@ else
     </div>
 }
 
-<!-- Deactivate Confirmation Modal -->
-@if (showDeactivateConfirm)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Deactivation</h5>
-                    <button type="button" class="btn-close" @onclick="CancelDeactivate"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to deactivate <strong>@staffDetail?.FullName</strong>?</p>
-                    <p class="text-warning small">
-                        <i class="fas fa-exclamation-triangle me-1"></i>
-                        This will remove them from active duty but preserve all their records and assignment history.
-                        They can be reactivated later if needed.
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CancelDeactivate">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
 @code {
     [Parameter] public int StaffId { get; set; }
 
     private bool isLoading = true;
     private bool isSaving = false;
-    private bool isDeactivating = false;
     private bool showEditDialog = false;
-    private bool showDeactivateConfirm = false;
     private Domain.Staff? staffDetail;
     private Domain.Staff staffForm = new();
     private string emailError = string.Empty;
@@ -530,8 +502,7 @@ else
 
     private async Task LoadStaffDetails()
     {
-
-        staffDetail = await StaffRepository.GetStaffByIdAsync(StaffId); //Http.GetFromJsonAsync<Staff>($"api/staff/{StaffId}");
+        staffDetail = await StaffRepository.GetStaffByIdAsync(StaffId);
     }
 
     private int TotalAssignments => staffDetail?.StaffAssignments.Count ?? 0;
@@ -627,18 +598,6 @@ else
         }
     }
 
-    private void ConfirmDeactivateStaff()
-    {
-        showDeactivateConfirm = true;
-        StateHasChanged();
-    }
-
-    private void CancelDeactivate()
-    {
-        showDeactivateConfirm = false;
-        StateHasChanged();
-    }
-
     private string GetRoleColor(StaffRole role)
     {
         return role switch
@@ -666,16 +625,4 @@ else
         };
     }
 
-    private static async Task<string> GetErrorMessage(HttpResponseMessage response, string fallbackMessage)
-    {
-        var errorMessage = await response.Content.ReadAsStringAsync();
-        if (!string.IsNullOrWhiteSpace(errorMessage))
-        {
-            return errorMessage;
-        }
-
-        return response.ReasonPhrase is { Length: > 0 }
-            ? $"{fallbackMessage} {response.ReasonPhrase}"
-            : fallbackMessage;
-    }
 }

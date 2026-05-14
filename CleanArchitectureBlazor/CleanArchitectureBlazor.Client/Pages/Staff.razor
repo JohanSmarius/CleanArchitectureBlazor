@@ -115,7 +115,6 @@
                                                 <i class="fas fa-edit me-2"></i>Edit Details
                                             </button>
                                         </li>
-                                        
                                     </ul>
                                 }
                             </div>
@@ -301,38 +300,13 @@
     </div>
 }
 
-<!-- Deactivate Confirmation Modal -->
-@if (staffToDeactivate is not null)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Deactivation</h5>
-                    <button type="button" class="btn-close" @onclick="CancelDeactivateStaff"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to deactivate <strong>@staffToDeactivate.FullName</strong>?</p>
-                    <p class="text-warning small">
-                        <i class="fas fa-exclamation-triangle me-1"></i>
-                        This will remove them from active duty but preserve all their records and assignment history.
-                        They can be reactivated later if needed.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
 @code {
     private bool isLoading = true;
     private bool isSaving = false;
-    private bool isDeactivating = false;
     private bool showStaffDialog = false;
     private bool isEditMode = false;
     private List<Domain.Staff> staff = new();
     private List<Domain.Staff> filteredStaff = new();
-    private Domain.Staff? staffToDeactivate;
     private Domain.Staff staffForm = new();
     private int? openDropdownId = null;
     
@@ -372,8 +346,7 @@
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             filtered = filtered.Where(s => 
-                s.FirstName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                s.LastName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                s.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
                 s.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
                 (s.Phone?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
             );
@@ -477,8 +450,8 @@
 
             if (isEditMode)
             {
-                await StaffRepository.UpdateStaffAsync(staffForm);   //Http.PutAsJsonAsync($"api/staff/{staffForm.Id}", staffForm);
-               // Update the local staff list
+                await StaffRepository.UpdateStaffAsync(staffForm);
+                // Update the local staff list
                 var staffIndex = staff.FindIndex(s => s.Id == staffForm.Id);
                 if (staffIndex >= 0)
                 {
@@ -503,19 +476,6 @@
             isSaving = false;
             StateHasChanged();
         }
-    }
-
-    private void ConfirmDeactivateStaff(Domain.Staff staffMember)
-    {
-        staffToDeactivate = staffMember;
-        CloseDropdown();
-        StateHasChanged();
-    }
-
-    private void CancelDeactivateStaff()
-    {
-        staffToDeactivate = null;
-        StateHasChanged();
     }
 
     private string GetRoleColor(StaffRole role)
