@@ -1,6 +1,7 @@
 @page "/staff/details/{StaffId:int}"
-@using CleanArchitectureBlazor.Client.Models
-@inject HttpClient Http
+@using DomainService
+@using Domain
+@inject IExternalStaffRepository StaffRepository
 @inject NavigationManager Navigation
 @rendermode InteractiveWebAssembly
 
@@ -71,18 +72,6 @@ else
                         <button class="btn btn-primary" @onclick="OpenEditStaffDialog">
                             <i class="fas fa-edit me-2"></i>Edit Details
                         </button>
-                        @if (staffDetail.IsActive)
-                        {
-                            <button class="btn btn-outline-warning" @onclick="ConfirmDeactivateStaff">
-                                <i class="fas fa-user-times me-2"></i>Deactivate
-                            </button>
-                        }
-                        else
-                        {
-                            <button class="btn btn-outline-success" @onclick="ReactivateStaff">
-                                <i class="fas fa-user-check me-2"></i>Reactivate
-                            </button>
-                        }
                     </div>
                 </div>
             </div>
@@ -509,13 +498,6 @@ else
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CancelDeactivate">Cancel</button>
-                    <button type="button" class="btn btn-warning" @onclick="DeactivateStaff" disabled="@isDeactivating">
-                        @if (isDeactivating)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
-                        Deactivate Staff
-                    </button>
                 </div>
             </div>
         </div>
@@ -530,8 +512,8 @@ else
     private bool isDeactivating = false;
     private bool showEditDialog = false;
     private bool showDeactivateConfirm = false;
-    private Models.Staff? staffDetail;
-    private Models.Staff staffForm = new();
+    private Domain.Staff? staffDetail;
+    private Domain.Staff staffForm = new();
     private string emailError = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -548,7 +530,8 @@ else
 
     private async Task LoadStaffDetails()
     {
-        staffDetail = await Http.GetFromJsonAsync<Models.Staff>($"api/staff/{StaffId}");
+
+        staffDetail = await StaffRepository.GetStaffByIdAsync(StaffId); //Http.GetFromJsonAsync<Staff>($"api/staff/{StaffId}");
     }
 
     private int TotalAssignments => staffDetail?.StaffAssignments.Count ?? 0;
@@ -586,7 +569,7 @@ else
     {
         if (staffDetail == null) return;
 
-        staffForm = new Models.Staff
+        staffForm = new Domain.Staff
         {
             Id = staffDetail.Id,
             FirstName = staffDetail.FirstName,
@@ -609,7 +592,7 @@ else
     private void CloseEditDialog()
     {
         showEditDialog = false;
-        staffForm = new Models.Staff();
+        staffForm = new Domain.Staff();
         emailError = string.Empty;
         StateHasChanged();
     }
@@ -627,13 +610,8 @@ else
                 return;
             }
 
-            var response = await Http.PutAsJsonAsync($"api/staff/{staffForm.Id}", staffForm);
-            if (!response.IsSuccessStatusCode)
-            {
-                emailError = await GetErrorMessage(response, "Error updating staff member.");
-                return;
-            }
-            
+            await StaffRepository.UpdateStaffAsync(staffForm);
+
             // Reload staff details
             await LoadStaffDetails();
             CloseEditDialog();
@@ -659,58 +637,6 @@ else
     {
         showDeactivateConfirm = false;
         StateHasChanged();
-    }
-
-    private async Task DeactivateStaff()
-    {
-        if (staffDetail == null) return;
-
-        isDeactivating = true;
-        try
-        {
-            var response = await Http.DeleteAsync($"api/staff/{staffDetail.Id}");
-            if (!response.IsSuccessStatusCode)
-            {
-                Console.WriteLine($"Error deactivating staff: {response.ReasonPhrase}");
-                return;
-            }
-            
-            // Reload staff details
-            await LoadStaffDetails();
-            showDeactivateConfirm = false;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error deactivating staff: {ex.Message}");
-        }
-        finally
-        {
-            isDeactivating = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task ReactivateStaff()
-    {
-        if (staffDetail == null) return;
-
-        try
-        {
-            staffDetail.IsActive = true;
-            var response = await Http.PutAsJsonAsync($"api/staff/{staffDetail.Id}", staffDetail);
-            if (!response.IsSuccessStatusCode)
-            {
-                Console.WriteLine($"Error reactivating staff: {response.ReasonPhrase}");
-                return;
-            }
-            
-            // Reload staff details
-            await LoadStaffDetails();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error reactivating staff: {ex.Message}");
-        }
     }
 
     private string GetRoleColor(StaffRole role)

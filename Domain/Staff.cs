@@ -33,7 +33,27 @@ public class Staff
 
     public DateTime? CertificationExpiry { get; set; }
 
-    public DateTime? Birthday { get; set; }
+    public DateTime? Birthday 
+    { 
+			get => field;
+            set
+            {
+                if (value == null)
+                {
+                    field = null;
+                    return;
+                };
+                
+                var today = DateTime.Today;
+                var age = today.Year - value.Value.Year;
+                if (value.Value.Date > today.AddYears(-age)) age--;
+                if (age < 18)
+                {
+                    throw new ArgumentException("Staff must be at least 18 years old");
+                }
+                field = value;
+			}
+    }
 
     public bool IsActive { get; set; } = true;
 

@@ -3,6 +3,7 @@ using CleanArchitectureBlazor.Components;
 using CleanArchitectureBlazor.Components.Account;
 using CleanArchitectureBlazor.Configuration;
 using CleanArchitectureBlazor.Data;
+using ClientInfrastructure;
 using Domain;
 using DomainService;
 using Infrastructure;
@@ -54,6 +55,7 @@ builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
 builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IExternalStaffRepository, ExternalStaffRepository>();
 
 // Register HttpClient for server-side pre-rendering
 builder.Services.AddScoped(sp =>
