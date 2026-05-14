@@ -95,9 +95,10 @@ else
 }
 app.UseStatusCodePagesWithReExecute("/not-found");
 
-// Apply database migrations automatically
-using (var scope = app.Services.CreateScope())
+// Apply database migrations automatically (only in non-production environments)
+if (!app.Environment.IsProduction())
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     if (db.Database.IsSqlite())
         db.Database.EnsureCreated();
