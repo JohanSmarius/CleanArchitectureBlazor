@@ -1,10 +1,8 @@
 @page "/staff/details/{StaffId:int}"
-@using CleanArchitectureBlazor.Models
-@using CleanArchitectureBlazor.Services
-@inject IStaffService StaffService
-@inject IStaffAssignmentService StaffAssignmentService
+@using CleanArchitectureBlazor.Client.Models
+@inject CleanArchitectureBlazor.Client.Services.StaffService StaffService
 @inject NavigationManager Navigation
-@rendermode InteractiveServer
+@rendermode InteractiveWebAssembly
 
 <PageTitle>Staff Details - Medical First Aid Manager</PageTitle>
 
@@ -100,9 +98,18 @@ else
                         </h5>
                     </div>
                     <div class="card-body">
+
                         <div class="mb-3">
                             <label class="form-label text-muted small">FULL NAME</label>
                             <div class="fw-medium">@staffDetail.FullName</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">DATE OF BIRTH</label>
+                            <div class="fw-medium">
+                                <i class="fas fa-birthday-cake text-muted me-2"></i>
+                                @staffDetail.DateOfBirth.ToString("MMMM dd, yyyy")
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -386,15 +393,20 @@ else
                     <DataAnnotationsValidator />
                     <div class="modal-body">
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">First Name *</label>
                                 <InputText @bind-Value="staffForm.FirstName" class="form-control" placeholder="Enter first name" />
                                 <ValidationMessage For="() => staffForm.FirstName" class="text-danger" />
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">Last Name *</label>
                                 <InputText @bind-Value="staffForm.LastName" class="form-control" placeholder="Enter last name" />
                                 <ValidationMessage For="() => staffForm.LastName" class="text-danger" />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Date of Birth *</label>
+                                <input type="date" @bind="staffForm.DateOfBirth" class="form-control" />
+                                <ValidationMessage For="() => staffForm.DateOfBirth" class="text-danger" />
                             </div>
                         </div>
 
@@ -513,8 +525,8 @@ else
     private bool isDeactivating = false;
     private bool showEditDialog = false;
     private bool showDeactivateConfirm = false;
-    private CleanArchitectureBlazor.Models.Staff? staffDetail;
-    private CleanArchitectureBlazor.Models.Staff staffForm = new();
+    private Models.Staff? staffDetail;
+    private Models.Staff staffForm = new();
     private string emailError = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -569,7 +581,7 @@ else
     {
         if (staffDetail == null) return;
 
-        staffForm = new CleanArchitectureBlazor.Models.Staff
+        staffForm = new Models.Staff
         {
             Id = staffDetail.Id,
             FirstName = staffDetail.FirstName,
@@ -591,7 +603,7 @@ else
     private void CloseEditDialog()
     {
         showEditDialog = false;
-        staffForm = new CleanArchitectureBlazor.Models.Staff();
+        staffForm = new Models.Staff();
         emailError = string.Empty;
         StateHasChanged();
     }
@@ -600,19 +612,9 @@ else
     {
         isSaving = true;
         emailError = string.Empty;
-        
         try
         {
-            // Check for email uniqueness
-            var isEmailUnique = await StaffService.IsEmailUniqueAsync(staffForm.Email, staffForm.Id);
-            if (!isEmailUnique)
-            {
-                emailError = "This email address is already in use by another staff member.";
-                return;
-            }
-
-            await StaffService.UpdateStaffAsync(staffForm);
-            
+            await StaffService.UpdateStaffAsync(staffForm.Id, staffForm);
             // Reload staff details
             await LoadStaffDetails();
             CloseEditDialog();
@@ -643,12 +645,10 @@ else
     private async Task DeactivateStaff()
     {
         if (staffDetail == null) return;
-
         isDeactivating = true;
         try
         {
             await StaffService.DeleteStaffAsync(staffDetail.Id);
-            
             // Reload staff details
             await LoadStaffDetails();
             showDeactivateConfirm = false;
@@ -667,12 +667,10 @@ else
     private async Task ReactivateStaff()
     {
         if (staffDetail == null) return;
-
         try
         {
             staffDetail.IsActive = true;
-            await StaffService.UpdateStaffAsync(staffDetail);
-            
+            await StaffService.UpdateStaffAsync(staffDetail.Id, staffDetail);
             // Reload staff details
             await LoadStaffDetails();
         }

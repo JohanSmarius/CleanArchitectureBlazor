@@ -4,42 +4,45 @@
     <projectFile>CleanArchitectureBlazor/CleanArchitectureBlazor.Client/CleanArchitectureBlazor.Client.csproj</projectFile>
     <projectFile profileName="http">CleanArchitectureBlazor/CleanArchitectureBlazor/CleanArchitectureBlazor.csproj</projectFile>
     <projectFile profileName="https">CleanArchitectureBlazor/CleanArchitectureBlazor/CleanArchitectureBlazor.csproj</projectFile>
+    <projectFile>E2ETests/E2ETests.csproj</projectFile>
+    <projectFile>UITests/UITests.csproj</projectFile>
   </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
+  <component name="CMakeProjectFlavorService">
+    <option name="flavorId" value="CMakePlainProjectFlavor" />
+  </component>
+  <component name="CMakeSettings">
+    <configurations />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="5233a2b0-209e-4894-847a-a8807de2a544" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Application/Application.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/Application/Application.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Application/Class1.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/CleanArchitectureBlazor.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/CleanArchitectureBlazor.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/Dashboard.razor" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/Dashboard.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/EventDetails.razor" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/EventDetails.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/EventEdit.razor" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/EventEdit.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/Events.razor" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/Events.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/Shifts.razor" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/Shifts.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Entities/EventDomainService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Entities/EventService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Entities/IEmailService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Entities/IEventRepository.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Entities/IEventService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Entities/IShiftRepository.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Entities/IStaffAssignmentRepository.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Entities/IStaffRepository.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/EmailService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Infrastructure/EmailService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/EventRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Infrastructure/EventRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/Infrastructure.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/Infrastructure/Infrastructure.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/Services/EmailService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Infrastructure/Services/EmailService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/ShiftRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Infrastructure/ShiftRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/StaffAssignmentRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Infrastructure/StaffAssignmentRepository.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.CleanArchitectureBlazor/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.CleanArchitectureBlazor/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_/Volumes/PortableSSD/Projects/CleanBlazorArchitectureTalk" value="32k1fWvRRQYNvgBa1tgkA9CEJ6f" />
+    </persistenceIdMap>
+  </component>
+  <component name="DpaMonitoringSettings">
+    <option name="firstShow" value="false" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="2" />
+    <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
+  </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -51,9 +54,18 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/JohanSmarius/CleanArchitectureBlazor.git&quot;,
-    &quot;accountId&quot;: &quot;a3eaa0aa-b463-42cd-8ebc-fb99f948fb4e&quot;
+    &quot;accountId&quot;: &quot;9da32cb4-4c8a-4fee-b147-dbdaa6b18cd6&quot;
   }
 }</component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/f9d2f95d72fa884d8b6ddefc717c56da3657fbb2d5fb683656c3589eb6587/Debugger.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Controllers/StaffController.cs" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 6
 }</component>
@@ -62,32 +74,41 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "Clean",
-    "ignore.virus.scanning.warn.message": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.lookFeel",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;.NET Launch Settings Profile.CleanArchitectureBlazor: https.executor&quot;: &quot;Debug&quot;,
+    &quot;.NET Project.CleanArchitectureBlazor.Client.executor&quot;: &quot;Debug&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;add-interactive-client&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
-  <component name="RunManager" selected=".NET Project.CleanArchitectureBlazor.Client">
+}</component>
+  <component name="RunManager" selected=".NET Launch Settings Profile.CleanArchitectureBlazor: https">
     <configuration name="CleanArchitectureBlazor.Client" type="DotNetProject" factoryName=".NET Project">
       <option name="EXE_PATH" value="" />
       <option name="PROGRAM_PARAMETERS" value="" />
       <option name="WORKING_DIRECTORY" value="" />
       <option name="PASS_PARENT_ENVS" value="1" />
-      <option name="USE_EXTERNAL_CONSOLE" value="0" />
       <option name="ENV_FILE_PATHS" value="" />
       <option name="REDIRECT_INPUT_PATH" value="" />
-      <option name="PTY_MODE" value="Auto" />
       <option name="MIXED_MODE_DEBUG" value="0" />
       <option name="USE_MONO" value="0" />
       <option name="RUNTIME_ARGUMENTS" value="" />
@@ -102,11 +123,31 @@
         <option name="Build" />
       </method>
     </configuration>
+    <configuration name="E2ETests" type="DotNetProject" factoryName=".NET Project">
+      <option name="EXE_PATH" value="" />
+      <option name="PROGRAM_PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="ENV_FILE_PATHS" value="" />
+      <option name="REDIRECT_INPUT_PATH" value="" />
+      <option name="MIXED_MODE_DEBUG" value="0" />
+      <option name="USE_MONO" value="0" />
+      <option name="RUNTIME_ARGUMENTS" value="" />
+      <option name="AUTO_ATTACH_CHILDREN" value="0" />
+      <option name="PROJECT_PATH" value="$PROJECT_DIR$/E2ETests/E2ETests.csproj" />
+      <option name="PROJECT_EXE_PATH_TRACKING" value="1" />
+      <option name="PROJECT_ARGUMENTS_TRACKING" value="1" />
+      <option name="PROJECT_WORKING_DIRECTORY_TRACKING" value="1" />
+      <option name="PROJECT_KIND" value="DotNetCore" />
+      <option name="PROJECT_TFM" value="" />
+      <method v="2">
+        <option name="Build" />
+      </method>
+    </configuration>
     <configuration name="CleanArchitectureBlazor: http" type="LaunchSettings" factoryName=".NET Launch Settings Profile">
       <option name="LAUNCH_PROFILE_PROJECT_FILE_PATH" value="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/CleanArchitectureBlazor.csproj" />
       <option name="LAUNCH_PROFILE_TFM" value="net10.0" />
       <option name="LAUNCH_PROFILE_NAME" value="http" />
-      <option name="USE_EXTERNAL_CONSOLE" value="0" />
       <option name="USE_MONO" value="0" />
       <option name="RUNTIME_ARGUMENTS" value="" />
       <option name="GENERATE_APPLICATIONHOST_CONFIG" value="1" />
@@ -114,6 +155,7 @@
       <option name="SEND_DEBUG_REQUEST" value="1" />
       <option name="ADDITIONAL_IIS_EXPRESS_ARGUMENTS" value="" />
       <option name="AUTO_ATTACH_CHILDREN" value="0" />
+      <option name="MIXED_MODE_DEBUG" value="0" />
       <method v="2">
         <option name="Build" />
       </method>
@@ -122,7 +164,6 @@
       <option name="LAUNCH_PROFILE_PROJECT_FILE_PATH" value="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/CleanArchitectureBlazor.csproj" />
       <option name="LAUNCH_PROFILE_TFM" value="net10.0" />
       <option name="LAUNCH_PROFILE_NAME" value="https" />
-      <option name="USE_EXTERNAL_CONSOLE" value="0" />
       <option name="USE_MONO" value="0" />
       <option name="RUNTIME_ARGUMENTS" value="" />
       <option name="GENERATE_APPLICATIONHOST_CONFIG" value="1" />
@@ -130,6 +171,7 @@
       <option name="SEND_DEBUG_REQUEST" value="1" />
       <option name="ADDITIONAL_IIS_EXPRESS_ARGUMENTS" value="" />
       <option name="AUTO_ATTACH_CHILDREN" value="0" />
+      <option name="MIXED_MODE_DEBUG" value="0" />
       <method v="2">
         <option name="Build" />
       </method>
@@ -146,15 +188,50 @@
       <workItem from="1757950582262" duration="2275000" />
       <workItem from="1757961591039" duration="745000" />
       <workItem from="1758108940037" duration="1248000" />
+      <workItem from="1778438137826" duration="619000" />
+      <workItem from="1778656174717" duration="1785000" />
+      <workItem from="1778673090652" duration="1785000" />
     </task>
+    <task id="LOCAL-00001" summary="Refactor application structure to support API integration. Added `StaffController` for CRUD operations, updated client components to use HttpClient, and adjusted routing for WASM mode.">
+      <option name="closed" value="true" />
+      <created>1778673285080</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1778673285080</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Add `Staff` model and related entities to define staff structure and assignments.">
+      <option name="closed" value="true" />
+      <created>1778676520586</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1778676520586</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+    <MESSAGE value="Refactor application structure to support API integration. Added `StaffController` for CRUD operations, updated client components to use HttpClient, and adjusted routing for WASM mode." />
+    <MESSAGE value="Add `Staff` model and related entities to define staff structure and assignments." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add `Staff` model and related entities to define staff structure and assignments." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -173,5 +250,13 @@
         </breakpoint>
       </breakpoints>
     </breakpoint-manager>
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
   </component>
 </project>
