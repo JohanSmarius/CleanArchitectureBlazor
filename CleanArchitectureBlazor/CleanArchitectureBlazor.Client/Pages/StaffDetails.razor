@@ -155,6 +155,17 @@ else
                             </div>
                         }
 
+                        @if (staffDetail.Birthday.HasValue)
+                        {
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">BIRTHDAY</label>
+                                <div class="fw-medium">
+                                    <i class="fas fa-birthday-cake text-muted me-2"></i>
+                                    @staffDetail.Birthday.Value.ToString("MMMM dd, yyyy")
+                                </div>
+                            </div>
+                        }
+
                         <div class="mb-3">
                             <label class="form-label text-muted small">STATUS</label>
                             <div class="fw-medium">
@@ -436,6 +447,14 @@ else
                                 <ValidationMessage For="() => staffForm.CertificationExpiry" class="text-danger" />
                             </div>
                             <div class="col-md-6 mb-3">
+                                <label class="form-label">Birthday</label>
+                                <input type="date" @bind="staffForm.Birthday" class="form-control" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                                <ValidationMessage For="() => staffForm.Birthday" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Status</label>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" @bind="staffForm.IsActive" id="staffActiveSwitch">
@@ -577,6 +596,7 @@ else
             Role = staffDetail.Role,
             CertificationLevel = staffDetail.CertificationLevel,
             CertificationExpiry = staffDetail.CertificationExpiry,
+            Birthday = staffDetail.Birthday,
             IsActive = staffDetail.IsActive,
             CreatedAt = staffDetail.CreatedAt,
             UpdatedAt = staffDetail.UpdatedAt
@@ -601,6 +621,12 @@ else
         
         try
         {
+            if (staffForm.Birthday.HasValue && staffForm.Birthday.Value.Date > DateTime.Today)
+            {
+                emailError = "Birthday cannot be in the future.";
+                return;
+            }
+
             var response = await Http.PutAsJsonAsync($"api/staff/{staffForm.Id}", staffForm);
             if (!response.IsSuccessStatusCode)
             {

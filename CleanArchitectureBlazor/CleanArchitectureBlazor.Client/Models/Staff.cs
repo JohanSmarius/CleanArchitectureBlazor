@@ -33,6 +33,8 @@ public class Staff
 
     public DateTime? CertificationExpiry { get; set; }
 
+    public DateTime? Birthday { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
