@@ -1,4 +1,5 @@
 using CleanArchitectureBlazor.Client.Pages;
+using ClientStaffService = CleanArchitectureBlazor.Client.Services.StaffService;
 using CleanArchitectureBlazor.Components;
 using CleanArchitectureBlazor.Components.Account;
 using CleanArchitectureBlazor.Configuration;
@@ -48,6 +49,7 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 
 // Register our application services
 builder.Services.AddScoped<IStaffRepository, StaffRepository>();
+builder.Services.AddScoped<ClientStaffService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IShiftService, ShiftService>();

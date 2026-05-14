@@ -18,6 +18,9 @@ public class Staff
     public string LastName { get; set; } = string.Empty;
 
     [Required]
+    public DateTime DateOfBirth { get; set; }
+
+    [Required]
     [EmailAddress]
     [StringLength(100)]
     public string Email { get; set; } = string.Empty;

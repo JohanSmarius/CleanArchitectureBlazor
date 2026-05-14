@@ -18,10 +18,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5233a2b0-209e-4894-847a-a8807de2a544" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor.Client/Services/StaffService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Controllers/StaffController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Controllers/StaffController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Services/StaffService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Services/StaffService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.CleanArchitectureBlazor/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.CleanArchitectureBlazor/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,23 +58,14 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor.Client/Services/StaffService.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/EventEdit.razor" root0="FORCE_HIGHLIGHTING" root1="FORCE_HIGHLIGHTING" root2="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/Events.razor" root0="FORCE_HIGHLIGHTING" root1="FORCE_HIGHLIGHTING" root2="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/f9d2f95d72fa884d8b6ddefc717c56da3657fbb2d5fb683656c3589eb6587/Debugger.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Controllers/StaffController.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Data/ApplicationDbContext.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Data/ApplicationUser.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Models/Event.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Models/Shift.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Models/Staff.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Services/EmailService.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Services/EventService.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/wwwroot/lib/bootstrap/dist/js/bootstrap.bundle.min.js.map" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
   </component>
+  <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 6
 }</component>
@@ -202,12 +190,31 @@
       <workItem from="1758108940037" duration="1248000" />
       <workItem from="1778438137826" duration="619000" />
       <workItem from="1778656174717" duration="1785000" />
+      <workItem from="1778673090652" duration="1785000" />
     </task>
+    <task id="LOCAL-00001" summary="Refactor application structure to support API integration. Added `StaffController` for CRUD operations, updated client components to use HttpClient, and adjusted routing for WASM mode.">
+      <option name="closed" value="true" />
+      <created>1778673285080</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1778673285080</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Add `Staff` model and related entities to define staff structure and assignments.">
+      <option name="closed" value="true" />
+      <created>1778676520586</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1778676520586</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
@@ -222,6 +229,9 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+    <MESSAGE value="Refactor application structure to support API integration. Added `StaffController` for CRUD operations, updated client components to use HttpClient, and adjusted routing for WASM mode." />
+    <MESSAGE value="Add `Staff` model and related entities to define staff structure and assignments." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add `Staff` model and related entities to define staff structure and assignments." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
