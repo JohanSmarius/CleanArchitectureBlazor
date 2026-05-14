@@ -3,6 +3,7 @@ using CleanArchitectureBlazor.Components;
 using CleanArchitectureBlazor.Components.Account;
 using CleanArchitectureBlazor.Configuration;
 using CleanArchitectureBlazor.Data;
+using CleanArchitectureBlazor.Repositories;
 using CleanArchitectureBlazor.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -46,6 +47,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 // Register our application services
+builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IShiftService, ShiftService>();

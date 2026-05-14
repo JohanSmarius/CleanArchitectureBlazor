@@ -1,6 +1,5 @@
 using CleanArchitectureBlazor.Models;
-using CleanArchitectureBlazor.Data;
-using Microsoft.EntityFrameworkCore;
+using CleanArchitectureBlazor.Repositories;
 
 namespace CleanArchitectureBlazor.Services;
 
@@ -21,86 +20,50 @@ public interface IStaffService
 
 public class StaffService : IStaffService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IStaffRepository _staffRepository;
 
-    public StaffService(ApplicationDbContext context)
+    public StaffService(IStaffRepository staffRepository)
     {
-        _context = context;
+        _staffRepository = staffRepository;
     }
 
     public async Task<List<Staff>> GetAllStaffAsync()
     {
-        return await _context.Staff
-            .OrderBy(s => s.LastName)
-            .ThenBy(s => s.FirstName)
-            .ToListAsync();
+        return await _staffRepository.GetAllAsync();
     }
 
     public async Task<Staff?> GetStaffByIdAsync(int id)
     {
-        return await _context.Staff
-            .Include(s => s.StaffAssignments)
-            .ThenInclude(sa => sa.Shift)
-            .ThenInclude(s => s.Event)
-            .FirstOrDefaultAsync(s => s.Id == id);
+        return await _staffRepository.GetByIdAsync(id);
     }
 
     public async Task<Staff> CreateStaffAsync(Staff staff)
     {
-        staff.CreatedAt = DateTime.UtcNow;
-        _context.Staff.Add(staff);
-        await _context.SaveChangesAsync();
-        return staff;
+        return await _staffRepository.CreateAsync(staff);
     }
 
     public async Task<Staff> UpdateStaffAsync(Staff staff)
     {
-        staff.UpdatedAt = DateTime.UtcNow;
-        _context.Staff.Update(staff);
-        await _context.SaveChangesAsync();
-        return staff;
+        return await _staffRepository.UpdateAsync(staff);
     }
 
     public async Task DeleteStaffAsync(int id)
     {
-        var staff = await _context.Staff.FindAsync(id);
-        if (staff != null)
-        {
-            // Soft delete by setting IsActive to false
-            staff.IsActive = false;
-            staff.UpdatedAt = DateTime.UtcNow;
-            _context.Staff.Update(staff);
-            await _context.SaveChangesAsync();
-        }
+        await _staffRepository.DeleteAsync(id);
     }
 
     public async Task<List<Staff>> GetActiveStaffAsync()
     {
-        return await _context.Staff
-            .Where(s => s.IsActive)
-            .OrderBy(s => s.LastName)
-            .ThenBy(s => s.FirstName)
-            .ToListAsync();
+        return await _staffRepository.GetActiveAsync();
     }
 
     public async Task<List<Staff>> GetStaffByRoleAsync(StaffRole role)
     {
-        return await _context.Staff
-            .Where(s => s.Role == role && s.IsActive)
-            .OrderBy(s => s.LastName)
-            .ThenBy(s => s.FirstName)
-            .ToListAsync();
+        return await _staffRepository.GetByRoleAsync(role);
     }
 
     public async Task<bool> IsEmailUniqueAsync(string email, int? excludeId = null)
     {
-        var query = _context.Staff.Where(s => s.Email == email);
-        
-        if (excludeId.HasValue)
-        {
-            query = query.Where(s => s.Id != excludeId.Value);
-        }
-
-        return !await query.AnyAsync();
+        return await _staffRepository.IsEmailUniqueAsync(email, excludeId);
     }
 }

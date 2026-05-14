@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using CleanArchitectureBlazor.Data;
 using CleanArchitectureBlazor.Models;
+using CleanArchitectureBlazor.Services;
 
 namespace CleanArchitectureBlazor.Controllers;
 
@@ -9,29 +8,26 @@ namespace CleanArchitectureBlazor.Controllers;
 [ApiController]
 public class StaffController : ControllerBase
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IStaffService _staffService;
 
-    public StaffController(ApplicationDbContext context)
+    public StaffController(IStaffService staffService)
     {
-        _context = context;
+        _staffService = staffService;
     }
 
     // GET: api/Staff
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Staff>>> GetStaff()
     {
-        return await _context.Staff
-            .Include(s => s.StaffAssignments)
-            .ToListAsync();
+        var staff = await _staffService.GetAllStaffAsync();
+        return Ok(staff);
     }
 
     // GET: api/Staff/5
     [HttpGet("{id}")]
     public async Task<ActionResult<Staff>> GetStaff(int id)
     {
-        var staff = await _context.Staff
-            .Include(s => s.StaffAssignments)
-            .FirstOrDefaultAsync(s => s.Id == id);
+        var staff = await _staffService.GetStaffByIdAsync(id);
 
         if (staff == null)
         {
@@ -50,24 +46,7 @@ public class StaffController : ControllerBase
             return BadRequest();
         }
 
-        staff.UpdatedAt = DateTime.UtcNow;
-        _context.Entry(staff).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!StaffExists(id))
-            {
-                return NotFound();
-            }
-            else
-            {
-                throw;
-            }
-        }
+        await _staffService.UpdateStaffAsync(staff);
 
         return NoContent();
     }
@@ -76,32 +55,24 @@ public class StaffController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Staff>> PostStaff(Staff staff)
     {
-        staff.CreatedAt = DateTime.UtcNow;
-        _context.Staff.Add(staff);
-        await _context.SaveChangesAsync();
+        var createdStaff = await _staffService.CreateStaffAsync(staff);
 
-        return CreatedAtAction("GetStaff", new { id = staff.Id }, staff);
+        return CreatedAtAction(nameof(GetStaff), new { id = createdStaff.Id }, createdStaff);
     }
 
     // DELETE: api/Staff/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteStaff(int id)
     {
-        var staff = await _context.Staff.FindAsync(id);
+        var staff = await _staffService.GetStaffByIdAsync(id);
         if (staff == null)
         {
             return NotFound();
         }
 
-        _context.Staff.Remove(staff);
-        await _context.SaveChangesAsync();
+        await _staffService.DeleteStaffAsync(id);
 
         return NoContent();
-    }
-
-    private bool StaffExists(int id)
-    {
-        return _context.Staff.Any(e => e.Id == id);
     }
 }
 

@@ -18,12 +18,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5233a2b0-209e-4894-847a-a8807de2a544" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Controllers/StaffController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.CleanArchitectureBlazor/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.CleanArchitectureBlazor/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor.Client/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor.Client/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/Staff.razor" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor.Client/Pages/Staff.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/StaffDetails.razor" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor.Client/Pages/StaffDetails.razor" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor.Client/Services/StaffService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Controllers/StaffController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Controllers/StaffController.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Program.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Services/StaffService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Services/StaffService.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,8 +61,18 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/f9d2f95d72fa884d8b6ddefc717c56da3657fbb2d5fb683656c3589eb6587/Debugger.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor.Client/Services/StaffService.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/EventEdit.razor" root0="FORCE_HIGHLIGHTING" root1="FORCE_HIGHLIGHTING" root2="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Components/Pages/Events.razor" root0="FORCE_HIGHLIGHTING" root1="FORCE_HIGHLIGHTING" root2="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Controllers/StaffController.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Data/ApplicationDbContext.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Data/ApplicationUser.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Models/Event.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Models/Shift.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Models/Staff.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Services/EmailService.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/Services/EventService.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/CleanArchitectureBlazor/CleanArchitectureBlazor/wwwroot/lib/bootstrap/dist/js/bootstrap.bundle.min.js.map" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
     <commands />
