@@ -2,6 +2,7 @@
 @using Application
 @using Domain
 @inject IExternalStaffRepository StaffRepository
+@inject IAddStaffUseCase AddStaffUseCase
 @inject NavigationManager Navigation
 @rendermode InteractiveWebAssembly
 
@@ -380,7 +381,7 @@ else
                     </h5>
                     <button type="button" class="btn-close" @onclick="CloseEditDialog"></button>
                 </div>
-                <EditForm Model="staffForm" OnValidSubmit="UpdateStaff">
+                <EditForm Model="staffForm" OnValidSubmit="SaveStaff">
                     <DataAnnotationsValidator />
                     <div class="modal-body">
                         <div class="row">
@@ -568,7 +569,7 @@ else
         StateHasChanged();
     }
 
-    private async Task UpdateStaff()
+    private async Task SaveStaff()
     {
         isSaving = true;
         emailError = string.Empty;
@@ -581,15 +582,24 @@ else
                 return;
             }
 
-            await StaffRepository.UpdateStaffAsync(staffForm);
+            if (staffForm.Id > 0)
+            {
+                await StaffRepository.UpdateStaffAsync(staffForm);
+                await LoadStaffDetails();
+            }
+            else
+            {
+                var createdStaff = await AddStaffUseCase.ExecuteAsync(staffForm);
+                StaffId = createdStaff.Id;
+                staffDetail = createdStaff;
+                Navigation.NavigateTo($"/staff/details/{createdStaff.Id}");
+            }
 
-            // Reload staff details
-            await LoadStaffDetails();
             CloseEditDialog();
         }
         catch (Exception ex)
         {
-            emailError = $"Error updating staff member: {ex.Message}";
+            emailError = $"Error saving staff member: {ex.Message}";
         }
         finally
         {

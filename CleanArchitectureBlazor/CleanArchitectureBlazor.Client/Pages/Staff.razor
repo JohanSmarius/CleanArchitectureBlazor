@@ -2,6 +2,7 @@
 @using Domain
 @using Application
 @inject IExternalStaffRepository StaffRepository
+@inject IAddStaffUseCase AddStaffUseCase
 @inject NavigationManager Navigation
 @rendermode InteractiveWebAssembly
 
@@ -460,7 +461,7 @@
             }
             else
             {
-                var created = await StaffRepository.AddStaffAsync(staffForm);
+                var created = await AddStaffUseCase.ExecuteAsync(staffForm);
                 staff.Add(created);
             }
             

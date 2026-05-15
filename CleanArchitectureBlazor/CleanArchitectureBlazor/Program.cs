@@ -56,6 +56,7 @@ builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IExternalStaffRepository, ExternalStaffRepository>();
+builder.Services.AddScoped<IAddStaffUseCase, AddStaffUseCase>();
 
 // Register HttpClient for server-side pre-rendering
 builder.Services.AddScoped(sp =>
