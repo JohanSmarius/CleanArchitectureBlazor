@@ -47,7 +47,7 @@ public class Staff
 
             if (value.Value.Date > DateTime.UtcNow.Date)
             {
-                throw new ArgumentException("Birthday cannot be in the future.");
+                throw new ArgumentException("Birthday cannot be set to a future date.");
             }
 
             var today = DateTime.UtcNow.Date;
@@ -59,7 +59,7 @@ public class Staff
 
             if (age < 18)
             {
-                throw new ArgumentException("Staff must be at least 18 years old.");
+                throw new ArgumentException($"Staff must be at least 18 years old. Provided birthday indicates age {age}.");
             }
 
             _birthday = value.Value.Date;

@@ -469,11 +469,11 @@ else
                             </div>
                         </div>
 
-                        @if (!string.IsNullOrEmpty(emailError))
+                        @if (!string.IsNullOrEmpty(formError))
                         {
                             <div class="alert alert-danger">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                @emailError
+                                @formError
                             </div>
                         }
                     </div>
@@ -536,7 +536,7 @@ else
     private bool showDeactivateConfirm = false;
     private Entities.Staff? staffDetail;
     private Entities.Staff staffForm = new();
-    private string emailError = string.Empty;
+    private string formError = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -605,7 +605,7 @@ else
             CreatedAt = staffDetail.CreatedAt,
             UpdatedAt = staffDetail.UpdatedAt
         };
-        emailError = string.Empty;
+        formError = string.Empty;
         showEditDialog = true;
         StateHasChanged();
     }
@@ -614,23 +614,17 @@ else
     {
         showEditDialog = false;
         staffForm = new Entities.Staff();
-        emailError = string.Empty;
+        formError = string.Empty;
         StateHasChanged();
     }
 
     private async Task UpdateStaff()
     {
         isSaving = true;
-        emailError = string.Empty;
+        formError = string.Empty;
         
         try
         {
-            if (staffForm.Birthday.HasValue && staffForm.Birthday.Value.Date > DateTime.UtcNow.Date)
-            {
-                emailError = "Birthday cannot be in the future.";
-                return;
-            }
-
             // Check for email uniqueness
             var isEmailUnique = await IsStaffEmailUniqueQueryHandler.Handle(new IsStaffEmailUniqueQuery
             {
@@ -639,7 +633,7 @@ else
             });
             if (!isEmailUnique)
             {
-                emailError = "This email address is already in use by another staff member.";
+                formError = "This email address is already in use by another staff member.";
                 return;
             }
 
@@ -663,7 +657,7 @@ else
         }
         catch (Exception ex)
         {
-            emailError = $"Error updating staff member: {ex.Message}";
+            formError = $"Error updating staff member: {ex.Message}";
         }
         finally
         {

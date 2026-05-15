@@ -296,11 +296,11 @@
                             }
                         </div>
 
-                        @if (!string.IsNullOrEmpty(emailError))
+                        @if (!string.IsNullOrEmpty(formError))
                         {
                             <div class="alert alert-danger">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                @emailError
+                                @formError
                             </div>
                         }
                     </div>
@@ -368,7 +368,7 @@
     private string searchTerm = string.Empty;
     private string roleFilter = string.Empty;
     private string statusFilter = string.Empty;
-    private string emailError = string.Empty;
+    private string formError = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -453,7 +453,7 @@
         CloseDropdown();
         isEditMode = false;
         staffForm = new Entities.Staff { IsActive = true };
-        emailError = string.Empty;
+        formError = string.Empty;
         showStaffDialog = true;
         StateHasChanged();
     }
@@ -477,7 +477,7 @@
             CreatedAt = staffMember.CreatedAt,
             UpdatedAt = staffMember.UpdatedAt
         };
-        emailError = string.Empty;
+        formError = string.Empty;
         showStaffDialog = true;
         StateHasChanged();
     }
@@ -486,23 +486,17 @@
     {
         showStaffDialog = false;
         staffForm = new Entities.Staff();
-        emailError = string.Empty;
+        formError = string.Empty;
         StateHasChanged();
     }
 
     private async Task SaveStaff()
     {
         isSaving = true;
-        emailError = string.Empty;
+        formError = string.Empty;
         
         try
         {
-            if (staffForm.Birthday.HasValue && staffForm.Birthday.Value.Date > DateTime.UtcNow.Date)
-            {
-                emailError = "Birthday cannot be in the future.";
-                return;
-            }
-
             // Check for email uniqueness
             var isEmailUnique = await IsStaffEmailUniqueQueryHandler.Handle(new IsStaffEmailUniqueQuery
             {
@@ -511,13 +505,13 @@
             });
             if (!isEmailUnique)
             {
-                emailError = "This email address is already in use by another staff member.";
+                formError = "This email address is already in use by another staff member.";
                 return;
             }
 
             if (isEditMode)
             {
-                var updatedStaff = await UpdateStaffCommandHandler.Handle(new UpdateStaffCommand
+                await UpdateStaffCommandHandler.Handle(new UpdateStaffCommand
                 {
                     Id = staffForm.Id,
                     FirstName = staffForm.FirstName,
@@ -535,7 +529,17 @@
                 var staffIndex = staff.FindIndex(s => s.Id == staffForm.Id);
                 if (staffIndex >= 0)
                 {
-                    staff[staffIndex] = updatedStaff;
+                    var existingStaff = staff[staffIndex];
+                    existingStaff.FirstName = staffForm.FirstName;
+                    existingStaff.LastName = staffForm.LastName;
+                    existingStaff.Email = staffForm.Email;
+                    existingStaff.Phone = staffForm.Phone;
+                    existingStaff.Role = staffForm.Role;
+                    existingStaff.CertificationLevel = staffForm.CertificationLevel;
+                    existingStaff.CertificationExpiry = staffForm.CertificationExpiry;
+                    existingStaff.Birthday = staffForm.Birthday;
+                    existingStaff.IsActive = staffForm.IsActive;
+                    existingStaff.UpdatedAt = DateTime.UtcNow;
                 }
             }
             else
@@ -560,7 +564,7 @@
         }
         catch (Exception ex)
         {
-            emailError = $"Error saving staff member: {ex.Message}";
+            formError = $"Error saving staff member: {ex.Message}";
         }
         finally
         {
