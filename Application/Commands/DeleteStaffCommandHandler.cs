@@ -25,6 +25,6 @@ public class DeleteStaffCommandHandler : IDeleteStaffCommandHandler
     public async Task Handle(DeleteStaffCommand command)
     {
         await _staffRepository.DeleteStaffAsync(command.Id);
-        _logger.LogInformation("Staff member {StaffId} deactivated successfully.", command.Id);
+        _logger.LogInformation("Staff member deactivated successfully.");
     }
 }

@@ -2,13 +2,13 @@
 @using Application
 @using Application.Commands
 @using Application.Queries
+@using Entities
 @inject IGetAllStaffQueryHandler GetAllStaffQueryHandler
 @inject IIsStaffEmailUniqueQueryHandler IsStaffEmailUniqueQueryHandler
 @inject ICreateStaffCommandHandler CreateStaffCommandHandler
 @inject IUpdateStaffCommandHandler UpdateStaffCommandHandler
 @inject IDeleteStaffCommandHandler DeleteStaffCommandHandler
 @inject NavigationManager Navigation
-@rendermode InteractiveServer
 
 <PageTitle>Staff - Medical First Aid Manager</PageTitle>
 
