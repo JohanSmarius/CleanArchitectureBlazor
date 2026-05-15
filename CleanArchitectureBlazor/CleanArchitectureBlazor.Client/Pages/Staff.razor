@@ -1,14 +1,8 @@
 @page "/staff"
 @rendermode InteractiveWebAssembly
 @using Application
-@using Application.Commands
-@using Application.Queries
 @using Entities
-@inject IGetAllStaffQueryHandler GetAllStaffQueryHandler
-@inject IIsStaffEmailUniqueQueryHandler IsStaffEmailUniqueQueryHandler
-@inject ICreateStaffCommandHandler CreateStaffCommandHandler
-@inject IUpdateStaffCommandHandler UpdateStaffCommandHandler
-@inject IDeleteStaffCommandHandler DeleteStaffCommandHandler
+@inject IExternalStaffRepository ExternalStaffRepository
 @inject NavigationManager Navigation
 
 <PageTitle>Staff - Medical First Aid Manager</PageTitle>
@@ -380,7 +374,7 @@
 
     private async Task LoadStaff()
     {
-        staff = await GetAllStaffQueryHandler.Handle(new GetAllStaffQuery());
+        staff = await ExternalStaffRepository.GetAllStaffAsync();
     }
 
     private void OnSearchChanged(ChangeEventArgs e)
@@ -498,33 +492,9 @@
         
         try
         {
-            // Check for email uniqueness
-            var isEmailUnique = await IsStaffEmailUniqueQueryHandler.Handle(new IsStaffEmailUniqueQuery
-            {
-                Email = staffForm.Email,
-                ExcludeId = isEditMode ? staffForm.Id : null
-            });
-            if (!isEmailUnique)
-            {
-                formError = "This email address is already in use by another staff member.";
-                return;
-            }
-
             if (isEditMode)
             {
-                await UpdateStaffCommandHandler.Handle(new UpdateStaffCommand
-                {
-                    Id = staffForm.Id,
-                    FirstName = staffForm.FirstName,
-                    LastName = staffForm.LastName,
-                    Email = staffForm.Email,
-                    Phone = staffForm.Phone,
-                    Role = staffForm.Role,
-                    CertificationLevel = staffForm.CertificationLevel,
-                    CertificationExpiry = staffForm.CertificationExpiry,
-                    Birthday = staffForm.Birthday,
-                    IsActive = staffForm.IsActive
-                });
+                await ExternalStaffRepository.UpdateStaffAsync(staffForm);
                 
                 // Update the local staff list
                 var staffIndex = staff.FindIndex(s => s.Id == staffForm.Id);
@@ -545,18 +515,7 @@
             }
             else
             {
-                var createdStaff = await CreateStaffCommandHandler.Handle(new CreateStaffCommand
-                {
-                    FirstName = staffForm.FirstName,
-                    LastName = staffForm.LastName,
-                    Email = staffForm.Email,
-                    Phone = staffForm.Phone,
-                    Role = staffForm.Role,
-                    CertificationLevel = staffForm.CertificationLevel,
-                    CertificationExpiry = staffForm.CertificationExpiry,
-                    Birthday = staffForm.Birthday,
-                    IsActive = staffForm.IsActive
-                });
+                var createdStaff = await ExternalStaffRepository.AddStaffAsync(staffForm);
                 staff.Add(createdStaff);
             }
             
@@ -594,7 +553,8 @@
         isDeactivating = true;
         try
         {
-            await DeleteStaffCommandHandler.Handle(new DeleteStaffCommand { Id = staffToDeactivate.Id });
+            staffToDeactivate.IsActive = false;
+            await ExternalStaffRepository.UpdateStaffAsync(staffToDeactivate);
             
             // Update the local staff list
             var staffMember = staff.FirstOrDefault(s => s.Id == staffToDeactivate.Id);
@@ -624,19 +584,7 @@
         try
         {
             staffMember.IsActive = true;
-            await UpdateStaffCommandHandler.Handle(new UpdateStaffCommand
-            {
-                Id = staffMember.Id,
-                FirstName = staffMember.FirstName,
-                LastName = staffMember.LastName,
-                Email = staffMember.Email,
-                Phone = staffMember.Phone,
-                Role = staffMember.Role,
-                CertificationLevel = staffMember.CertificationLevel,
-                CertificationExpiry = staffMember.CertificationExpiry,
-                Birthday = staffMember.Birthday,
-                IsActive = staffMember.IsActive
-            });
+            await ExternalStaffRepository.UpdateStaffAsync(staffMember);
             
             // Update the local staff list
             var localStaff = staff.FirstOrDefault(s => s.Id == staffMember.Id);

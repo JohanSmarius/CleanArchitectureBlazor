@@ -1,13 +1,8 @@
 @page "/staff/details/{StaffId:int}"
 @rendermode InteractiveWebAssembly
 @using Application
-@using Application.Commands
-@using Application.Queries
 @using Entities
-@inject IGetStaffByIdQueryHandler GetStaffByIdQueryHandler
-@inject IIsStaffEmailUniqueQueryHandler IsStaffEmailUniqueQueryHandler
-@inject IUpdateStaffCommandHandler UpdateStaffCommandHandler
-@inject IDeleteStaffCommandHandler DeleteStaffCommandHandler
+@inject IExternalStaffRepository ExternalStaffRepository
 @inject NavigationManager Navigation
 
 <PageTitle>Staff Details - Medical First Aid Manager</PageTitle>
@@ -551,7 +546,7 @@ else
 
     private async Task LoadStaffDetails()
     {
-        staffDetail = await GetStaffByIdQueryHandler.Handle(new GetStaffByIdQuery { Id = StaffId });
+        staffDetail = await ExternalStaffRepository.GetStaffByIdAsync(StaffId);
     }
 
     private int TotalAssignments => staffDetail?.StaffAssignments.Count ?? 0;
@@ -624,31 +619,7 @@ else
         
         try
         {
-            // Check for email uniqueness
-            var isEmailUnique = await IsStaffEmailUniqueQueryHandler.Handle(new IsStaffEmailUniqueQuery
-            {
-                Email = staffForm.Email,
-                ExcludeId = staffForm.Id
-            });
-            if (!isEmailUnique)
-            {
-                formError = "This email address is already in use by another staff member.";
-                return;
-            }
-
-            await UpdateStaffCommandHandler.Handle(new UpdateStaffCommand
-            {
-                Id = staffForm.Id,
-                FirstName = staffForm.FirstName,
-                LastName = staffForm.LastName,
-                Email = staffForm.Email,
-                Phone = staffForm.Phone,
-                Role = staffForm.Role,
-                CertificationLevel = staffForm.CertificationLevel,
-                CertificationExpiry = staffForm.CertificationExpiry,
-                Birthday = staffForm.Birthday,
-                IsActive = staffForm.IsActive
-            });
+            await ExternalStaffRepository.UpdateStaffAsync(staffForm);
             
             // Reload staff details
             await LoadStaffDetails();
@@ -684,7 +655,8 @@ else
         isDeactivating = true;
         try
         {
-            await DeleteStaffCommandHandler.Handle(new DeleteStaffCommand { Id = staffDetail.Id });
+            staffDetail.IsActive = false;
+            await ExternalStaffRepository.UpdateStaffAsync(staffDetail);
             
             // Reload staff details
             await LoadStaffDetails();
@@ -708,19 +680,7 @@ else
         try
         {
             staffDetail.IsActive = true;
-            await UpdateStaffCommandHandler.Handle(new UpdateStaffCommand
-            {
-                Id = staffDetail.Id,
-                FirstName = staffDetail.FirstName,
-                LastName = staffDetail.LastName,
-                Email = staffDetail.Email,
-                Phone = staffDetail.Phone,
-                Role = staffDetail.Role,
-                CertificationLevel = staffDetail.CertificationLevel,
-                CertificationExpiry = staffDetail.CertificationExpiry,
-                Birthday = staffDetail.Birthday,
-                IsActive = staffDetail.IsActive
-            });
+            await ExternalStaffRepository.UpdateStaffAsync(staffDetail);
             
             // Reload staff details
             await LoadStaffDetails();
