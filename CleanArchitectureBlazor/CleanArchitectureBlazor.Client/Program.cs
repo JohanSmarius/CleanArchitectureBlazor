@@ -1,7 +1,7 @@
 using Application;
 using Application.Commands;
 using Application.Queries;
-using CleanArchitectureBlazor.Client.Services;
+using Infrastructure;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);

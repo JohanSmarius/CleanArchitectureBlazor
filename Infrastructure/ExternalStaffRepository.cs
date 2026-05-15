@@ -2,7 +2,7 @@ using System.Net.Http.Json;
 using Application;
 using Entities;
 
-namespace CleanArchitectureBlazor.Client.Services;
+namespace Infrastructure;
 
 /// <summary>
 /// HTTP-based staff repository used by WebAssembly components.
