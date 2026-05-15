@@ -1,6 +1,12 @@
 @page "/staff"
 @using Application
-@inject IStaffRepository StaffService
+@using Application.Commands
+@using Application.Queries
+@inject IGetAllStaffQueryHandler GetAllStaffQueryHandler
+@inject IIsStaffEmailUniqueQueryHandler IsStaffEmailUniqueQueryHandler
+@inject ICreateStaffCommandHandler CreateStaffCommandHandler
+@inject IUpdateStaffCommandHandler UpdateStaffCommandHandler
+@inject IDeleteStaffCommandHandler DeleteStaffCommandHandler
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 
@@ -161,6 +167,13 @@
                                     }
                                 </div>
                             }
+                            @if (staffMember.Birthday.HasValue)
+                            {
+                                <div class="mb-2">
+                                    <i class="fas fa-birthday-cake text-muted me-2"></i>
+                                    <span>@staffMember.Birthday.Value.ToString("MMM dd, yyyy")</span>
+                                </div>
+                            }
                             <div class="small text-muted">
                                 <i class="fas fa-calendar-plus me-1"></i>
                                 Joined: @staffMember.CreatedAt.ToString("MMM dd, yyyy")
@@ -259,6 +272,11 @@
                         </div>
 
                         <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Birthday</label>
+                                <input type="date" @bind="staffForm.Birthday" class="form-control" max="@DateTime.UtcNow.Date.ToString("yyyy-MM-dd")" />
+                                <ValidationMessage For="() => staffForm.Birthday" class="text-danger" />
+                            </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Certification Expiry</label>
                                 <input type="date" @bind="staffForm.CertificationExpiry" class="form-control" />
@@ -361,7 +379,7 @@
 
     private async Task LoadStaff()
     {
-        staff = await StaffService.GetAllStaffAsync();
+        staff = await GetAllStaffQueryHandler.Handle(new GetAllStaffQuery());
     }
 
     private void OnSearchChanged(ChangeEventArgs e)
@@ -454,6 +472,7 @@
             Role = staffMember.Role,
             CertificationLevel = staffMember.CertificationLevel,
             CertificationExpiry = staffMember.CertificationExpiry,
+            Birthday = staffMember.Birthday,
             IsActive = staffMember.IsActive,
             CreatedAt = staffMember.CreatedAt,
             UpdatedAt = staffMember.UpdatedAt
@@ -478,8 +497,18 @@
         
         try
         {
+            if (staffForm.Birthday.HasValue && staffForm.Birthday.Value.Date > DateTime.UtcNow.Date)
+            {
+                emailError = "Birthday cannot be in the future.";
+                return;
+            }
+
             // Check for email uniqueness
-            var isEmailUnique = await StaffService.IsEmailUniqueAsync(staffForm.Email, isEditMode ? staffForm.Id : null);
+            var isEmailUnique = await IsStaffEmailUniqueQueryHandler.Handle(new IsStaffEmailUniqueQuery
+            {
+                Email = staffForm.Email,
+                ExcludeId = isEditMode ? staffForm.Id : null
+            });
             if (!isEmailUnique)
             {
                 emailError = "This email address is already in use by another staff member.";
@@ -488,18 +517,41 @@
 
             if (isEditMode)
             {
-                await StaffService.UpdateStaffAsync(staffForm);
+                var updatedStaff = await UpdateStaffCommandHandler.Handle(new UpdateStaffCommand
+                {
+                    Id = staffForm.Id,
+                    FirstName = staffForm.FirstName,
+                    LastName = staffForm.LastName,
+                    Email = staffForm.Email,
+                    Phone = staffForm.Phone,
+                    Role = staffForm.Role,
+                    CertificationLevel = staffForm.CertificationLevel,
+                    CertificationExpiry = staffForm.CertificationExpiry,
+                    Birthday = staffForm.Birthday,
+                    IsActive = staffForm.IsActive
+                });
                 
                 // Update the local staff list
                 var staffIndex = staff.FindIndex(s => s.Id == staffForm.Id);
                 if (staffIndex >= 0)
                 {
-                    staff[staffIndex] = staffForm;
+                    staff[staffIndex] = updatedStaff;
                 }
             }
             else
             {
-                var createdStaff = await StaffService.CreateStaffAsync(staffForm);
+                var createdStaff = await CreateStaffCommandHandler.Handle(new CreateStaffCommand
+                {
+                    FirstName = staffForm.FirstName,
+                    LastName = staffForm.LastName,
+                    Email = staffForm.Email,
+                    Phone = staffForm.Phone,
+                    Role = staffForm.Role,
+                    CertificationLevel = staffForm.CertificationLevel,
+                    CertificationExpiry = staffForm.CertificationExpiry,
+                    Birthday = staffForm.Birthday,
+                    IsActive = staffForm.IsActive
+                });
                 staff.Add(createdStaff);
             }
             
@@ -537,7 +589,7 @@
         isDeactivating = true;
         try
         {
-            await StaffService.DeleteStaffAsync(staffToDeactivate.Id);
+            await DeleteStaffCommandHandler.Handle(new DeleteStaffCommand { Id = staffToDeactivate.Id });
             
             // Update the local staff list
             var staffMember = staff.FirstOrDefault(s => s.Id == staffToDeactivate.Id);
@@ -567,7 +619,19 @@
         try
         {
             staffMember.IsActive = true;
-            await StaffService.UpdateStaffAsync(staffMember);
+            await UpdateStaffCommandHandler.Handle(new UpdateStaffCommand
+            {
+                Id = staffMember.Id,
+                FirstName = staffMember.FirstName,
+                LastName = staffMember.LastName,
+                Email = staffMember.Email,
+                Phone = staffMember.Phone,
+                Role = staffMember.Role,
+                CertificationLevel = staffMember.CertificationLevel,
+                CertificationExpiry = staffMember.CertificationExpiry,
+                Birthday = staffMember.Birthday,
+                IsActive = staffMember.IsActive
+            });
             
             // Update the local staff list
             var localStaff = staff.FirstOrDefault(s => s.Id == staffMember.Id);

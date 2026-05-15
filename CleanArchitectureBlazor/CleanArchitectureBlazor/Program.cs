@@ -68,12 +68,18 @@ builder.Services.AddScoped<IUpdateEventUseCase, UpdateEventUseCase>();
 builder.Services.AddScoped<ICreateEventCommandHandler, CreateEventCommandHandler>();
 builder.Services.AddScoped<IUpdateEventCommandHandler, UpdateEventCommandHandler>();
 builder.Services.AddScoped<IDeleteEventCommandHandler, DeleteEventCommandHandler>();
+builder.Services.AddScoped<ICreateStaffCommandHandler, CreateStaffCommandHandler>();
+builder.Services.AddScoped<IUpdateStaffCommandHandler, UpdateStaffCommandHandler>();
+builder.Services.AddScoped<IDeleteStaffCommandHandler, DeleteStaffCommandHandler>();
 
 // CQRS query handlers
 builder.Services.AddScoped<IGetAllEventsQueryHandler, GetAllEventsQueryHandler>();
 builder.Services.AddScoped<IGetEventByIdQueryHandler, GetEventByIdQueryHandler>();
 builder.Services.AddScoped<IGetUpcomingEventsQueryHandler, GetUpcomingEventsQueryHandler>();
 builder.Services.AddScoped<IGetEventsByDateRangeQueryHandler, GetEventsByDateRangeQueryHandler>();
+builder.Services.AddScoped<IGetAllStaffQueryHandler, GetAllStaffQueryHandler>();
+builder.Services.AddScoped<IGetStaffByIdQueryHandler, GetStaffByIdQueryHandler>();
+builder.Services.AddScoped<IIsStaffEmailUniqueQueryHandler, IsStaffEmailUniqueQueryHandler>();
 
 builder.Services.Configure<EmailOptions>(
     builder.Configuration.GetSection(EmailOptions.SectionName)

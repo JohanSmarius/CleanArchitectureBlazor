@@ -1,7 +1,12 @@
 @page "/staff/details/{StaffId:int}"
 @using Application
+@using Application.Commands
+@using Application.Queries
 @using Entities
-@inject IStaffRepository StaffService
+@inject IGetStaffByIdQueryHandler GetStaffByIdQueryHandler
+@inject IIsStaffEmailUniqueQueryHandler IsStaffEmailUniqueQueryHandler
+@inject IUpdateStaffCommandHandler UpdateStaffCommandHandler
+@inject IDeleteStaffCommandHandler DeleteStaffCommandHandler
 @inject IStaffAssignmentRepository StaffAssignmentService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
@@ -120,6 +125,17 @@ else
                                 <div class="fw-medium">
                                     <i class="fas fa-phone text-muted me-2"></i>
                                     <a href="tel:@staffDetail.Phone" class="text-decoration-none">@staffDetail.Phone</a>
+                                </div>
+                            </div>
+                        }
+                        
+                        @if (staffDetail.Birthday.HasValue)
+                        {
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">BIRTHDAY</label>
+                                <div class="fw-medium">
+                                    <i class="fas fa-birthday-cake text-muted me-2"></i>
+                                    @staffDetail.Birthday.Value.ToString("MMMM dd, yyyy")
                                 </div>
                             </div>
                         }
@@ -433,6 +449,11 @@ else
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
+                                <label class="form-label">Birthday</label>
+                                <input type="date" @bind="staffForm.Birthday" class="form-control" max="@DateTime.UtcNow.Date.ToString("yyyy-MM-dd")" />
+                                <ValidationMessage For="() => staffForm.Birthday" class="text-danger" />
+                            </div>
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Certification Expiry</label>
                                 <input type="date" @bind="staffForm.CertificationExpiry" class="form-control" />
                                 <ValidationMessage For="() => staffForm.CertificationExpiry" class="text-danger" />
@@ -531,7 +552,7 @@ else
 
     private async Task LoadStaffDetails()
     {
-        staffDetail = await StaffService.GetStaffByIdAsync(StaffId);
+        staffDetail = await GetStaffByIdQueryHandler.Handle(new GetStaffByIdQuery { Id = StaffId });
     }
 
     private int TotalAssignments => staffDetail?.StaffAssignments.Count ?? 0;
@@ -579,6 +600,7 @@ else
             Role = staffDetail.Role,
             CertificationLevel = staffDetail.CertificationLevel,
             CertificationExpiry = staffDetail.CertificationExpiry,
+            Birthday = staffDetail.Birthday,
             IsActive = staffDetail.IsActive,
             CreatedAt = staffDetail.CreatedAt,
             UpdatedAt = staffDetail.UpdatedAt
@@ -603,15 +625,37 @@ else
         
         try
         {
+            if (staffForm.Birthday.HasValue && staffForm.Birthday.Value.Date > DateTime.UtcNow.Date)
+            {
+                emailError = "Birthday cannot be in the future.";
+                return;
+            }
+
             // Check for email uniqueness
-            var isEmailUnique = await StaffService.IsEmailUniqueAsync(staffForm.Email, staffForm.Id);
+            var isEmailUnique = await IsStaffEmailUniqueQueryHandler.Handle(new IsStaffEmailUniqueQuery
+            {
+                Email = staffForm.Email,
+                ExcludeId = staffForm.Id
+            });
             if (!isEmailUnique)
             {
                 emailError = "This email address is already in use by another staff member.";
                 return;
             }
 
-            await StaffService.UpdateStaffAsync(staffForm);
+            await UpdateStaffCommandHandler.Handle(new UpdateStaffCommand
+            {
+                Id = staffForm.Id,
+                FirstName = staffForm.FirstName,
+                LastName = staffForm.LastName,
+                Email = staffForm.Email,
+                Phone = staffForm.Phone,
+                Role = staffForm.Role,
+                CertificationLevel = staffForm.CertificationLevel,
+                CertificationExpiry = staffForm.CertificationExpiry,
+                Birthday = staffForm.Birthday,
+                IsActive = staffForm.IsActive
+            });
             
             // Reload staff details
             await LoadStaffDetails();
@@ -647,7 +691,7 @@ else
         isDeactivating = true;
         try
         {
-            await StaffService.DeleteStaffAsync(staffDetail.Id);
+            await DeleteStaffCommandHandler.Handle(new DeleteStaffCommand { Id = staffDetail.Id });
             
             // Reload staff details
             await LoadStaffDetails();
@@ -671,7 +715,19 @@ else
         try
         {
             staffDetail.IsActive = true;
-            await StaffService.UpdateStaffAsync(staffDetail);
+            await UpdateStaffCommandHandler.Handle(new UpdateStaffCommand
+            {
+                Id = staffDetail.Id,
+                FirstName = staffDetail.FirstName,
+                LastName = staffDetail.LastName,
+                Email = staffDetail.Email,
+                Phone = staffDetail.Phone,
+                Role = staffDetail.Role,
+                CertificationLevel = staffDetail.CertificationLevel,
+                CertificationExpiry = staffDetail.CertificationExpiry,
+                Birthday = staffDetail.Birthday,
+                IsActive = staffDetail.IsActive
+            });
             
             // Reload staff details
             await LoadStaffDetails();
