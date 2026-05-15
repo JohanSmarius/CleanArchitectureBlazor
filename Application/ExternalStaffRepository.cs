@@ -10,7 +10,7 @@ public class ExternalStaffRepository(HttpClient httpClient) : IExternalStaffRepo
 {
     public async Task<List<Staff>> GetAllStaffAsync()
     {
-        return await httpClient.GetFromJsonAsync<List<Staff>>("api/staff") ?? new List<Staff>();
+        return await httpClient.GetFromJsonAsync<List<Staff>>("api/staff") ?? new();
     }
 
     public Task<Staff?> GetStaffByIdAsync(int id)
@@ -23,7 +23,7 @@ public class ExternalStaffRepository(HttpClient httpClient) : IExternalStaffRepo
         var response = await httpClient.PostAsJsonAsync("api/staff", staff);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<Staff>()
-            ?? throw new InvalidOperationException("Staff API returned an empty response.");
+            ?? throw new InvalidOperationException("Invalid response received from staff API.");
     }
 
     public async Task UpdateStaffAsync(Staff staff)
