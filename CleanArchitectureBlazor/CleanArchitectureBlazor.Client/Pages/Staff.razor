@@ -1,6 +1,7 @@
 @page "/staff"
 @rendermode InteractiveWebAssembly
-@using Application
+@using ClientApplication
+@using ClientApplication.DataAdapters
 @using Entities
 @inject IExternalStaffRepository ExternalStaffRepository
 @inject NavigationManager Navigation
@@ -115,24 +116,7 @@
                                                 <i class="fas fa-edit me-2"></i>Edit Details
                                             </button>
                                         </li>
-                                        @if (staffMember.IsActive)
-                                        {
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <button class="dropdown-item text-danger" @onclick="@((e) => ConfirmDeactivateStaff(staffMember))" @onclick:stopPropagation="true">
-                                                    <i class="fas fa-user-times me-2"></i>Deactivate
-                                                </button>
-                                            </li>
-                                        }
-                                        else
-                                        {
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <button class="dropdown-item text-success" @onclick="@((e) => ReactivateStaff(staffMember))" @onclick:stopPropagation="true">
-                                                    <i class="fas fa-user-check me-2"></i>Reactivate
-                                                </button>
-                                            </li>
-                                        }
+                                        
                                     </ul>
                                 }
                             </div>
@@ -322,8 +306,6 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Confirm Deactivation</h5>
-                    <button type="button" class="btn-close" @onclick="CancelDeactivateStaff"></button>
                 </div>
                 <div class="modal-body">
                     <p>Are you sure you want to deactivate <strong>@staffToDeactivate.FullName</strong>?</p>
@@ -334,14 +316,6 @@
                     </p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CancelDeactivateStaff">Cancel</button>
-                    <button type="button" class="btn btn-warning" @onclick="DeactivateStaff" disabled="@isDeactivating">
-                        @if (isDeactivating)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
-                        Deactivate Staff
-                    </button>
                 </div>
             </div>
         </div>
@@ -354,10 +328,10 @@
     private bool isDeactivating = false;
     private bool showStaffDialog = false;
     private bool isEditMode = false;
-    private List<Entities.Staff> staff = new();
-    private List<Entities.Staff> filteredStaff = new();
-    private Entities.Staff? staffToDeactivate;
-    private Entities.Staff staffForm = new();
+    private List<StaffDTO> staff = new();
+    private List<StaffDTO> filteredStaff = new();
+    private StaffDTO? staffToDeactivate;
+    private StaffDTO staffForm = new();
     private int? openDropdownId = null;
     
     private string searchTerm = string.Empty;
@@ -403,7 +377,7 @@
         }
 
         // Apply role filter
-        if (!string.IsNullOrEmpty(roleFilter) && Enum.TryParse<StaffRole>(roleFilter, out var role))
+        if (!string.IsNullOrEmpty(roleFilter) && Enum.TryParse<StaffRoleDTO>(roleFilter, out var role))
         {
             filtered = filtered.Where(s => s.Role == role);
         }
@@ -447,17 +421,17 @@
     {
         CloseDropdown();
         isEditMode = false;
-        staffForm = new Entities.Staff { IsActive = true };
+        staffForm = new StaffDTO { IsActive = true };
         formError = string.Empty;
         showStaffDialog = true;
         StateHasChanged();
     }
 
-    private void OpenEditStaffDialog(Entities.Staff staffMember)
+    private void OpenEditStaffDialog(StaffDTO staffMember)
     {
         CloseDropdown();
         isEditMode = true;
-        staffForm = new Entities.Staff
+        staffForm = new StaffDTO
         {
             Id = staffMember.Id,
             FirstName = staffMember.FirstName,
@@ -480,7 +454,7 @@
     private void CloseStaffDialog()
     {
         showStaffDialog = false;
-        staffForm = new Entities.Staff();
+        staffForm = new StaffDTO();
         formError = string.Empty;
         StateHasChanged();
     }
@@ -533,84 +507,23 @@
         }
     }
 
-    private void ConfirmDeactivateStaff(Entities.Staff staffMember)
+    private void ConfirmDeactivateStaff(StaffDTO staffMember)
     {
         staffToDeactivate = staffMember;
         CloseDropdown();
         StateHasChanged();
     }
 
-    private void CancelDeactivateStaff()
-    {
-        staffToDeactivate = null;
-        StateHasChanged();
-    }
-
-    private async Task DeactivateStaff()
-    {
-        if (staffToDeactivate is null) return;
-
-        isDeactivating = true;
-        try
-        {
-            staffToDeactivate.IsActive = false;
-            await ExternalStaffRepository.UpdateStaffAsync(staffToDeactivate);
-            
-            // Update the local staff list
-            var staffMember = staff.FirstOrDefault(s => s.Id == staffToDeactivate.Id);
-            if (staffMember != null)
-            {
-                staffMember.IsActive = false;
-                staffMember.UpdatedAt = DateTime.UtcNow;
-            }
-            
-            ApplyFiltersAndSort();
-            staffToDeactivate = null;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error deactivating staff: {ex.Message}");
-        }
-        finally
-        {
-            isDeactivating = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task ReactivateStaff(Entities.Staff staffMember)
-    {
-        CloseDropdown();
-        try
-        {
-            staffMember.IsActive = true;
-            await ExternalStaffRepository.UpdateStaffAsync(staffMember);
-            
-            // Update the local staff list
-            var localStaff = staff.FirstOrDefault(s => s.Id == staffMember.Id);
-            if (localStaff != null)
-            {
-                localStaff.IsActive = true;
-                localStaff.UpdatedAt = DateTime.UtcNow;
-            }
-            
-            ApplyFiltersAndSort();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error reactivating staff: {ex.Message}");
-        }
-    }
-
-    private string GetRoleColor(StaffRole role)
+    
+    private string GetRoleColor(StaffRoleDTO role)
     {
         return role switch
         {
-            StaffRole.Doctor => "danger",
-            StaffRole.Paramedic => "warning",
-            StaffRole.TeamLeader => "primary",
-            StaffRole.FirstAider => "success",
-            StaffRole.Volunteer => "info",
+            StaffRoleDTO.Doctor => "danger",
+            StaffRoleDTO.Paramedic => "warning",
+            StaffRoleDTO.TeamLeader => "primary",
+            StaffRoleDTO.FirstAider => "success",
+            StaffRoleDTO.Volunteer => "info",
             _ => "secondary"
         };
     }

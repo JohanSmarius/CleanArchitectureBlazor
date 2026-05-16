@@ -25,22 +25,26 @@ public class UpdateStaffCommandHandler : IUpdateStaffCommandHandler
     /// <inheritdoc />
     public async Task<Staff> Handle(UpdateStaffCommand command)
     {
-        var entity = new Staff
-        {
-            Id = command.Id,
-            FirstName = command.FirstName,
-            LastName = command.LastName,
-            Email = command.Email,
-            Phone = command.Phone,
-            Role = command.Role,
-            CertificationLevel = command.CertificationLevel,
-            CertificationExpiry = command.CertificationExpiry,
-            Birthday = command.Birthday,
-            IsActive = command.IsActive
-        };
+        var storedStaff = await _staffRepository.GetStaffByIdAsync(command.Id);
 
-        var updatedStaff = await _staffRepository.UpdateStaffAsync(entity);
-        _logger.LogInformation("Staff member {StaffId} updated successfully.", updatedStaff.Id);
-        return updatedStaff;
+        if (storedStaff is null)
+        {
+            throw new ApplicationException($"Staff member with id {command.Id} not found.");
+        }
+
+        storedStaff.FirstName = command.FirstName;
+        storedStaff.LastName = command.LastName;
+        storedStaff.Email = command.Email;
+        storedStaff.Phone = command.Phone;
+        storedStaff.Role = (StaffRole)command.Role;
+        storedStaff.CertificationLevel = command.CertificationLevel;
+        storedStaff.CertificationExpiry = command.CertificationExpiry;
+        storedStaff.Birthday = command.Birthday;
+        storedStaff.IsActive = command.IsActive;
+        
+
+        var updatedStaff = await _staffRepository.UpdateStaffAsync(storedStaff);
+        _logger.LogInformation("Staff member {StaffId} updated successfully.", storedStaff.Id);
+        return storedStaff;
     }
 }

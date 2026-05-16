@@ -232,16 +232,11 @@
     {
         try
         {
-            var loadTasks = new List<Task>
-            {
-                LoadUpcomingEventsAsync(),
-                LoadActiveShiftsAsync(),
-                LoadTodaysShiftsAsync(),
-                LoadActiveStaffAsync(),
-                LoadStaffOnDutyAsync()
-            };
-
-            await Task.WhenAll(loadTasks);
+            await LoadUpcomingEventsAsync();
+            await LoadActiveShiftsAsync();
+            await LoadTodaysShiftsAsync();
+            await LoadActiveStaffAsync();
+            await LoadStaffOnDutyAsync();
         }
         catch (Exception ex)
         {

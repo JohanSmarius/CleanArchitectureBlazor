@@ -10,12 +10,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Application\Application.csproj" />
+    <ProjectReference Include="..\..\ClientApplication\ClientApplication.csproj" />
     <ProjectReference Include="..\..\Entities\Entities.csproj" />
+    <ProjectReference Include="..\..\InfraClient\InfraClient.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Infrastructure.csproj" />
     <ProjectReference Include="..\CleanArchitectureBlazor.Client\CleanArchitectureBlazor.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.0-preview.7.25380.108" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.0-preview.7.25380.108" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0-preview.7.25380.108" />
+    <PackageReference Include="Microsoft.Build.Tasks.Core" Version="18.6.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0-preview.7.25380.108" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0-preview.7.25380.108" />
   </ItemGroup>

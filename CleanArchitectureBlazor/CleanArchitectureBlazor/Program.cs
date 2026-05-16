@@ -6,11 +6,17 @@ using CleanArchitectureBlazor.Data;
 using Application;
 using Application.Commands;
 using Application.Queries;
+using appQuery = Application.Queries;
+using clientQuery = ClientApplication.Queries;
+using ClientApplication;
 using Entities;
+using InfraClient;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure;
+using Microsoft.AspNetCore.Components;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +58,16 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
+// Register HttpClient for server-side pre-rendering
+builder.Services.AddScoped(sp =>
+{
+    var navigationManager = sp.GetRequiredService<NavigationManager>();
+    return new HttpClient
+    {
+        BaseAddress = new Uri(navigationManager.BaseUri)
+    };
+});
+
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 // Register our application services
@@ -64,6 +80,9 @@ builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
 builder.Services.AddScoped<ICreateEventUseCase, CreateEventUseCase>();
 builder.Services.AddScoped<IUpdateEventUseCase, UpdateEventUseCase>();
+builder.Services.AddScoped<IExternalStaffRepository, ExternalStaffRepository>();
+builder.Services.AddScoped<IAddStaffUseCase, AddStaffUseCase>();
+
 
 // CQRS command handlers
 builder.Services.AddScoped<ICreateEventCommandHandler, CreateEventCommandHandler>();
@@ -73,14 +92,20 @@ builder.Services.AddScoped<ICreateStaffCommandHandler, CreateStaffCommandHandler
 builder.Services.AddScoped<IUpdateStaffCommandHandler, UpdateStaffCommandHandler>();
 builder.Services.AddScoped<IDeleteStaffCommandHandler, DeleteStaffCommandHandler>();
 
+// CQRS Client command handlers
+builder.Services.AddScoped<IUpdateStaffCommandHandler, UpdateStaffCommandHandler>();
+
 // CQRS query handlers
 builder.Services.AddScoped<IGetAllEventsQueryHandler, GetAllEventsQueryHandler>();
 builder.Services.AddScoped<IGetEventByIdQueryHandler, GetEventByIdQueryHandler>();
 builder.Services.AddScoped<IGetUpcomingEventsQueryHandler, GetUpcomingEventsQueryHandler>();
 builder.Services.AddScoped<IGetEventsByDateRangeQueryHandler, GetEventsByDateRangeQueryHandler>();
 builder.Services.AddScoped<IGetAllStaffQueryHandler, GetAllStaffQueryHandler>();
-builder.Services.AddScoped<IGetStaffByIdQueryHandler, GetStaffByIdQueryHandler>();
+builder.Services.AddScoped<appQuery.IGetStaffByIdQueryHandler, appQuery.GetStaffByIdQueryHandler>();
 builder.Services.AddScoped<IIsStaffEmailUniqueQueryHandler, IsStaffEmailUniqueQueryHandler>();
+
+// CQRS Client query handlers
+builder.Services.AddScoped<clientQuery.IGetStaffByIdQueryHandler, clientQuery.GetStaffByIdQueryHandler>();
 
 builder.Services.Configure<EmailOptions>(
     builder.Configuration.GetSection(EmailOptions.SectionName)
