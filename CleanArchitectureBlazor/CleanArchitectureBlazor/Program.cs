@@ -4,6 +4,7 @@ using CleanArchitectureBlazor.Components.Account;
 using CleanArchitectureBlazor.Configuration;
 using CleanArchitectureBlazor.Data;
 using Application;
+using ClientInfrastructure;
 using Entities;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -61,6 +62,8 @@ builder.Services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<ICreateEventUseCase, CreateEventUseCase>();
 builder.Services.AddScoped<IUpdateEventUseCase, UpdateEventUseCase>();
+builder.Services.AddScoped<IExternalStaffRepository, ExternalStaffRepository>();
+builder.Services.AddScoped<IAddStaffUseCase, AddStaffUseCase>();
 
 // Register HttpClient for server-side pre-rendering
 builder.Services.AddScoped(sp =>

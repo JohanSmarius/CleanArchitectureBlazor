@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Test-Path \"C:\\\\src\\\\CleanArchitectureTalk\\\\CleanArchitectureBlazor-Clean\\\\Application\\\\DataAdapters\\\\StaffMapper.cs\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\src\\\\CleanArchitectureTalk\\\\CleanArchitectureBlazor-Clean\\\\Entities\" -File)"
+    ]
+  }
+}

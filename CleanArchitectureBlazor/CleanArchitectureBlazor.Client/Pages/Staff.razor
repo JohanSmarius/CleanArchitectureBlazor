@@ -1,6 +1,10 @@
 @page "/staff"
+@using System.Net
+@using Application
+@using Application.DataAdapters
 @using CleanArchitectureBlazor.Client.Models
-@inject HttpClient Http
+@inject IAddStaffUseCase AddStaffUseCase
+@inject IExternalStaffRepository StaffRepository
 @inject NavigationManager Navigation
 @rendermode InteractiveWebAssembly
 
@@ -114,24 +118,7 @@
                                                 <i class="fas fa-edit me-2"></i>Edit Details
                                             </button>
                                         </li>
-                                        @if (staffMember.IsActive)
-                                        {
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <button class="dropdown-item text-danger" @onclick="@((e) => ConfirmDeactivateStaff(staffMember))" @onclick:stopPropagation="true">
-                                                    <i class="fas fa-user-times me-2"></i>Deactivate
-                                                </button>
-                                            </li>
-                                        }
-                                        else
-                                        {
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <button class="dropdown-item text-success" @onclick="@((e) => ReactivateStaff(staffMember))" @onclick:stopPropagation="true">
-                                                    <i class="fas fa-user-check me-2"></i>Reactivate
-                                                </button>
-                                            </li>
-                                        }
+                                        
                                     </ul>
                                 }
                             </div>
@@ -317,49 +304,16 @@
     </div>
 }
 
-<!-- Deactivate Confirmation Modal -->
-@if (staffToDeactivate is not null)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Deactivation</h5>
-                    <button type="button" class="btn-close" @onclick="CancelDeactivateStaff"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to deactivate <strong>@staffToDeactivate.FullName</strong>?</p>
-                    <p class="text-warning small">
-                        <i class="fas fa-exclamation-triangle me-1"></i>
-                        This will remove them from active duty but preserve all their records and assignment history.
-                        They can be reactivated later if needed.
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CancelDeactivateStaff">Cancel</button>
-                    <button type="button" class="btn btn-warning" @onclick="DeactivateStaff" disabled="@isDeactivating">
-                        @if (isDeactivating)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
-                        Deactivate Staff
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
 @code {
     private bool isLoading = true;
     private bool isSaving = false;
     private bool isDeactivating = false;
     private bool showStaffDialog = false;
     private bool isEditMode = false;
-    private List<Models.Staff> staff = new();
-    private List<Models.Staff> filteredStaff = new();
-    private Models.Staff? staffToDeactivate;
-    private Models.Staff staffForm = new();
+    private List<StaffDTO> staff = new();
+    private List<StaffDTO> filteredStaff = new();
+    private StaffDTO? staffToDeactivate;
+    private StaffDTO staffForm = new();
     private int? openDropdownId = null;
     
     private string searchTerm = string.Empty;
@@ -376,7 +330,8 @@
 
     private async Task LoadStaff()
     {
-        staff = await Http.GetFromJsonAsync<List<Models.Staff>>("api/staff") ?? new();
+        staff = await StaffRepository.GetAllStaffAsync();
+        //staff = await WebRequestMethods.Http.GetFromJsonAsync<List<Models.Staff>>("api/staff") ?? new();
     }
 
     private void OnSearchChanged(ChangeEventArgs e)
@@ -405,7 +360,7 @@
         }
 
         // Apply role filter
-        if (!string.IsNullOrEmpty(roleFilter) && Enum.TryParse<StaffRole>(roleFilter, out var role))
+        if (!string.IsNullOrEmpty(roleFilter) && Enum.TryParse<StaffRoleDTO>(roleFilter, out var role))
         {
             filtered = filtered.Where(s => s.Role == role);
         }
@@ -449,24 +404,24 @@
     {
         CloseDropdown();
         isEditMode = false;
-        staffForm = new Models.Staff { IsActive = true };
+        staffForm = new StaffDTO { IsActive = true };
         emailError = string.Empty;
         showStaffDialog = true;
         StateHasChanged();
     }
 
-    private void OpenEditStaffDialog(Models.Staff staffMember)
+    private void OpenEditStaffDialog(StaffDTO staffMember)
     {
         CloseDropdown();
         isEditMode = true;
-        staffForm = new Models.Staff
+        staffForm = new StaffDTO
         {
             Id = staffMember.Id,
             FirstName = staffMember.FirstName,
             LastName = staffMember.LastName,
             Email = staffMember.Email,
             Phone = staffMember.Phone,
-            Role = staffMember.Role,
+            Role = (StaffRoleDTO)staffMember.Role,
             CertificationLevel = staffMember.CertificationLevel,
             CertificationExpiry = staffMember.CertificationExpiry,
             Birthday = staffMember.Birthday,
@@ -482,7 +437,7 @@
     private void CloseStaffDialog()
     {
         showStaffDialog = false;
-        staffForm = new Models.Staff();
+        staffForm = new StaffDTO();
         emailError = string.Empty;
         StateHasChanged();
     }
@@ -502,12 +457,14 @@
 
             if (isEditMode)
             {
-                var response = await Http.PutAsJsonAsync($"api/staff/{staffForm.Id}", staffForm);
-                if (!response.IsSuccessStatusCode)
-                {
-                    emailError = await GetErrorMessage(response, "Error updating staff member.");
-                    return;
-                }
+                await StaffRepository.UpdateStaffAsync(staffForm);   
+             
+                // var response = await WebRequestMethods.Http.PutAsJsonAsync($"api/staff/{staffForm.Id}", staffForm);
+                // if (!response.IsSuccessStatusCode)
+                // {
+                //     emailError = await GetErrorMessage(response, "Error updating staff member.");
+                //     return;
+                // }
                 
                 // Update the local staff list
                 var staffIndex = staff.FindIndex(s => s.Id == staffForm.Id);
@@ -518,16 +475,18 @@
             }
             else
             {
-                var response = await Http.PostAsJsonAsync("api/staff", staffForm);
-                if (!response.IsSuccessStatusCode)
+                var newStaff = await StaffRepository.AddStaffAsync(staffForm);
+                
+                // var response = await WebRequestMethods.Http.PostAsJsonAsync("api/staff", staffForm);
+                // if (!response.IsSuccessStatusCode)
+                // {
+                //     emailError = await GetErrorMessage(response, "Error creating staff member.");
+                //     return;
+                // }
+                // var createdStaff = await response.Content.ReadFromJsonAsync<Models.Staff>();
+                if (newStaff is not null)
                 {
-                    emailError = await GetErrorMessage(response, "Error creating staff member.");
-                    return;
-                }
-                var createdStaff = await response.Content.ReadFromJsonAsync<Models.Staff>();
-                if (createdStaff != null)
-                {
-                    staff.Add(createdStaff);
+                    staff.Add(newStaff);
                 }
             }
             
@@ -545,107 +504,17 @@
         }
     }
 
-    private void ConfirmDeactivateStaff(Models.Staff staffMember)
-    {
-        staffToDeactivate = staffMember;
-        CloseDropdown();
-        StateHasChanged();
-    }
 
-    private void CancelDeactivateStaff()
-    {
-        staffToDeactivate = null;
-        StateHasChanged();
-    }
-
-    private async Task DeactivateStaff()
-    {
-        if (staffToDeactivate is null) return;
-
-        isDeactivating = true;
-        try
-        {
-            var response = await Http.DeleteAsync($"api/staff/{staffToDeactivate.Id}");
-            if (!response.IsSuccessStatusCode)
-            {
-                Console.WriteLine($"Error deactivating staff: {response.ReasonPhrase}");
-                return;
-            }
-            
-            // Update the local staff list
-            var staffMember = staff.FirstOrDefault(s => s.Id == staffToDeactivate.Id);
-            if (staffMember != null)
-            {
-                staffMember.IsActive = false;
-                staffMember.UpdatedAt = DateTime.UtcNow;
-            }
-            
-            ApplyFiltersAndSort();
-            staffToDeactivate = null;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error deactivating staff: {ex.Message}");
-        }
-        finally
-        {
-            isDeactivating = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task ReactivateStaff(Models.Staff staffMember)
-    {
-        CloseDropdown();
-        try
-        {
-            staffMember.IsActive = true;
-            var response = await Http.PutAsJsonAsync($"api/staff/{staffMember.Id}", staffMember);
-            if (!response.IsSuccessStatusCode)
-            {
-                Console.WriteLine($"Error reactivating staff: {response.ReasonPhrase}");
-                return;
-            }
-            
-            // Update the local staff list
-            var localStaff = staff.FirstOrDefault(s => s.Id == staffMember.Id);
-            if (localStaff != null)
-            {
-                localStaff.IsActive = true;
-                localStaff.UpdatedAt = DateTime.UtcNow;
-            }
-            
-            ApplyFiltersAndSort();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error reactivating staff: {ex.Message}");
-        }
-    }
-
-    private string GetRoleColor(StaffRole role)
+    private string GetRoleColor(StaffRoleDTO role)
     {
         return role switch
         {
-            StaffRole.Doctor => "danger",
-            StaffRole.Paramedic => "warning",
-            StaffRole.TeamLeader => "primary",
-            StaffRole.FirstAider => "success",
-            StaffRole.Volunteer => "info",
+            StaffRoleDTO.Doctor => "danger",
+            StaffRoleDTO.Paramedic => "warning",
+            StaffRoleDTO.TeamLeader => "primary",
+            StaffRoleDTO.FirstAider => "success",
+            StaffRoleDTO.Volunteer => "info",
             _ => "secondary"
         };
-    }
-
-    private static async Task<string> GetErrorMessage(HttpResponseMessage response, string fallbackMessage)
-    {
-        var errorMessage = await response.Content.ReadAsStringAsync();
-        if (!string.IsNullOrWhiteSpace(errorMessage))
-        {
-            return errorMessage;
-        }
-
-        return response.ReasonPhrase is { Length: > 0 }
-            ? $"{fallbackMessage} {response.ReasonPhrase}"
-            : fallbackMessage;
     }
 }
