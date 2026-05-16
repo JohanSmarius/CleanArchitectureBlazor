@@ -2,6 +2,7 @@
   <Project Path="Application/Application.csproj" Id="e8e970e2-179b-41de-a622-a61e7c869264" />
   <Project Path="CleanArchitectureBlazor/CleanArchitectureBlazor.Client/CleanArchitectureBlazor.Client.csproj" />
   <Project Path="CleanArchitectureBlazor/CleanArchitectureBlazor/CleanArchitectureBlazor.csproj" />
+  <Project Path="ClientInfrastructure/ClientInfrastructure.csproj" />
   <Project Path="Domain/Domain.csproj" Id="106faf23-a126-40ad-89d2-75da539bc478" />
   <Project Path="DomainService.Tests/DomainService.Tests.csproj" Id="8663a59c-f92c-4f0e-b3e1-34b635cc15d4" />
   <Project Path="DomainService/DomainService.csproj" Id="201d7551-f674-403b-b983-9c5005f2466a" />
